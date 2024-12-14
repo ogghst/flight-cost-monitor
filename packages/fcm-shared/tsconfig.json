@@ -1,0 +1,38 @@
+{
+  "extends": "@repo/typescript-config/nestjs.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "baseUrl": ".",
+    "rootDir": "src",
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "target": "ES2022",
+    "outDir": "dist",
+    "declaration": true,
+    "sourceMap": true,
+    "strict": true,
+    "preserveSymlinks": true,
+    "paths": {
+      "@fcm/mylib": [
+        "libs/mylib/src"
+      ],
+      "@fcm/mylib/*": [
+        "libs/mylib/src/*"
+      ]
+    }
+  },
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "test",
+    "dist",
+    "**/*spec.ts"
+  ]
+}

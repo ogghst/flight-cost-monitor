@@ -1,117 +1,133 @@
-# Turborepo starter
+# Flight Cost Monitor
 
-This is an official starter Turborepo.
+A monorepo project for monitoring and analyzing flight costs using the Amadeus API. Built with TypeScript, NestJS, and React.
 
-## Using this example
+## Project Structure
 
-Run the following command:
-
-```bash
-npx create-turbo@latest -e with-nestjs
+```
+flight-cost-monitor/
+├── apps/
+│   ├── fcm-api/         # Backend API service
+│   └── fcm-webui/       # Frontend web application
+├── packages/
+│   ├── eslint-config/   # Shared ESLint configuration
+│   ├── fcm-shared/      # Shared business logic and types
+│   ├── fcm-shared-webui/# Shared UI components
+│   ├── jest-config/     # Shared Jest configuration
+│   └── typescript-config/# Shared TypeScript configuration
 ```
 
-## What's inside?
+## Prerequisites
 
-This Turborepo includes the following packages/apps:
+- Node.js >= 18
+- pnpm 8.15.5 or higher
+- Amadeus API credentials
 
-### Apps and Packages
+## Getting Started
 
-    .
-    ├── apps
-    │   ├── api                       # NestJS app (https://nestjs.com).
-    │   └── web                       # Next.js app (https://nextjs.org).
-    └── packages
-        ├── @repo/api                 # Shared `NestJS` resources.
-        ├── @repo/eslint-config       # `eslint` configurations (includes `prettier`)
-        ├── @repo/jest-config         # `jest` configurations
-        ├── @repo/typescript-config   # `tsconfig.json`s used throughout the monorepo
-        └── @repo/ui                  # Shareable stub React component library.
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/flight-cost-monitor.git
+   cd flight-cost-monitor
+   ```
 
-Each package and application are 100% [TypeScript](https://www.typescriptlang.org/) safe.
+2. **Install dependencies**
+   ```bash
+   pnpm install
+   ```
 
-### Utilities
+3. **Set up environment variables**
+   ```bash
+   # Create .env files in both apps/fcm-api and apps/fcm-webui
+   cp apps/fcm-api/.env.example apps/fcm-api/.env
+   cp apps/fcm-webui/.env.example apps/fcm-webui/.env
+   ```
 
-This `Turborepo` has some additional tools already set for you:
+4. **Start development servers**
+   ```bash
+   # Start all services
+   pnpm dev
 
-- [TypeScript](https://www.typescriptlang.org/) for static type-safety
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-- [Jest](https://prettier.io) & [Playwright](https://playwright.dev/) for testing
+   # Or start individual services
+   pnpm --filter fcm-api dev
+   pnpm --filter fcm-webui dev
+   ```
 
-### Commands
+## Development
 
-This `Turborepo` already configured useful commands for all your apps and packages.
+### Available Scripts
 
-#### Build
+- `pnpm dev` - Start development servers
+- `pnpm build` - Build all packages and applications
+- `pnpm test` - Run unit tests
+- `pnpm test:e2e` - Run end-to-end tests
+- `pnpm lint` - Lint all packages
+- `pnpm format` - Format code using Prettier
+- `pnpm clean` - Clean build artifacts
+- `pnpm clean:all` - Deep clean including node_modules
 
-```bash
-# Will build all the app & packages with the supported `build` script.
-pnpm run build
+### Debugging
 
-# ℹ️ If you plan to only build apps individually,
-# Please make sure you've built the packages first.
-```
+VSCode launch configurations are provided for debugging:
 
-#### Develop
+1. Set breakpoints in your code
+2. Press F5 or use the Run and Debug panel
+3. Select the appropriate debug configuration
 
-```bash
-# Will run the development server for all the app & packages with the supported `dev` script.
-pnpm run dev
-```
+### Package Management
 
-#### test
-
-```bash
-# Will launch a test suites for all the app & packages with the supported `test` script.
-pnpm run test
-
-# You can launch e2e testes with `test:e2e`
-pnpm run test:e2e
-
-# See `@repo/jest-config` to customize the behavior.
-```
-
-#### Lint
+This project uses pnpm workspaces. To add dependencies:
 
 ```bash
-# Will lint all the app & packages with the supported `lint` script.
-# See `@repo/eslint-config` to customize the behavior.
-pnpm run lint
+# Add to root
+pnpm add -w package-name
+
+# Add to specific package/app
+pnpm --filter package-name add dependency-name
 ```
 
-#### Format
+## Architecture
 
-```bash
-# Will format all the supported `.ts,.js,json,.tsx,.jsx` files.
-# See `@repo/eslint-config/prettier-base.js` to customize the behavior.
-pnpm format
-```
+### Backend (fcm-api)
 
-### Remote Caching
+- Built with NestJS
+- Integrates with Amadeus API for flight data
+- RESTful API design
+- TypeScript for type safety
 
-Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+### Frontend (fcm-webui)
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup), then enter the following commands:
+- React application
+- TypeScript
+- Shared UI components
+- Integration with backend API
 
-```bash
-npx turbo login
-```
+### Shared Packages
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+- **fcm-shared**: Common business logic, API clients, and types
+- **fcm-shared-webui**: Reusable UI components
+- **Configuration packages**: Shared development tool configurations
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+## API Documentation
 
-```bash
-npx turbo link
-```
+API documentation is available at:
+- Development: http://localhost:3000/api/docs
+- Production: https://your-domain.com/api/docs
 
-## Useful Links
+## Testing
 
-Learn more about the power of Turborepo:
+- Unit tests: `pnpm test`
+- E2E tests: `pnpm test:e2e`
+- Coverage reports are generated in the `coverage` directory
 
-- [Tasks](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
-- [Caching](https://turbo.build/repo/docs/core-concepts/caching)
-- [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching)
-- [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
-- [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
-- [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+[MIT](LICENSE)

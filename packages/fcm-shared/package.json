@@ -1,0 +1,53 @@
+{
+  "name": "@fcm/shared",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm build --watch",
+    "build": "tsc -b -v",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "debug": "node --loader ts-node/esm src/examples.ts"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./amadeus/clients": {
+      "import": "./dist/amadeus/clients/index.js",
+      "types": "./dist/amadeus/clients/index.d.ts"
+    },
+    "./amadeus/types": {
+      "import": "./dist/amadeus/types/index.js",
+      "types": "./dist/amadeus/types/index.d.ts"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "amadeus/clients": ["./dist/amadeus/clients/index.d.ts"],
+      "amadeus/types": ["./dist/amadeus/types/index.d.ts"]
+    }
+  },
+  "dependencies": {
+    "@nestjs/mapped-types": "*",
+    "axios": "^1.7.9"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^20.3.1",
+    "ts-loader": "^9.4.3",
+    "ts-node": "^10.9.2",
+    "typescript": "5.7.2"
+  }
+}
