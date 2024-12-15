@@ -30,12 +30,17 @@
     "./amadeus/types": {
       "import": "./dist/amadeus/types/index.js",
       "types": "./dist/amadeus/types/index.d.ts"
+    },
+    "./logging": {
+      "import": "./dist/logging/index.js",
+      "types": "./dist/logging/index.d.ts"
     }
   },
   "typesVersions": {
     "*": {
       "amadeus/clients": ["./dist/amadeus/clients/index.d.ts"],
-      "amadeus/types": ["./dist/amadeus/types/index.d.ts"]
+      "amadeus/types": ["./dist/amadeus/types/index.d.ts"],
+      "logging": ["./dist/logging/index.d.ts"]
     }
   },
   "dependencies": {

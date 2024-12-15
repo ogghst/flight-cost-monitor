@@ -1,5 +1,11 @@
 // Shared enums
-export type TravelClass = 'ECONOMY' | 'PREMIUM_ECONOMY' | 'BUSINESS' | 'FIRST';
+export enum TravelClass {
+  ECONOMY = 'ECONOMY',
+  PREMIUM_ECONOMY = 'PREMIUM_ECONOMY',
+  BUSINESS = 'BUSINESS',
+  FIRST = 'FIRST',
+}
+
 export type TravelerType =
   | 'ADULT'
   | 'CHILD'
@@ -41,11 +47,11 @@ export interface GeoCode {
 export interface FlightEndPoint {
   iataCode: string;
   terminal?: string;
-  at: string;  // ISO8601 format
+  at: string; // ISO8601 format
 }
 
 export interface Aircraft {
-  code: string;  // IATA aircraft code
+  code: string; // IATA aircraft code
 }
 
 export interface OperatingFlight {

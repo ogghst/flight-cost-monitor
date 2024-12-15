@@ -58,7 +58,7 @@ export abstract class BaseClient {
   public async getAccessToken(): Promise<string> {
     try {
       console.log('Requesting access token from Amadeus API...');
-      
+
       const params = new URLSearchParams({
         grant_type: 'client_credentials',
         client_id: this.clientId,
@@ -66,20 +66,16 @@ export abstract class BaseClient {
       });
 
       const url = `${this.baseUrl}/v1/security/oauth2/token`;
-      
+
       console.log('Token request URL:', url);
       console.log('Client ID:', this.clientId);
       console.log('Request parameters:', params.toString());
 
-      const response = await axios.post(
-        url,
-        params.toString(),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
+      const response = await axios.post(url, params.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-      );
+      });
 
       console.log('Token response status:', response.status);
 
@@ -91,11 +87,11 @@ export abstract class BaseClient {
     } catch (error) {
       const errorMessage = this.extractErrorMessage(error);
       console.error('Token retrieval error details:', errorMessage);
-      
+
       if (error instanceof AxiosError) {
         console.error('Full error response:', error.response?.data);
       }
-      
+
       throw new Error(`Failed to retrieve access token: ${errorMessage}`);
     }
   }

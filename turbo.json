@@ -1,12 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
-  "globalEnv": [
-    "NEXT_PUBLIC_AZURE_CLIENT_ID",
-    "NEXT_PUBLIC_AZURE_TENANT_ID",
-    "NEXT_PUBLIC_API_URL",
-    "NEXT_PUBLIC_API_SCOPE"
-  ],
   "tasks": {
     "dev": {
       "cache": false,

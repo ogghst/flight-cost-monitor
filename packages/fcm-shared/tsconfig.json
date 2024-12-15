@@ -4,14 +4,9 @@
     "allowJs": true,
     "baseUrl": ".",
     "rootDir": "src",
-    "esModuleInterop": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "target": "ES2022",
     "outDir": "dist",
     "declaration": true,
     "sourceMap": true,
-    "strict": true,
     "preserveSymlinks": true,
     "paths": {
       "@fcm/mylib": [
@@ -20,7 +15,10 @@
       "@fcm/mylib/*": [
         "libs/mylib/src/*"
       ]
-    }
+    },
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true
   },
   "ts-node": {
     "esm": true,

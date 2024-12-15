@@ -11,26 +11,33 @@ export class FlightOfferClient extends BaseClient {
 
   /**
    * Search for flight offers based on provided criteria (POST endpoint)
-   * 
+   *
    * @param request Advanced search criteria for flight offers
    * @returns List of matching flight offers
    */
-  async search(request: FlightOfferSearchRequest): Promise<FlightOfferSearchResponse> {
+  async search(
+    request: FlightOfferSearchRequest,
+  ): Promise<FlightOfferSearchResponse> {
     return this.post<FlightOfferSearchResponse>(this.basePath, request);
   }
 
   /**
    * Get flight offers using simplified parameters (GET endpoint)
-   * 
+   *
    * @param params Simple search parameters for flight offers
    * @returns List of matching flight offers
    */
-  async getOffers(params: FlightOffersGetParams): Promise<FlightOfferSearchResponse> {
+  async getOffers(
+    params: FlightOffersGetParams,
+  ): Promise<FlightOfferSearchResponse> {
     const searchParams = new URLSearchParams();
 
     // Add required parameters
     searchParams.append('originLocationCode', params.originLocationCode);
-    searchParams.append('destinationLocationCode', params.destinationLocationCode);
+    searchParams.append(
+      'destinationLocationCode',
+      params.destinationLocationCode,
+    );
     searchParams.append('departureDate', params.departureDate);
     searchParams.append('adults', params.adults.toString());
 
@@ -48,10 +55,16 @@ export class FlightOfferClient extends BaseClient {
       searchParams.append('travelClass', params.travelClass);
     }
     if (params.includedAirlineCodes) {
-      searchParams.append('includedAirlineCodes', params.includedAirlineCodes.join(','));
+      searchParams.append(
+        'includedAirlineCodes',
+        params.includedAirlineCodes.join(','),
+      );
     }
     if (params.excludedAirlineCodes) {
-      searchParams.append('excludedAirlineCodes', params.excludedAirlineCodes.join(','));
+      searchParams.append(
+        'excludedAirlineCodes',
+        params.excludedAirlineCodes.join(','),
+      );
     }
     if (params.nonStop !== undefined) {
       searchParams.append('nonStop', params.nonStop.toString());
@@ -66,7 +79,9 @@ export class FlightOfferClient extends BaseClient {
       searchParams.append('max', params.max.toString());
     }
 
-    return this.get<FlightOfferSearchResponse>(`${this.basePath}?${searchParams.toString()}`);
+    return this.get<FlightOfferSearchResponse>(
+      `${this.basePath}?${searchParams.toString()}`,
+    );
   }
 
   /**

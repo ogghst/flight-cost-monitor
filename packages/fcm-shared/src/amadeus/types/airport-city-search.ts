@@ -1,12 +1,11 @@
 import type { CollectionMeta, GeoCode } from './common.js';
-import { Address, LocationSubType } from './location.js';
-
+import { Address, SearchLocationType } from './location.js';
 
 export type LocationView = 'LIGHT' | 'FULL';
 
 export interface AirportCitySearchParams {
   keyword: string;
-  subType: LocationSubType[];
+  subType: SearchLocationType[];
   countryCode?: string;
   'page[limit]'?: number;
   'page[offset]'?: number;
@@ -22,7 +21,7 @@ export interface Analytics {
 
 export interface LocationResponse {
   type: string;
-  subType: LocationSubType;
+  subType: SearchLocationType;
   name: string;
   detailedName: string;
   id: string;

@@ -1,68 +1,46 @@
-import { GeoCode, CollectionMeta } from './common';
-
-export type LocationSubType =
-  | 'AIRPORT'
-  | 'CITY'
-  | 'POINT_OF_INTEREST'
-  | 'DISTRICT';
-export type ViewType = 'LIGHT' | 'FULL';
-export type LocationCategory =
-  | 'SIGHTS'
-  | 'BEACH_PARK'
-  | 'HISTORICAL'
-  | 'NIGHTLIFE'
-  | 'RESTAURANT'
-  | 'SHOPPING';
+import { GeoCode, CollectionMeta } from './common.js';
 
 export interface Address {
-  cityName: string;
-  cityCode: string;
-  countryName: string;
+  cityCode?: string;
+  cityName?: string;
+  countryName?: string;
   countryCode: string;
+  regionCode?: string;
   stateCode?: string;
-  regionCode: string;
-}
-
-export interface Links {
-  href: string;
-  methods?: Array<'GET' | 'PUT' | 'DELETE' | 'POST' | 'PATCH'>;
-  count?: number;
 }
 
 export interface Location {
   id: string;
-  self: Links;
-  type: string;
-  subType: LocationSubType;
   name: string;
-  detailedName: string;
-  timeZoneOffset?: string;
-  iataCode: string;
-  geoCode?: GeoCode;
-  address?: Address;
-  relevance?: number;
-  category?: LocationCategory;
-  tags?: string[];
-  rank?: string;
+  address: Address;
+  geoCode: GeoCode;
+  timeZoneOffset: string;
 }
 
-// Request/Response types
-export interface LocationSearchParams {
-  subType: LocationSubType[];
-  keyword: string;
-  countryCode?: string;
-  'page[limit]'?: number;
-  'page[offset]'?: number;
-  sort?: 'analytics.travelers.score';
-  view?: ViewType;
-}
-
-export interface LocationSearchResponse {
-  meta?: CollectionMeta;
-  data: Location[];
-}
-
-export interface LocationByIdResponse {
-  meta?: CollectionMeta;
+export interface GetLocationResponse {
   data: Location;
+  meta: CollectionMeta;
+}
+
+export interface SearchLocationsResponse {
+  data: Location[];
+  meta: CollectionMeta;
+}
+
+export type SearchLocationType =
+  | 'AIRPORT'
+  | 'CITY'
+  | 'POINT_OF_INTEREST'
+  | 'DISTRICT';
+
+export interface SearchLocationsParams {
+  keyword: string;
+  subType?: SearchLocationType[];
+  countryCode?: string;
+  sort?: string;
+  view?: 'FULL' | 'LIGHT';
+  page?: {
+    limit?: number;
+    offset?: number;
+  };
 }

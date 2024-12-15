@@ -4,12 +4,14 @@ import {
   ClientConfig,
   FlightOfferClient,
 } from '@fcm/shared/amadeus/clients';
-import { FlightEndPoint, FlightOffer, TravelClass } from '@fcm/shared/amadeus/types';
+import {
+  FlightEndPoint,
+  FlightOffer,
+  TravelClass,
+} from '@fcm/shared/amadeus/types';
 import { config } from 'dotenv';
 
 config();
-
-
 
 function formatDateTime(dateTime: string): string {
   return new Date(dateTime).toLocaleString('en-US', {
@@ -18,14 +20,20 @@ function formatDateTime(dateTime: string): string {
     day: 'numeric',
     hour: 'numeric',
     minute: 'numeric',
-    timeZoneName: 'short'
+    timeZoneName: 'short',
   });
 }
 
-function formatSegment(departure: FlightEndPoint, arrival: FlightEndPoint, duration: string) {
-  return `${departure.iataCode} (${formatDateTime(departure.at)}) → ` +
-         `${arrival.iataCode} (${formatDateTime(arrival.at)}) ` +
-         `[${FlightOfferClient.formatDuration(duration)}]`;
+function formatSegment(
+  departure: FlightEndPoint,
+  arrival: FlightEndPoint,
+  duration: string,
+) {
+  return (
+    `${departure.iataCode} (${formatDateTime(departure.at)}) → ` +
+    `${arrival.iataCode} (${formatDateTime(arrival.at)}) ` +
+    `[${FlightOfferClient.formatDuration(duration)}]`
+  );
 }
 
 function displayFlightOffer(offer: FlightOffer): void {
@@ -34,29 +42,39 @@ function displayFlightOffer(offer: FlightOffer): void {
   console.log('='.repeat(80));
 
   // Display basic info
-  console.log(`Price: ${FlightOfferClient.formatPrice(offer.price.total, offer.price.currency)}`);
+  console.log(
+    `Price: ${FlightOfferClient.formatPrice(offer.price.total, offer.price.currency)}`,
+  );
   console.log(`Seats available: ${offer.numberOfBookableSeats}`);
   console.log(`Last ticketing date: ${offer.lastTicketingDate}`);
-  console.log(`Instant ticketing required: ${offer.instantTicketingRequired ? 'Yes' : 'No'}`);
+  console.log(
+    `Instant ticketing required: ${offer.instantTicketingRequired ? 'Yes' : 'No'}`,
+  );
 
   // Display itineraries
   offer.itineraries.forEach((itinerary, index) => {
-    console.log(`\nItinerary ${index + 1} (${FlightOfferClient.formatDuration(itinerary.duration)}):`);
+    console.log(
+      `\nItinerary ${index + 1} (${FlightOfferClient.formatDuration(itinerary.duration)}):`,
+    );
     console.log('-'.repeat(80));
-    
+
     itinerary.segments.forEach((segment, segIndex) => {
       console.log(`\nFlight ${segment.carrierCode}${segment.number}:`);
-      console.log(formatSegment(segment.departure, segment.arrival, segment.duration));
-      
+      console.log(
+        formatSegment(segment.departure, segment.arrival, segment.duration),
+      );
+
       if (segment.operating) {
         console.log(`Operated by: ${segment.operating.carrierCode}`);
       }
-      
+
       // Display stops if any
       if (segment.numberOfStops > 0 && segment.stops) {
         console.log('\nStops:');
-        segment.stops.forEach(stop => {
-          console.log(`  ${stop.iataCode} (${FlightOfferClient.formatDuration(stop.duration)})`);
+        segment.stops.forEach((stop) => {
+          console.log(
+            `  ${stop.iataCode} (${FlightOfferClient.formatDuration(stop.duration)})`,
+          );
         });
       }
     });
@@ -65,12 +83,14 @@ function displayFlightOffer(offer: FlightOffer): void {
   // Display pricing details
   console.log('\nPricing Details:');
   console.log('-'.repeat(80));
-  offer.travelerPricings.forEach(pricing => {
+  offer.travelerPricings.forEach((pricing) => {
     console.log(`\nTraveler ${pricing.travelerId} (${pricing.travelerType}):`);
     console.log(`Fare option: ${pricing.fareOption}`);
-    console.log(`Price: ${FlightOfferClient.formatPrice(pricing.price.total, pricing.price.currency)}`);
-    
-    pricing.fareDetailsBySegment.forEach(detail => {
+    console.log(
+      `Price: ${FlightOfferClient.formatPrice(pricing.price.total, pricing.price.currency)}`,
+    );
+
+    pricing.fareDetailsBySegment.forEach((detail) => {
       console.log(`\nSegment ${detail.segmentId}:`);
       console.log(`  Class: ${detail.class} (${detail.cabin})`);
       console.log(`  Fare basis: ${detail.fareBasis}`);
@@ -81,12 +101,13 @@ function displayFlightOffer(offer: FlightOffer): void {
         console.log(`  Included bags: ${detail.includedCheckedBags.quantity}`);
       }
       if (detail.includedCheckedBags.weight) {
-        console.log(`  Bag weight allowance: ${detail.includedCheckedBags.weight}${detail.includedCheckedBags.weightUnit}`);
+        console.log(
+          `  Bag weight allowance: ${detail.includedCheckedBags.weight}${detail.includedCheckedBags.weightUnit}`,
+        );
       }
     });
   });
 }
-
 
 async function airportSearch(): Promise<void> {
   try {
@@ -100,7 +121,7 @@ async function airportSearch(): Promise<void> {
     console.log('\nSearching for airports containing "YUL" in the name...');
     const response = await airportClient.search({
       keyword: 'YUL',
-      subType: ['AIRPORT']
+      subType: ['AIRPORT'],
     });
     console.log('\nSearch results:', JSON.stringify(response.data, null, 2));
 
@@ -108,7 +129,6 @@ async function airportSearch(): Promise<void> {
     const location = await airportClient.getById('ALHR');
 
     console.log('\nLocation details:', JSON.stringify(location, null, 2));
-
   } catch (error) {
     if (error instanceof Error) {
       console.error('\nError occurred:', error.message);
@@ -121,7 +141,6 @@ async function airportSearch(): Promise<void> {
       console.error('\nUnknown error:', error);
     }
     throw error; // Re-throw to handle in the main execution
-
   }
 }
 
@@ -143,11 +162,11 @@ async function simpleSearch(): Promise<void> {
       max: 3,
       travelClass: 'BUSINESS' as TravelClass,
       nonStop: true,
-      currencyCode: 'USD'
+      currencyCode: 'USD',
     });
 
     console.log(`\nFound ${response.data.length} flight offers:`);
-    response.data.forEach(offer => displayFlightOffer(offer));
+    response.data.forEach((offer) => displayFlightOffer(offer));
   } catch (error) {
     console.error('Error in simple search:', error);
     throw error;
@@ -173,8 +192,8 @@ async function advancedSearch(): Promise<void> {
           destinationLocationCode: 'NYC',
           departureDateTimeRange: {
             date: '2025-07-01',
-            time: '10:00:00'
-          }
+            time: '10:00:00',
+          },
         },
         {
           id: '2',
@@ -182,19 +201,19 @@ async function advancedSearch(): Promise<void> {
           destinationLocationCode: 'LON',
           departureDateTimeRange: {
             date: '2025-07-15',
-            time: '17:00:00'
-          }
-        }
+            time: '17:00:00',
+          },
+        },
       ],
       travelers: [
         {
           id: '1',
-          travelerType: 'ADULT'
+          travelerType: 'ADULT',
         },
         {
           id: '2',
-          travelerType: 'CHILD'
-        }
+          travelerType: 'CHILD',
+        },
       ],
       sources: ['GDS'],
       searchCriteria: {
@@ -202,27 +221,27 @@ async function advancedSearch(): Promise<void> {
         flightFilters: {
           cabinRestrictions: [
             {
-              cabin: 'BUSINESS',
+              cabin: TravelClass.BUSINESS,
               coverage: 'ALL_SEGMENTS',
-              originDestinationIds: ['1', '2']
-            }
+              originDestinationIds: ['1', '2'],
+            },
           ],
           carrierRestrictions: {
-            excludedCarrierCodes: ['NK', 'FR'] // Exclude certain budget airlines
+            excludedCarrierCodes: ['NK', 'FR'], // Exclude certain budget airlines
           },
           connectionRestriction: {
             maxNumberOfConnections: 1,
-            nonStopPreferred: true
-          }
+            nonStopPreferred: true,
+          },
         },
         pricingOptions: {
           includedCheckedBagsOnly: true,
-        }
-      }
+        },
+      },
     });
 
     console.log(`\nFound ${response.data.length} flight offers:`);
-    response.data.forEach(offer => displayFlightOffer(offer));
+    response.data.forEach((offer) => displayFlightOffer(offer));
 
     // Display dictionary information if available
     if (response.dictionaries) {
@@ -241,18 +260,19 @@ async function runExamples(): Promise<void> {
   try {
     // Validate environment variables
     if (!process.env.AMADEUS_CLIENT_ID || !process.env.AMADEUS_CLIENT_SECRET) {
-      throw new Error('Missing required environment variables AMADEUS_CLIENT_ID and/or AMADEUS_CLIENT_SECRET');
+      throw new Error(
+        'Missing required environment variables AMADEUS_CLIENT_ID and/or AMADEUS_CLIENT_SECRET',
+      );
     }
 
     // Run airport search example
-    airportSearch()
+    airportSearch();
 
     // Run simple search example
     await simpleSearch();
 
     // Run advanced search example
     await advancedSearch();
-
   } catch (error) {
     console.error('\nError running examples:', error);
     process.exit(1);

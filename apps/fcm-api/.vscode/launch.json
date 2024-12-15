@@ -17,6 +17,33 @@
       "env": {
         "NODE_ENV": "development"
       }
-    }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug FCM API",
+      "skipFiles": [
+          "<node_internals>/**"
+      ],
+      "program": "${workspaceFolder}/src/main.ts",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+          "--loader",
+          "ts-node/esm",
+          "--experimental-specifier-resolution=node"
+      ],
+      "outFiles": [
+          "${workspaceFolder}/dist/**/*.js"
+      ],
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal"
+  },
+  {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to FCM API",
+      "port": 9229,
+      "restart": true,
+  }
   ]
 }

@@ -26,17 +26,20 @@ flight-cost-monitor/
 ## Getting Started
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/yourusername/flight-cost-monitor.git
    cd flight-cost-monitor
    ```
 
 2. **Install dependencies**
+
    ```bash
    pnpm install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    # Create .env files in both apps/fcm-api and apps/fcm-webui
    cp apps/fcm-api/.env.example apps/fcm-api/.env
@@ -44,6 +47,7 @@ flight-cost-monitor/
    ```
 
 4. **Start development servers**
+
    ```bash
    # Start all services
    pnpm dev
@@ -111,6 +115,7 @@ pnpm --filter package-name add dependency-name
 ## API Documentation
 
 API documentation is available at:
+
 - Development: http://localhost:3000/api/docs
 - Production: https://your-domain.com/api/docs
 

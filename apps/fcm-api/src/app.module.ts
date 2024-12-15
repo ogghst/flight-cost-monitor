@@ -1,10 +1,15 @@
+import { FlightOffersModule } from '#/flight-offers/flight-offers.module.js';
+import { LoggingModule } from '#/logging/logging.module.js';
 import { Module } from '@nestjs/common';
-
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    LoggingModule,
+    FlightOffersModule,
+  ],
 })
 export class AppModule {}

@@ -8,7 +8,7 @@ import type {
   BaggageAllowance,
   FlightOfferSource,
   Dictionaries,
-  CollectionMeta
+  CollectionMeta,
 } from './common.js';
 
 export interface FlightStop {
