@@ -1,14 +1,19 @@
-/** @type {import("eslint").Linter.Config} */
-module.exports = {
-  extends: ['./base.js'],
-  rules: {
-    '@typescript-eslint/interface-name-prefix': 'off',
-    '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/no-explicit-any': 'off',
-  },
-  env: {
-    node: true,
-    jest: true,
-  },
-};
+import { config as baseConfig } from './base.js'
+
+/** @type {import("eslint").Linter.Config[]} */
+export default [
+    ...baseConfig,
+    {
+        files: ['**/*.{js,jsx,ts,tsx}'],
+        settings: {
+            'import/resolver': {
+                typescript: {
+                    project: './tsconfig.json',
+                },
+            },
+        },
+        rules: {
+            // Add any fcm-api specific rules here
+        },
+    },
+]

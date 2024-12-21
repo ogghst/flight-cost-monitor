@@ -1,9 +1,9 @@
 {
-  "extends": "./tsconfig.json",
-  "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
-  "compilerOptions": {
-    "skipLibCheck": true,
-    "noEmit": true
-  }
+    "extends": "./tsconfig.json",
+    "include": ["src/**/*.ts"],
+    "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
+    "compilerOptions": {
+        "skipLibCheck": true,
+        "noEmit": true
+    }
 }

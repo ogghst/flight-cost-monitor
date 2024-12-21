@@ -1,81 +1,81 @@
 import {
-  Logger,
-  LogEntry,
-  LoggerOptions,
-  LogLevel,
-  LogMetadata,
-} from './types.js';
+    LogEntry,
+    Logger,
+    LoggerOptions,
+    LogLevel,
+    LogMetadata,
+} from './types.js'
 
 const LOG_LEVELS: Record<LogLevel, number> = {
-  error: 0,
-  warn: 1,
-  info: 2,
-  http: 3,
-  verbose: 4,
-  debug: 5,
-  silly: 6,
-};
+    error: 0,
+    warn: 1,
+    info: 2,
+    http: 3,
+    verbose: 4,
+    debug: 5,
+    silly: 6,
+}
 
 export abstract class BaseLogger implements Logger {
-  protected context?: string;
-  protected minLevel: LogLevel;
-  protected defaultMetadata: Record<string, unknown>;
+    protected context?: string
+    protected minLevel: LogLevel
+    protected defaultMetadata: Record<string, unknown>
 
-  constructor(options?: LoggerOptions) {
-    this.context = options?.context;
-    this.minLevel = options?.minLevel ?? 'info';
-    this.defaultMetadata = options?.metadata ?? {};
-  }
-
-  protected abstract writeLog(entry: LogEntry): void;
-
-  protected shouldLog(level: LogLevel): boolean {
-    return LOG_LEVELS[level] <= LOG_LEVELS[this.minLevel];
-  }
-
-  protected mergeMetadata(metadata?: LogMetadata): LogMetadata {
-    return {
-      ...this.defaultMetadata,
-      ...(this.context ? { context: this.context } : {}),
-      ...metadata,
-    };
-  }
-
-  log(entry: LogEntry): void {
-    if (this.shouldLog(entry.level)) {
-      this.writeLog({
-        ...entry,
-        timestamp: entry.timestamp ?? new Date(),
-        metadata: this.mergeMetadata(entry.metadata),
-      });
+    constructor(options?: LoggerOptions) {
+        this.context = options?.context
+        this.minLevel = options?.minLevel ?? 'info'
+        this.defaultMetadata = options?.metadata ?? {}
     }
-  }
 
-  error(message: string, metadata?: LogMetadata): void {
-    this.log({ level: 'error', message, metadata });
-  }
+    protected abstract writeLog(entry: LogEntry): void
 
-  warn(message: string, metadata?: LogMetadata): void {
-    this.log({ level: 'warn', message, metadata });
-  }
+    protected shouldLog(level: LogLevel): boolean {
+        return LOG_LEVELS[level] <= LOG_LEVELS[this.minLevel]
+    }
 
-  info(message: string, metadata?: LogMetadata): void {
-    this.log({ level: 'info', message, metadata });
-  }
+    protected mergeMetadata(metadata?: LogMetadata): LogMetadata {
+        return {
+            ...this.defaultMetadata,
+            ...(this.context ? { context: this.context } : {}),
+            ...metadata,
+        }
+    }
 
-  http(message: string, metadata?: LogMetadata): void {
-    this.log({ level: 'http', message, metadata });
-  }
+    log(entry: LogEntry): void {
+        if (this.shouldLog(entry.level)) {
+            this.writeLog({
+                ...entry,
+                timestamp: entry.timestamp ?? new Date(),
+                metadata: this.mergeMetadata(entry.metadata),
+            })
+        }
+    }
 
-  verbose(message: string, metadata?: LogMetadata): void {
-    this.log({ level: 'verbose', message, metadata });
-  }
+    error(message: string, metadata?: LogMetadata): void {
+        this.log({ level: 'error', message, metadata })
+    }
 
-  debug(message: string, metadata?: LogMetadata): void {
-    this.log({ level: 'debug', message, metadata });
-  }
+    warn(message: string, metadata?: LogMetadata): void {
+        this.log({ level: 'warn', message, metadata })
+    }
 
-  silly(message: string, metadata?: LogMetadata): void {
-    this.log({ level: 'silly', message, metadata });
-  }
+    info(message: string, metadata?: LogMetadata): void {
+        this.log({ level: 'info', message, metadata })
+    }
+
+    http(message: string, metadata?: LogMetadata): void {
+        this.log({ level: 'http', message, metadata })
+    }
+
+    verbose(message: string, metadata?: LogMetadata): void {
+        this.log({ level: 'verbose', message, metadata })
+    }
+
+    debug(message: string, metadata?: LogMetadata): void {
+        this.log({ level: 'debug', message, metadata })
+    }
+
+    silly(message: string, metadata?: LogMetadata): void {
+        this.log({ level: 'silly', message, metadata })
+    }
 }

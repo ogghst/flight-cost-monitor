@@ -1,23 +1,12 @@
 {
-  "extends": "@repo/typescript-config/nestjs.json",
-  "compilerOptions": {
-    "sourceMap": true,
-    "outDir": "./dist",
-    "baseUrl": ".",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "target": "ES2022",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "preserveConstEnums": true,
-    "experimentalDecorators": true,
-    "declaration": true,
-    "paths": {
-      "#/*": ["./src/*"]
-    }
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+    "extends": "@fcm/typescript-config/nestjs.json",
+    "compilerOptions": {
+        "paths": {
+            "#/*": ["./src/*"],
+            "@fcm/shared": ["../fcm-shared/src/index.ts"],
+            "@fcm/shared/*": ["../fcm-shared/src/*"]
+        }
+    },
+    "include": ["src/**/*.ts"],
+    "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }

@@ -1,23 +1,21 @@
-/* eslint-disable react/function-component-definition */
+'use client'
 
-'use client';
+import { ThemeProvider } from '@mui/material/styles'
+import { Layout } from './components/layout'
+import theme from './components/layout/theme'
 
-import { ThemeProvider } from '@mui/material/styles';
-import { Layout } from './components/layout';
-import theme from './theme';
+interface RootLayoutProps {
+    children: React.ReactNode // Add this type
+}
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en">
-      <body>
-        <ThemeProvider theme={theme}>
-          <Layout>{children}</Layout>
-        </ThemeProvider>
-      </body>
-    </html>
-  );
+export default function RootLayout({ children }: RootLayoutProps) {
+    return (
+        <html lang="en">
+            <body>
+                <ThemeProvider theme={theme}>
+                    <Layout>{children}</Layout>
+                </ThemeProvider>
+            </body>
+        </html>
+    )
 }

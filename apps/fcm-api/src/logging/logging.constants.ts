@@ -1,1 +1,1 @@
-export const LOGGER = 'LOGGER' as const;
+export const LOGGER = 'LOGGER' as const

@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
-import { LOGGER } from '../logging.constants.js';
+import { Inject } from '@nestjs/common'
+import { LOGGER } from '../logging.constants.js'
 
-export const InjectLogger = () => Inject(LOGGER);
+export const InjectLogger = () => Inject(LOGGER)

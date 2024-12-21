@@ -1,58 +1,65 @@
 {
-  "name": "@fcm/shared",
-  "version": "0.0.0",
-  "private": true,
-  "license": "MIT",
-  "type": "module",
-  "scripts": {
-    "dev": "pnpm build --watch",
-    "build": "tsc -b -v",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
-    "debug": "node --loader ts-node/esm src/examples.ts"
-  },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist/**"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+    "name": "@fcm/fcm-shared",
+    "version": "0.0.0",
+    "private": true,
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "build": "tsc -b -v",
+        "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+        "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+        "debug": "node --loader ts-node/esm src/examples.ts",
+        "clean": "rimraf node_modules .turbo .next dist out coverage"
     },
-    "./amadeus/clients": {
-      "import": "./dist/amadeus/clients/index.js",
-      "types": "./dist/amadeus/clients/index.d.ts"
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist/**"
+    ],
+    "publishConfig": {
+        "access": "public"
     },
-    "./amadeus/types": {
-      "import": "./dist/amadeus/types/index.js",
-      "types": "./dist/amadeus/types/index.d.ts"
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        },
+        "./amadeus/clients": {
+            "import": "./dist/amadeus/clients/index.js",
+            "types": "./dist/amadeus/clients/index.d.ts"
+        },
+        "./amadeus/types": {
+            "import": "./dist/amadeus/types/index.js",
+            "types": "./dist/amadeus/types/index.d.ts"
+        },
+        "./logging": {
+            "import": "./dist/logging/index.js",
+            "types": "./dist/logging/index.d.ts"
+        }
     },
-    "./logging": {
-      "import": "./dist/logging/index.js",
-      "types": "./dist/logging/index.d.ts"
+    "typesVersions": {
+        "*": {
+            "amadeus/clients": [
+                "./dist/amadeus/clients/index.d.ts"
+            ],
+            "amadeus/types": [
+                "./dist/amadeus/types/index.d.ts"
+            ],
+            "logging": [
+                "./dist/logging/index.d.ts"
+            ]
+        }
+    },
+    "dependencies": {
+        "@nestjs/mapped-types": "^2.0.6",
+        "axios": "^1.7.9"
+    },
+    "devDependencies": {
+        "@fcm/eslint-config": "workspace:*",
+        "@fcm/typescript-config": "workspace:*",
+        "@types/node": "^20.17.10",
+        "ts-loader": "^9.5.1",
+        "ts-node": "^10.9.2",
+        "typescript": "5.7.2"
     }
-  },
-  "typesVersions": {
-    "*": {
-      "amadeus/clients": ["./dist/amadeus/clients/index.d.ts"],
-      "amadeus/types": ["./dist/amadeus/types/index.d.ts"],
-      "logging": ["./dist/logging/index.d.ts"]
-    }
-  },
-  "dependencies": {
-    "@nestjs/mapped-types": "*",
-    "axios": "^1.7.9"
-  },
-  "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "@types/node": "^20.3.1",
-    "ts-loader": "^9.4.3",
-    "ts-node": "^10.9.2",
-    "typescript": "5.7.2"
-  }
 }
