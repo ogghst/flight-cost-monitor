@@ -27,7 +27,7 @@ interface SidebarProps {
 
 const menuItems = [
     { text: 'Home', icon: <Home />, path: '/' },
-    { text: 'Flight Search', icon: <Search />, path: '/search' },
+    { text: 'Flight Search', icon: <Search />, path: '/flight-search' },
     { text: 'My Flights', icon: <FlightTakeoff />, path: '/flights' },
     { text: 'Schedule', icon: <DateRange />, path: '/schedule' },
     { text: 'Settings', icon: <Settings />, path: '/settings' },

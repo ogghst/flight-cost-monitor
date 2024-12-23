@@ -1,11 +1,34 @@
 import { InjectLogger } from '#/logging/decorators/inject-logger.decorator.js'
 import { formatError } from '#/utils/error.utils.js'
-import { ClientConfig, FlightOfferClient } from '@fcm/fcm-shared'
-import type { FlightOfferSearchResponse } from '@fcm/fcm-shared/amadeus/types'
-import type { Logger } from '@fcm/fcm-shared/logging'
-import { Injectable } from '@nestjs/common'
+import {
+    AmadeusApiError,
+    ClientConfig,
+    FlightOfferClient,
+} from '@fcm/shared/amadeus/clients'
+
+import type {
+    FlightOfferSearchResponse,
+    FlightOffersGetParams,
+} from '@fcm/shared/amadeus/types'
+import type { Logger } from '@fcm/shared/logging'
+import {
+    BadRequestException,
+    Injectable,
+    InternalServerErrorException,
+} from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { SearchFlightOffersDto } from './dto/search-flight-offers.dto.js'
+import { AxiosError } from 'axios'
+
+interface AmadeusError {
+    code: string
+    status: number
+    title?: string
+    detail?: string
+}
+
+interface AmadeusErrorResponse {
+    errors: AmadeusError[]
+}
 
 @Injectable()
 export class FlightOffersService {
@@ -37,25 +60,15 @@ export class FlightOffersService {
     }
 
     async searchFlightOffers(
-        params: SearchFlightOffersDto
+        params: FlightOffersGetParams
     ): Promise<FlightOfferSearchResponse> {
         try {
             this.logger.info('Starting flight offers search', {
-                origin: params.originLocationCode,
-                destination: params.destinationLocationCode,
-                departureDate: params.departureDate,
-                returnDate: params.returnDate,
-                adults: params.adults,
-                travelClass: params.travelClass,
+                params,
             })
 
             const response = await this.flightClient.getOffers({
-                originLocationCode: params.originLocationCode,
-                destinationLocationCode: params.destinationLocationCode,
-                departureDate: params.departureDate,
-                returnDate: params.returnDate,
-                adults: params.adults,
-                travelClass: params.travelClass,
+                ...params,
             })
 
             this.logger.info('Flight offers search completed', {
@@ -68,6 +81,42 @@ export class FlightOffersService {
                 'Failed to send flight offers search request',
                 formatError(error)
             )
+
+            if (error instanceof AmadeusApiError) {
+                throw new BadRequestException({
+                    message: error.message,
+                    error: error.name,
+                    status: 400,
+                })
+            }
+
+            // Check if it's an Axios error
+            if (error instanceof AxiosError) {
+                throw new BadRequestException({
+                    message: (error as AxiosError)?.message,
+                    error: (error as AxiosError)?.code,
+                    status: (error as AxiosError)?.status,
+                })
+            }
+
+            // Handle validation errors
+            if (error instanceof Error) {
+                throw new BadRequestException({
+                    message: error.message || 'Invalid request parameters',
+                    error: error.name,
+                    status: 400,
+                })
+            }
+
+            // For all other errors
+            throw new InternalServerErrorException({
+                message: 'An error occurred while processing your request',
+                error:
+                    error instanceof Error
+                        ? error.message
+                        : 'INTERNAL_SERVER_ERROR',
+                status: 500,
+            })
         }
     }
 }

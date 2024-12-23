@@ -13,7 +13,7 @@ export default [
             },
         },
         rules: {
-            // Add any fcm-api specific rules here
+            // Add any @fcm/api specific rules here
         },
     },
 ]

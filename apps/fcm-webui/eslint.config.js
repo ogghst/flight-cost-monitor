@@ -13,7 +13,7 @@ export default [
             },
         },
         rules: {
-            // Add any fcm-webui specific rules here
+            // Add any @fcm/webui specific rules here
         },
     },
 ]

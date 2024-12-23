@@ -1,15 +1,15 @@
-import type {
+import {
+    Aircraft as AircraftEquipment,
+    BaggageAllowance,
+    CollectionMeta,
+    Dictionaries,
+    FlightEndPoint,
+    FlightOfferSource,
+    OperatingFlight,
+    ExtendedPrice as Price,
     TravelClass,
     TravelerType,
-    FlightEndPoint,
-    OperatingFlight,
-    Aircraft as AircraftEquipment,
-    ExtendedPrice as Price,
-    BaggageAllowance,
-    FlightOfferSource,
-    Dictionaries,
-    CollectionMeta,
-} from './common.js'
+} from '../../types/common.js'
 
 export interface FlightStop {
     iataCode: string
@@ -88,8 +88,24 @@ export interface FlightOffersGetParams {
     nonStop?: boolean
     currencyCode?: string
     maxPrice?: number
-    max?: number
+    maxResults?: number
 }
+
+export const FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES: Partial<FlightOffersGetParams> =
+    {
+        originLocationCode: 'MXP',
+        destinationLocationCode: 'MIA',
+        departureDate: '2025-01-25',
+        returnDate: '2025-02-02',
+        adults: 2,
+        children: 0,
+        infants: 1,
+        travelClass: TravelClass.ECONOMY,
+        nonStop: true,
+        currencyCode: 'EUR',
+        maxResults: 10,
+        maxPrice: 2000,
+    }
 
 export interface DateTimeRange {
     date: string // YYYY-MM-DD

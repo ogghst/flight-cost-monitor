@@ -32,7 +32,7 @@
             "sourceMaps": true,
             "sourceMapPathOverrides": {
                 "webpack://_N_E/./*": "${webRoot}/*",
-                "webpack://fcm-webui/./*": "${webRoot}/*"
+                "webpack://@fcm/webui/./*": "${webRoot}/*"
             }
         }
     ],

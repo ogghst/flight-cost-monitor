@@ -13,7 +13,7 @@ import { LOGGER } from './logging.constants.js'
                         process.env.NODE_ENV === 'production'
                             ? 'info'
                             : 'debug',
-                    context: 'FCM-API',
+                    context: '@fcm/api',
                 })
             },
         },

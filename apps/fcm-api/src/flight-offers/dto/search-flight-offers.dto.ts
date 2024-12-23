@@ -1,146 +1,112 @@
-import { TravelClass } from '@fcm/fcm-shared/amadeus/types'
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { Type } from 'class-transformer'
+import { FlightOffersGetParams, TravelClass } from '@fcm/shared/amadeus/types'
+import { ApiProperty } from '@nestjs/swagger'
 import {
     IsArray,
     IsBoolean,
     IsEnum,
     IsInt,
-    IsNumber,
     IsOptional,
     IsString,
+    Length,
     Max,
     Min,
 } from 'class-validator'
 
-export class SearchFlightOffersDto {
-    @ApiProperty({
-        description: 'IATA code of the origin city/airport',
-        example: 'JFK',
-    })
+export class SearchFlightOffersDto implements FlightOffersGetParams {
+    @ApiProperty({ example: 'LHR', description: 'Origin airport IATA code' })
     @IsString()
+    @Length(3, 3)
     originLocationCode: string
 
     @ApiProperty({
-        description: 'IATA code of the destination city/airport',
-        example: 'LHR',
+        example: 'JFK',
+        description: 'Destination airport IATA code',
     })
     @IsString()
+    @Length(3, 3)
     destinationLocationCode: string
 
     @ApiProperty({
+        example: '2024-03-25',
         description: 'Departure date (YYYY-MM-DD)',
-        example: '2024-12-25',
     })
     @IsString()
     departureDate: string
 
-    @ApiPropertyOptional({
-        description: 'Return date for round trips (YYYY-MM-DD)',
-        example: '2024-12-31',
-    })
-    @IsOptional()
-    @IsString()
-    returnDate?: string
-
     @ApiProperty({
-        description: 'Number of adult passengers',
-        minimum: 1,
-        example: 1,
+        example: '2024-03-25',
+        description: 'Return date (YYYY-MM-DD)',
     })
+    @IsString()
+    returnDate: string
+
+    @ApiProperty({ example: 1, description: 'Number of adult passengers' })
     @IsInt()
     @Min(1)
-    @Type(() => Number)
+    @Max(9)
     adults: number
 
-    @ApiPropertyOptional({
-        description: 'Number of child passengers (2-11 years)',
-        minimum: 0,
+    @ApiProperty({
         example: 0,
+        description: 'Number of child passengers (2-11 years)',
     })
-    @IsOptional()
     @IsInt()
     @Min(0)
-    @Type(() => Number)
+    @Max(9)
+    @IsOptional()
     children?: number
 
-    @ApiPropertyOptional({
-        description: 'Number of infant passengers (under 2 years)',
-        minimum: 0,
+    @ApiProperty({
         example: 0,
+        description: 'Number of infant passengers (0-2 years)',
     })
-    @IsOptional()
     @IsInt()
     @Min(0)
-    @Type(() => Number)
+    @Max(9)
+    @IsOptional()
     infants?: number
 
-    @ApiPropertyOptional({
-        description: 'Desired cabin class for the flight',
-        enum: TravelClass,
-        example: TravelClass.ECONOMY,
-    })
-    @IsOptional()
+    @ApiProperty({ enum: TravelClass, example: TravelClass.ECONOMY })
     @IsEnum(TravelClass)
-    travelClass?: TravelClass
+    travelClass: TravelClass
 
-    @ApiPropertyOptional({
-        description: 'List of airline codes to include in search',
-        type: [String],
-        example: ['BA', 'AA'],
+    @ApiProperty({
+        example: ['LH', 'AF'],
+        description: 'Only show flights from these airlines',
     })
-    @IsOptional()
     @IsArray()
-    @IsString({ each: true })
+    @IsOptional()
     includedAirlineCodes?: string[]
 
-    @ApiPropertyOptional({
-        description: 'List of airline codes to exclude from search',
-        type: [String],
-        example: ['FR', 'U2'],
+    @ApiProperty({
+        example: ['FR', 'W6'],
+        description: 'Exclude flights from these airlines',
     })
-    @IsOptional()
     @IsArray()
-    @IsString({ each: true })
+    @IsOptional()
     excludedAirlineCodes?: string[]
 
-    @ApiPropertyOptional({
-        description: 'Search for non-stop flights only',
-        example: true,
-    })
-    @IsOptional()
+    @ApiProperty({ example: false, description: 'Only show non-stop flights' })
     @IsBoolean()
-    @Type(() => Boolean)
+    @IsOptional()
     nonStop?: boolean
 
-    @ApiPropertyOptional({
-        description: 'Currency code for pricing',
-        example: 'USD',
-    })
+    @ApiProperty({ example: 2000, description: 'Maximum price per passenger' })
+    @IsInt()
+    @Min(0)
     @IsOptional()
-    @IsString()
-    currencyCode?: string
-
-    @ApiPropertyOptional({
-        description: 'Maximum price in the specified currency',
-        example: 1000,
-    })
-    @IsOptional()
-    @IsNumber()
-    @Type(() => Number)
     maxPrice?: number
 
-    @ApiPropertyOptional({
-        description: 'Maximum number of offers to return',
-        minimum: 1,
-        maximum: 250,
-        default: 50,
-        example: 50,
-    })
+    @ApiProperty({ example: 'EUR', description: 'Currency code (ISO 4217)' })
+    @IsString()
+    @Length(3, 3)
     @IsOptional()
+    currencyCode?: string
+
+    @ApiProperty({ example: 50, description: 'Maximum number of results' })
     @IsInt()
     @Min(1)
     @Max(250)
-    @Type(() => Number)
+    @IsOptional()
     max?: number
 }

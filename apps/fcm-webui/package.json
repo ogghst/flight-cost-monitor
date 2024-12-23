@@ -1,10 +1,10 @@
 {
-    "name": "fcm-webui",
+    "name": "@fcm/webui",
     "version": "1.0.0",
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "next dev --port 3001",
+        "dev": "next dev --port 3000",
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
@@ -14,25 +14,40 @@
     "dependencies": {
         "@emotion/react": "^11.14.0",
         "@emotion/styled": "^11.14.0",
-        "@fcm/fcm-shared": "workspace:*",
-        "@fcm/fcm-shared-webui": "workspace:*",
-        "@mui/icons-material": "^5.16.12",
-        "@mui/material": "^5.16.12",
-        "@mui/x-data-grid": "^6.20.4",
+        "@fcm/shared": "workspace:*",
+        "@fcm/shared-webui": "workspace:*",
+        "@hookform/resolvers": "^3.9.1",
+        "@mui/icons-material": "latest",
+        "@mui/material": "latest",
+        "@mui/x-data-grid": "latest",
+        "@mui/x-date-pickers": "latest",
+        "@tanstack/react-query": "^5.17.19",
+        "@tanstack/react-query-devtools": "^5.17.19",
+        "axios": "^1.7.9",
+        "dayjs": "^1.11.13",
+        "lodash": "^4.17.21",
         "next": "^15.1.2",
         "react": "^19.0.0",
-        "react-dom": "^19.0.0"
+        "react-dom": "^19.0.0",
+        "react-hook-form": "^7.54.2",
+        "zod": "^3.22.4",
+        "zod-formik-adapter": "^1.2.0"
     },
     "devDependencies": {
         "@fcm/eslint-config": "workspace:*",
         "@fcm/jest-config": "workspace:*",
+        "@fcm/shared": "workspace:*",
         "@fcm/typescript-config": "workspace:*",
         "@playwright/test": "^1.49.1",
         "@types/eslint": "^8.56.12",
         "@types/node": "^20.17.10",
-        "@types/react": "^19.0.0",
-        "@types/react-dom": "^19.0.0",
+        "@types/react": "^19.0.2",
+        "@types/react-dom": "^19.0.2",
         "eslint": "^9.17.0",
         "typescript": "^5.7.2"
+    },
+    "peerDependencies": {
+        "react": "^17.0.0 || ^18.0.0 || ^19.0.0",
+        "react-dom": "^17.0.0 || ^18.0.0 || ^19.0.0"
     }
 }

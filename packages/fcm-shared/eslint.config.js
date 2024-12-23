@@ -1,4 +1,4 @@
-import { config as baseConfig } from '@fcm/eslint-config/base';
+import { config as baseConfig } from '@fcm/eslint-config/base'
 
 /** @type {import("eslint").Linter.Config[]} */
 export default [
@@ -13,9 +13,7 @@ export default [
             },
         },
         rules: {
-            // Add any fcm-api specific rules here
+            // Add any @fcm/api specific rules here
         },
     },
 ]
-
-

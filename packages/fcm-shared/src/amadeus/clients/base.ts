@@ -1,4 +1,3 @@
- 
 import axios, { AxiosError } from 'axios'
 import { ErrorResponse } from '../types/common.js'
 

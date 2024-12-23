@@ -3,18 +3,21 @@
 import { ThemeProvider } from '@mui/material/styles'
 import { Layout } from './components/layout'
 import theme from './components/layout/theme'
+import { Provider } from './providers'
 
-interface RootLayoutProps {
-    children: React.ReactNode // Add this type
-}
-
-export default function RootLayout({ children }: RootLayoutProps) {
+export default function RootLayout({
+    children,
+}: {
+    children: React.ReactNode
+}) {
     return (
         <html lang="en">
             <body>
-                <ThemeProvider theme={theme}>
-                    <Layout>{children}</Layout>
-                </ThemeProvider>
+                <Provider>
+                    <ThemeProvider theme={theme}>
+                        <Layout>{children}</Layout>
+                    </ThemeProvider>
+                </Provider>
             </body>
         </html>
     )

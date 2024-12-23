@@ -1,9 +1,9 @@
+import { BaseClient } from '../base.js'
 import {
     AirportCityByIdResponse,
     AirportCitySearchParams,
     AirportCitySearchResponse,
-} from '../types/airport-city-search.js'
-import { BaseClient } from './base.js'
+} from './airport-city-types.js'
 
 export class AirportCityClient extends BaseClient {
     private readonly basePath = '/v1/reference-data/locations'

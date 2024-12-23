@@ -1,6 +1,14 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalDependencies": [".env", ".env.local"],
+  "globalEnv": [
+    "NODE_ENV",
+    "PORT",
+    "AMADEUS_CLIENT_ID",
+    "AMADEUS_CLIENT_SECRET",
+    "AMADEUS_API_URL"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

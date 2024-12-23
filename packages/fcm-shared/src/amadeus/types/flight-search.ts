@@ -1,13 +1,13 @@
 import {
+    ExtendedPrice,
     FareType,
+    Fee,
+    Tax,
     TravelClass,
     TravelerType,
-    ExtendedPrice,
-    Tax,
-    Fee,
 } from './common.js'
 
-import { FlightOffer } from './flight-offers.js'
+import { FlightOffer } from '../clients/flight-offer/flight-offers-types.js'
 
 export interface FlightSearchAdvancedCriteria {
     fareOptions?: {

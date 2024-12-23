@@ -5,7 +5,7 @@ import 'winston-daily-rotate-file'
 const logFormat = winston.format.combine(
     winston.format.timestamp(),
     winston.format.ms(),
-    nestWinstonModuleUtilities.format.nestLike('FCM-API', {
+    nestWinstonModuleUtilities.format.nestLike('@fcm/api', {
         prettyPrint: true,
         colors: true,
     })

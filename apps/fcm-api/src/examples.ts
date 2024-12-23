@@ -1,14 +1,13 @@
-/* eslint-disable turbo/no-undeclared-env-vars */
 import {
     AirportCityClient,
     ClientConfig,
     FlightOfferClient,
-} from '@fcm/fcm-shared/amadeus/clients'
+} from '@fcm/shared/amadeus/clients'
 import {
     FlightEndPoint,
     FlightOffer,
     TravelClass,
-} from '@fcm/fcm-shared/amadeus/types'
+} from '@fcm/shared/amadeus/types'
 import { config } from 'dotenv'
 
 config()
@@ -170,7 +169,7 @@ async function simpleSearch(): Promise<void> {
             destinationLocationCode: 'NYC',
             departureDate: '2025-07-01',
             adults: 1,
-            max: 3,
+            maxResults: 3,
             travelClass: 'BUSINESS' as TravelClass,
             nonStop: true,
             currencyCode: 'USD',

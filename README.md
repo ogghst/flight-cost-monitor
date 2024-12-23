@@ -7,8 +7,8 @@ A monorepo project for monitoring and analyzing flight costs using the Amadeus A
 ```
 flight-cost-monitor/
 ├── apps/
-│   ├── fcm-api/         # Backend API service
-│   └── fcm-webui/       # Frontend web application
+│   ├── @fcm/api/         # Backend API service
+│   └── @fcm/webui/       # Frontend web application
 ├── packages/
 │   ├── eslint-config/   # Shared ESLint configuration
 │   ├── fcm-shared/      # Shared business logic and types
@@ -41,9 +41,9 @@ flight-cost-monitor/
 3. **Set up environment variables**
 
    ```bash
-   # Create .env files in both apps/fcm-api and apps/fcm-webui
-   cp apps/fcm-api/.env.example apps/fcm-api/.env
-   cp apps/fcm-webui/.env.example apps/fcm-webui/.env
+   # Create .env files in both apps/@fcm/api and apps/@fcm/webui
+   cp apps/@fcm/api/.env.example apps/@fcm/api/.env
+   cp apps/@fcm/webui/.env.example apps/@fcm/webui/.env
    ```
 
 4. **Start development servers**
@@ -53,8 +53,8 @@ flight-cost-monitor/
    pnpm dev
 
    # Or start individual services
-   pnpm --filter fcm-api dev
-   pnpm --filter fcm-webui dev
+   pnpm --filter @fcm/api dev
+   pnpm --filter @fcm/webui dev
    ```
 
 ## Development
@@ -92,14 +92,14 @@ pnpm --filter package-name add dependency-name
 
 ## Architecture
 
-### Backend (fcm-api)
+### Backend (@fcm/api)
 
 - Built with NestJS
 - Integrates with Amadeus API for flight data
 - RESTful API design
 - TypeScript for type safety
 
-### Frontend (fcm-webui)
+### Frontend (@fcm/webui)
 
 - React application
 - TypeScript

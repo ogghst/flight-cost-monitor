@@ -1,5 +1,5 @@
-import type { CollectionMeta, GeoCode } from './common.js'
-import { Address, SearchLocationType } from './location.js'
+import type { CollectionMeta, GeoCode } from '../../types/common.js'
+import { Address, SearchLocationType } from '../../types/location.js'
 
 export type LocationView = 'LIGHT' | 'FULL'
 

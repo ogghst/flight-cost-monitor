@@ -1,5 +1,5 @@
 {
-  "name": "@fcm/fcm-shared-webui",
+  "name": "@fcm/shared-webui",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -20,9 +20,9 @@
     "@turbo/gen": "^1.13.4",
     "@types/eslint": "^8.56.12",
     "@types/node": "^20.17.10",
-    "@types/react": "^18.3.17",
-    "@types/react-dom": "^18.3.5",
-    "react": "^18.3.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "react": "^19.0.0",
     "typescript": "5.7.2"
   }
 }

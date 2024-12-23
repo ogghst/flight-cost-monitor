@@ -1,4 +1,4 @@
-import { BaseLogger, LogEntry, LoggerOptions } from '@fcm/fcm-shared'
+import { BaseLogger, LogEntry, LoggerOptions } from '@fcm/shared/logging'
 import * as winston from 'winston'
 import 'winston-daily-rotate-file'
 
@@ -16,14 +16,10 @@ export class FcmWinstonLogger extends BaseLogger {
 
         const logFormat = winston.format.combine(
             winston.format.timestamp(),
-            winston.format.ms()
-            //winston.format.errors({ stack: true }), // Add this line
-            //winston.format.splat(),                 // Add this line
-            //winston.format.json(),                  // Add this line
-            //nestWinstonModuleUtilities.format.nestLike('FCM-API', {
-            //  prettyPrint: true,
-            //  colors: true,
-            //}),
+            winston.format.ms(),
+            winston.format.errors({ stack: true }),
+            winston.format.splat(),
+            winston.format.json()
         )
 
         const logDir = options?.logDirectory ?? 'logs'
@@ -44,31 +40,17 @@ export class FcmWinstonLogger extends BaseLogger {
                                 ms,
                                 ...meta
                             }) => {
-                                const metaString = Object.keys(meta).length
-                                    ? `\n${JSON.stringify(meta, null, 2)}`
+                                const ctx = context ? `[${context}]` : ''
+                                const metaStr = Object.keys(meta).length
+                                    ? ` ${JSON.stringify(meta)}`
                                     : ''
-                                return `${timestamp} ${level} [${context}] ${message}${ms}${metaString}`
+                                return `${timestamp} ${level} ${ctx} ${message}${metaStr}`
                             }
                         )
                     ),
                 }),
                 new winston.transports.DailyRotateFile({
-                    format: winston.format.combine(
-                        winston.format.uncolorize(),
-                        winston.format.json()
-                    ),
-                    filename: `${logDir}/error-%DATE%.log`,
-                    datePattern: 'YYYY-MM-DD',
-                    zippedArchive: true,
-                    maxSize,
-                    maxFiles,
-                    level: 'error',
-                }),
-                new winston.transports.DailyRotateFile({
-                    format: winston.format.combine(
-                        winston.format.uncolorize(),
-                        winston.format.json()
-                    ),
+                    format: logFormat,
                     filename: `${logDir}/combined-%DATE%.log`,
                     datePattern: 'YYYY-MM-DD',
                     zippedArchive: true,
@@ -81,30 +63,14 @@ export class FcmWinstonLogger extends BaseLogger {
     }
 
     protected writeLog(entry: LogEntry): void {
-        const metadata = { ...entry.metadata }
-
-        if (metadata?.error) {
-            // Type check and format the error object
-            const errorObj = metadata.error
-            if (errorObj instanceof Error) {
-                metadata.error = {
-                    message: errorObj.message,
-                    name: errorObj.name,
-                    stack: errorObj.stack,
-                }
-            } else if (typeof errorObj === 'object' && errorObj !== null) {
-                metadata.error = errorObj
-            } else {
-                metadata.error = { message: String(errorObj) }
-            }
-        }
+        const { level, message, metadata = {}, timestamp } = entry
 
         this.logger.log({
-            level: entry.level,
-            message: entry.message,
-            timestamp: entry.timestamp,
+            level,
+            message,
+            timestamp,
             context: this.context,
-            ...metadata,
+            ...(Object.keys(metadata).length ? metadata : {}),
         })
     }
 }

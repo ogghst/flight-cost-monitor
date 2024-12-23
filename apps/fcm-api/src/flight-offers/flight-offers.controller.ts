@@ -1,7 +1,9 @@
-import { FlightOfferSearchResponse } from '@fcm/fcm-shared/amadeus/types'
-import { Controller, Get, Query, ValidationPipe } from '@nestjs/common'
+import {
+    FlightOfferSearchResponse,
+    type FlightOffersGetParams,
+} from '@fcm/shared/amadeus/types'
+import { Body, Controller, Post, ValidationPipe } from '@nestjs/common'
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
-import { SearchFlightOffersDto } from './dto/search-flight-offers.dto.js'
 import { FlightOffersService } from './flight-offers.service.js'
 
 @ApiTags('Flight Offers')
@@ -9,7 +11,7 @@ import { FlightOffersService } from './flight-offers.service.js'
 export class FlightOffersController {
     constructor(private readonly flightOffersService: FlightOffersService) {}
 
-    @Get()
+    @Post()
     @ApiOperation({
         summary: 'Search flight offers',
         description:
@@ -36,8 +38,8 @@ export class FlightOffersController {
         description: 'Internal server error or Amadeus API error',
     })
     async searchFlightOffers(
-        @Query(new ValidationPipe({ transform: true }))
-        params: SearchFlightOffersDto
+        @Body(new ValidationPipe({ transform: true }))
+        params: FlightOffersGetParams
     ): Promise<FlightOfferSearchResponse> {
         return this.flightOffersService.searchFlightOffers(params)
     }

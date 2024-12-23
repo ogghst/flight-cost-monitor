@@ -1,9 +1,9 @@
+import { BaseClient } from '../base.js'
 import type {
     FlightOfferSearchRequest,
     FlightOfferSearchResponse,
     FlightOffersGetParams,
-} from '../types/flight-offers.js'
-import { BaseClient } from './base.js'
+} from './flight-offers-types.js'
 
 export class FlightOfferClient extends BaseClient {
     private readonly basePath = '/v2/shopping/flight-offers'
@@ -74,8 +74,8 @@ export class FlightOfferClient extends BaseClient {
         if (params.maxPrice !== undefined) {
             searchParams.append('maxPrice', params.maxPrice.toString())
         }
-        if (params.max !== undefined) {
-            searchParams.append('max', params.max.toString())
+        if (params.maxResults !== undefined) {
+            searchParams.append('max', params.maxResults.toString())
         }
 
         return this.get<FlightOfferSearchResponse>(
