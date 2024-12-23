@@ -4,6 +4,7 @@ import {
     CollectionMeta,
     Dictionaries,
     FlightEndPoint,
+    FlightOffer,
     FlightOfferSource,
     OperatingFlight,
     ExtendedPrice as Price,
@@ -52,26 +53,6 @@ export interface TravelerPricing {
     travelerType: TravelerType
     price: Price
     fareDetailsBySegment: FareDetailsBySegment[]
-}
-
-export interface FlightOffer {
-    type: 'flight-offer'
-    id: string
-    source: FlightOfferSource
-    instantTicketingRequired: boolean
-    nonHomogeneous: boolean
-    oneWay: boolean
-    lastTicketingDate: string // YYYY-MM-DD
-    lastTicketingDateTime?: string // ISO8601
-    numberOfBookableSeats: number
-    itineraries: Itinerary[]
-    price: Price
-    pricingOptions: {
-        fareType: string[]
-        includedCheckedBagsOnly: boolean
-    }
-    validatingAirlineCodes: string[]
-    travelerPricings: TravelerPricing[]
 }
 
 export interface FlightOffersGetParams {

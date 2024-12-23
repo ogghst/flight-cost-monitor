@@ -1,15 +1,17 @@
 import { InjectLogger } from '#/logging/decorators/inject-logger.decorator.js'
 import { formatError } from '#/utils/error.utils.js'
+import { AmadeusApiError, ClientConfig } from '@fcm/shared/amadeus/clients'
 import {
-    AmadeusApiError,
-    ClientConfig,
     FlightOfferClient,
-} from '@fcm/shared/amadeus/clients'
-
-import type {
     FlightOfferSearchResponse,
     FlightOffersGetParams,
-} from '@fcm/shared/amadeus/types'
+} from '@fcm/shared/amadeus/clients/flight-offer'
+import {
+    FlightOfferAdvancedClient,
+    FlightOffersAdvancedResponse,
+    FlightOffersAdvancedSearchRequest,
+} from '@fcm/shared/amadeus/clients/flight-offer-advanced'
+
 import type { Logger } from '@fcm/shared/logging'
 import {
     BadRequestException,
@@ -19,23 +21,13 @@ import {
 import { ConfigService } from '@nestjs/config'
 import { AxiosError } from 'axios'
 
-interface AmadeusError {
-    code: string
-    status: number
-    title?: string
-    detail?: string
-}
-
-interface AmadeusErrorResponse {
-    errors: AmadeusError[]
-}
-
 @Injectable()
 export class FlightOffersService {
     private accessToken: string | null = null
     private tokenExpiry: Date | null = null
     private clientConfig: ClientConfig | null = null
     private flightClient: FlightOfferClient | null = null
+    private flightAdvancedClient: FlightOfferAdvancedClient | null = null
 
     constructor(
         @InjectLogger() private readonly logger: Logger,
@@ -46,17 +38,9 @@ export class FlightOffersService {
             clientSecret: process.env.AMADEUS_CLIENT_SECRET!,
         })
         this.flightClient = new FlightOfferClient(this.clientConfig)
-    }
-
-    private get baseUrl(): string {
-        return (
-            this.configService.get('AMADEUS_API_URL') ||
-            'https://test.api.amadeus.com/v2'
+        this.flightAdvancedClient = new FlightOfferAdvancedClient(
+            this.clientConfig
         )
-    }
-
-    private async getAccessToken(): Promise<string> {
-        return this.flightClient.getAccessToken()
     }
 
     async searchFlightOffers(
@@ -90,7 +74,6 @@ export class FlightOffersService {
                 })
             }
 
-            // Check if it's an Axios error
             if (error instanceof AxiosError) {
                 throw new BadRequestException({
                     message: (error as AxiosError)?.message,
@@ -99,7 +82,6 @@ export class FlightOffersService {
                 })
             }
 
-            // Handle validation errors
             if (error instanceof Error) {
                 throw new BadRequestException({
                     message: error.message || 'Invalid request parameters',
@@ -108,7 +90,65 @@ export class FlightOffersService {
                 })
             }
 
-            // For all other errors
+            throw new InternalServerErrorException({
+                message: 'An error occurred while processing your request',
+                error:
+                    error instanceof Error
+                        ? error.message
+                        : 'INTERNAL_SERVER_ERROR',
+                status: 500,
+            })
+        }
+    }
+
+    async searchFlightOffersAdvanced(
+        params: FlightOffersAdvancedSearchRequest
+    ): Promise<FlightOffersAdvancedResponse> {
+        try {
+            this.logger.info('Starting advanced flight offers search', {
+                params,
+            })
+
+            const response =
+                await this.flightAdvancedClient.searchFlightOffersAdvanced(
+                    params
+                )
+
+            this.logger.info('Advanced flight offers search completed', {
+                count: response.meta.count,
+            })
+
+            return response
+        } catch (error) {
+            this.logger.error(
+                'Failed to send advanced flight offers search request',
+                formatError(error)
+            )
+
+            if (error instanceof AmadeusApiError) {
+                throw new BadRequestException({
+                    message: error.message,
+                    error: error.name,
+                    status: 400,
+                })
+            }
+
+            if (error instanceof AxiosError) {
+                throw new BadRequestException({
+                    message: (error as AxiosError)?.message,
+                    error: (error as AxiosError)?.code,
+                    status: (error as AxiosError)?.status,
+                })
+            }
+
+            if (error instanceof Error) {
+                throw new BadRequestException({
+                    message: error.message || 'Invalid request parameters',
+                    error: error.name,
+                    status: 400,
+                })
+            }
+
             throw new InternalServerErrorException({
                 message: 'An error occurred while processing your request',
                 error:

@@ -1,5 +1,5 @@
+import { FlightOffer } from 'src/amadeus/types/common.js'
 import { TravelClass } from '../../types/common.js'
-import { FlightOffer } from '../flight-offer/flight-offers-types.js'
 
 export type FlightOfferSource = 'GDS'
 
@@ -92,7 +92,7 @@ export interface SearchCriteria {
     flightFilters?: FlightFilters
 }
 
-export interface FlightOffersSearchRequest {
+export interface FlightOffersAdvancedSearchRequest {
     currencyCode?: string
     originDestinations: OriginDestination[] // max 6
     travelers: TravelerInfo[] // max 9 adults/children, max 1 infant per adult

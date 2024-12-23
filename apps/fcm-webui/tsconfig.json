@@ -9,7 +9,11 @@
         "allowImportingTsExtensions": true,
         "allowJs": true,
         "noEmit": true,
-        "jsx": "preserve"
+        "jsx": "preserve",
+        "baseUrl": ".",
+        "paths": {
+            "./app/*": ["./app/*"]
+        }
     },
     "include": [
         "next-env.d.ts",

@@ -1,8 +1,6 @@
-import {
-    AirportCityClient,
-    ClientConfig,
-    FlightOfferClient,
-} from '@fcm/shared/amadeus/clients'
+import { ClientConfig } from '@fcm/shared/amadeus/clients'
+import { AirportCityClient } from '@fcm/shared/amadeus/clients/airport-city'
+import { FlightOfferClient } from '@fcm/shared/amadeus/clients/flight-offer'
 import {
     FlightEndPoint,
     FlightOffer,

@@ -1,5 +1,6 @@
+import { FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES } from '@fcm/shared/amadeus/clients/flight-offer'
 import {
-    FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES,
+
     TravelClass,
 } from '@fcm/shared/amadeus/types'
 import dayjs, { type Dayjs } from 'dayjs'

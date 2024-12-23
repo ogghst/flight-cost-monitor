@@ -1,6 +1,5 @@
 'use client'
 
-import { FlightOfferSearchResponse, FlightOffersGetParams } from '@fcm/shared'
 import {
     Alert,
     Container,
@@ -15,11 +14,16 @@ import { useCallback } from 'react'
 import { FlightOfferList } from '../components/FlightOfferList'
 import { FlightSearchForm } from './components/FlightSearchForm'
 
+import {
+    FlightOfferSearchResponse,
+    FlightOffersGetParams,
+} from '@fcm/shared/amadeus/clients/flight-offer'
+
+const DEBOUNCE_TIME = 300 // 300ms
+
 // Configure axios once
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 axios.defaults.baseURL = API_URL
-
-const DEBOUNCE_TIME = 300 // 300ms
 
 export default function FlightSearchPage() {
     const queryClient = useQueryClient()
@@ -43,7 +47,7 @@ export default function FlightSearchPage() {
             }
 
             const { data } = await axios.post<FlightOfferSearchResponse>(
-                '/flight-offers',
+                '/flight-offers/simple',
                 searchParams
             )
             queryClient.setQueryData(['flightSearch', cacheKey], data)

@@ -191,7 +191,8 @@ export function FlightOfferCard({ offer }: FlightOfferCardProps) {
                                         variant="body2"
                                         color="text.secondary"
                                     >
-                                        {pricing.fareDetailsBySegment[0]?.cabin ?? 'Unknown'}{' '}
+                                        {pricing.fareDetailsBySegment[0]
+                                            ?.cabin ?? 'Unknown'}{' '}
                                         ({pricing.travelerType})
                                         {idx < offer.travelerPricings.length - 1
                                             ? ', '

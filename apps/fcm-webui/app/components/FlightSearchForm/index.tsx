@@ -3,8 +3,8 @@
 import {
     FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES,
     FlightOffersGetParams,
-    TravelClass,
-} from '@fcm/shared/amadeus/types'
+} from '@fcm/shared/amadeus/clients/flight-offer'
+import { TravelClass } from '@fcm/shared/amadeus/types'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
     Box,

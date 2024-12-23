@@ -1,6 +1,7 @@
 'use client'
 
-import { FlightOfferSearchResponse } from '@fcm/api'
+import { FlightOfferSearchResponse } from '@fcm/shared/amadeus/clients/flight-offer'
+import { ExpandMore, FlightLand, FlightTakeoff } from '@mui/icons-material'
 import {
     Accordion,
     AccordionDetails,
@@ -14,7 +15,6 @@ import {
     Stack,
     Typography,
 } from '@mui/material'
-import { ExpandMore, FlightTakeoff, FlightLand } from '@mui/icons-material'
 import dayjs from 'dayjs'
 import { FlightOfferCard } from './FlightOfferCard'
 
@@ -33,7 +33,11 @@ export function FlightOfferList({ response }: FlightOfferListProps) {
         )
     }
 
-    const formatTime = (dateTime: string) => dayjs(dateTime).format('HH:mm')
+    const formatTime = (dateTime: string | undefined) => {
+        if (!dateTime) return ''
+        dayjs(dateTime).format('HH:mm')
+    }
+
     const formatDuration = (duration: string) => {
         const hours = duration.match(/(\d+)H/)?.[1] || '0'
         const minutes = duration.match(/(\d+)M/)?.[1] || '0'
@@ -47,11 +51,13 @@ export function FlightOfferList({ response }: FlightOfferListProps) {
             </Typography>
 
             {response.data.map((offer, index) => {
+                if (!offer.itineraries?.[0]) return null
                 const outbound = offer.itineraries[0]
                 const inbound = offer.itineraries[1]
                 const firstSegment = outbound.segments[0]
-                const lastOutboundSegment = outbound.segments[outbound.segments.length - 1]
-                
+                const lastOutboundSegment =
+                    outbound.segments[outbound.segments.length - 1]
+
                 return (
                     <Accordion key={offer.id} disableGutters>
                         <AccordionSummary expandIcon={<ExpandMore />}>
@@ -59,20 +65,28 @@ export function FlightOfferList({ response }: FlightOfferListProps) {
                                 {/* Price and Airline */}
                                 <Grid item xs={12} sm={3}>
                                     <Stack>
-                                        <Typography variant="h6" color="primary">
-                                            {Number(offer.price.total).toLocaleString(undefined, {
+                                        <Typography
+                                            variant="h6"
+                                            color="primary"
+                                        >
+                                            {Number(
+                                                offer.price.total
+                                            ).toLocaleString(undefined, {
                                                 style: 'currency',
                                                 currency: offer.price.currency,
                                             })}
                                         </Typography>
                                         <Stack direction="row" spacing={1}>
-                                            <Chip 
-                                                label={offer.validatingAirlineCodes[0]}
+                                            <Chip
+                                                label={
+                                                    offer
+                                                        .validatingAirlineCodes[0]
+                                                }
                                                 size="small"
                                                 variant="outlined"
                                             />
                                             {outbound.segments.length > 1 && (
-                                                <Chip 
+                                                <Chip
                                                     label={`${outbound.segments.length} stops`}
                                                     size="small"
                                                     color="warning"
@@ -85,28 +99,60 @@ export function FlightOfferList({ response }: FlightOfferListProps) {
                                 {/* Outbound Flight */}
                                 <Grid item xs={12} sm={4}>
                                     <Stack spacing={1}>
-                                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                                            <Stack direction="row" spacing={1} alignItems="center">
+                                        <Box
+                                            display="flex"
+                                            justifyContent="space-between"
+                                            alignItems="center"
+                                        >
+                                            <Stack
+                                                direction="row"
+                                                spacing={1}
+                                                alignItems="center"
+                                            >
                                                 <FlightTakeoff fontSize="small" />
                                                 <Typography>
-                                                    {firstSegment.departure.iataCode} 
-                                                    <Typography component="span" color="text.secondary">
-                                                        {` ${formatTime(firstSegment.departure.at)}`}
+                                                    {firstSegment?.departure
+                                                        ?.iataCode ?? 'N/A'}
+                                                    <Typography
+                                                        component="span"
+                                                        color="text.secondary"
+                                                    >
+                                                        {firstSegment?.departure
+                                                            ?.at
+                                                            ? ` ${formatTime(firstSegment.departure.at)}`
+                                                            : ''}
                                                     </Typography>
                                                 </Typography>
                                             </Stack>
-                                            <Stack direction="row" spacing={1} alignItems="center">
+                                            <Stack
+                                                direction="row"
+                                                spacing={1}
+                                                alignItems="center"
+                                            >
                                                 <Typography>
-                                                    {lastOutboundSegment.arrival.iataCode}
-                                                    <Typography component="span" color="text.secondary">
-                                                        {` ${formatTime(lastOutboundSegment.arrival.at)}`}
+                                                    {lastOutboundSegment
+                                                        ?.arrival?.iataCode ??
+                                                        'N/A'}
+                                                    <Typography
+                                                        component="span"
+                                                        color="text.secondary"
+                                                    >
+                                                        {lastOutboundSegment
+                                                            ?.arrival?.at
+                                                            ? ` ${formatTime(lastOutboundSegment.arrival.at)}`
+                                                            : ''}
                                                     </Typography>
                                                 </Typography>
                                                 <FlightLand fontSize="small" />
                                             </Stack>
                                         </Box>
-                                        <Typography variant="caption" color="text.secondary" align="center">
-                                            Duration: {formatDuration(outbound.duration)}
+                                        <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                            align="center"
+                                        >
+                                            Duration:{' '}
+                                            {formatDuration(outbound.duration)}
                                         </Typography>
                                     </Stack>
                                 </Grid>
@@ -119,28 +165,80 @@ export function FlightOfferList({ response }: FlightOfferListProps) {
                                         </Grid>
                                         <Grid item xs={12} sm={4}>
                                             <Stack spacing={1}>
-                                                <Box display="flex" justifyContent="space-between" alignItems="center">
-                                                    <Stack direction="row" spacing={1} alignItems="center">
+                                                <Box
+                                                    display="flex"
+                                                    justifyContent="space-between"
+                                                    alignItems="center"
+                                                >
+                                                    <Stack
+                                                        direction="row"
+                                                        spacing={1}
+                                                        alignItems="center"
+                                                    >
                                                         <FlightTakeoff fontSize="small" />
                                                         <Typography>
-                                                            {inbound.segments[0].departure.iataCode}
-                                                            <Typography component="span" color="text.secondary">
-                                                                {` ${formatTime(inbound.segments[0].departure.at)}`}
+                                                            {
+                                                                inbound
+                                                                    ?.segments[0]
+                                                                    ?.departure
+                                                                    ?.iataCode
+                                                            }
+                                                            <Typography
+                                                                component="span"
+                                                                color="text.secondary"
+                                                            >
+                                                                {inbound
+                                                                    ?.segments[0]
+                                                                    ?.departure
+                                                                    ?.at
+                                                                    ? ` ${formatTime(inbound.segments[0].departure.at)}`
+                                                                    : ''}
                                                             </Typography>
                                                         </Typography>
                                                     </Stack>
-                                                    <Stack direction="row" spacing={1} alignItems="center">
+                                                    <Stack
+                                                        direction="row"
+                                                        spacing={1}
+                                                        alignItems="center"
+                                                    >
                                                         <Typography>
-                                                            {inbound.segments[inbound.segments.length - 1].arrival.iataCode}
-                                                            <Typography component="span" color="text.secondary">
-                                                                {` ${formatTime(inbound.segments[inbound.segments.length - 1].arrival.at)}`}
+                                                            {
+                                                                inbound
+                                                                    ?.segments[
+                                                                    inbound
+                                                                        ?.segments
+                                                                        .length -
+                                                                        1
+                                                                ]?.arrival
+                                                                    ?.iataCode
+                                                            }
+                                                            <Typography
+                                                                component="span"
+                                                                color="text.secondary"
+                                                            >
+                                                                {inbound
+                                                                    ?.segments[
+                                                                    inbound
+                                                                        ?.segments
+                                                                        ?.length -
+                                                                        1
+                                                                ]?.arrival
+                                                                    ?.at &&
+                                                                    ` ${formatTime(inbound?.segments[inbound.segments.length - 1]?.arrival?.at)}`}
                                                             </Typography>
                                                         </Typography>
                                                         <FlightLand fontSize="small" />
                                                     </Stack>
                                                 </Box>
-                                                <Typography variant="caption" color="text.secondary" align="center">
-                                                    Duration: {formatDuration(inbound.duration)}
+                                                <Typography
+                                                    variant="caption"
+                                                    color="text.secondary"
+                                                    align="center"
+                                                >
+                                                    Duration:{' '}
+                                                    {formatDuration(
+                                                        inbound.duration
+                                                    )}
                                                 </Typography>
                                             </Stack>
                                         </Grid>
