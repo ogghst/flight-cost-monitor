@@ -6,19 +6,19 @@ import theme from './components/layout/theme'
 import { Provider } from './providers'
 
 export default function RootLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode
+  children: React.ReactNode
 }) {
-    return (
-        <html lang="en">
-            <body>
-                <Provider>
-                    <ThemeProvider theme={theme}>
-                        <Layout>{children}</Layout>
-                    </ThemeProvider>
-                </Provider>
-            </body>
-        </html>
-    )
+  return (
+    <html lang="en">
+      <body>
+        <Provider>
+          <ThemeProvider theme={theme}>
+            <Layout>{children}</Layout>
+          </ThemeProvider>
+        </Provider>
+      </body>
+    </html>
+  )
 }

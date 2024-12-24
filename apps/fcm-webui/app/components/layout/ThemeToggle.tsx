@@ -4,16 +4,16 @@ import { IconButton, useTheme } from '@mui/material'
 import { useColorMode } from './AppThemeProvider'
 
 export default function ThemeToggle() {
-    const theme = useTheme()
-    const { toggleColorMode } = useColorMode()
+  const theme = useTheme()
+  const { toggleColorMode } = useColorMode()
 
-    return (
-        <IconButton onClick={toggleColorMode} color="inherit">
-            {theme.palette.mode === 'dark' ? (
-                <Brightness7Icon />
-            ) : (
-                <Brightness4Icon />
-            )}
-        </IconButton>
-    )
+  return (
+    <IconButton onClick={toggleColorMode} color="inherit">
+      {theme.palette.mode === 'dark' ? (
+        <Brightness7Icon />
+      ) : (
+        <Brightness4Icon />
+      )}
+    </IconButton>
+  )
 }
