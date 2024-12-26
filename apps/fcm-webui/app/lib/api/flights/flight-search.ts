@@ -1,19 +1,29 @@
 'use server'
-import { FlightOfferSearchResponse, FlightOffersGetParams } from '@fcm/shared/amadeus/clients/flight-offer'
-import type { FlightOffersAdvancedResponse, FlightOffersAdvancedSearchRequest } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
-import { axiosInstance } from '../axiosConfig'
+import { FlightOfferClient } from '@fcm/shared/amadeus/clients/flight-offer'
+import { FlightOfferAdvancedClient } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
+import type { FlightOffersAdvancedSearchRequest, FlightOffersAdvancedResponse } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
+import type { FlightOfferSimpleSearchRequest, FlightOfferSimpleSearchResponse } from '@fcm/shared/amadeus/clients/flight-offer'
+import { amadeusConfig } from '../../config/amadeus'
 
-// Set timeout to 60 seconds
-axiosInstance.defaults.timeout = 60000
-
-export const searchFlights = async (params: FlightOffersGetParams): Promise<FlightOfferSearchResponse> => {
-  const { data } = await axiosInstance.post<FlightOfferSearchResponse>('/flight-offers/simple', params)
-  console.log('searchFlights response: \n', JSON.stringify(data, null, 2))
-  return data
+const flightClients = {
+  simple: new FlightOfferClient(amadeusConfig),
+  advanced: new FlightOfferAdvancedClient(amadeusConfig),
 }
 
-export const searchFlightsAdvanced = async (params: FlightOffersAdvancedSearchRequest): Promise<FlightOffersAdvancedResponse> => {
-  const { data } = await axiosInstance.post<FlightOffersAdvancedResponse>('/flight-offers/advanced', params)
-  console.log('searchFlightsAdvanced response: \n', JSON.stringify(data, null, 2))
-  return data
+export async function searchFlights(params: FlightOfferSimpleSearchRequest): Promise<FlightOfferSimpleSearchResponse> {
+  try {
+    return await flightClients.simple.searchFlightOffers(params)
+  } catch (error) {
+    console.error('Simple search error:', error)
+    throw new Error('Failed to search flights')
+  }
+}
+
+export async function searchFlightsAdvanced(params: FlightOffersAdvancedSearchRequest): Promise<FlightOffersAdvancedResponse> {
+  try {
+    return await flightClients.advanced.searchFlightOffersAdvanced(params)
+  } catch (error) {
+    console.error('Advanced search error:', error)
+    throw new Error('Failed to search flights')
+  }
 }

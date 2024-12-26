@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-    transpilePackages: ['@fcm/shared-webui'],
+/*const nextConfig = {
     env: {
         NEXT_PUBLIC_AZURE_CLIENT_ID: process.env.NEXT_PUBLIC_AZURE_CLIENT_ID,
         NEXT_PUBLIC_AZURE_TENANT_ID: process.env.NEXT_PUBLIC_AZURE_TENANT_ID,
@@ -15,4 +14,13 @@ const nextConfig = {
     },
 }
 
+export default nextConfig
+*/
+
+import type { NextConfig } from 'next'
+ 
+const nextConfig: NextConfig = {
+  /* config options here */
+}
+ 
 export default nextConfig

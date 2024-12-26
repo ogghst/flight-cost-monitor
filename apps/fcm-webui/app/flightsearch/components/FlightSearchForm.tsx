@@ -2,7 +2,7 @@
 
 import {
   FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES,
-  FlightOffersGetParams,
+  FlightOfferSimpleSearchRequest,
 } from '@fcm/shared/amadeus/clients/flight-offer'
 import { TravelClass } from '@fcm/shared/amadeus/types'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -66,10 +66,10 @@ const flightSearchSchema = z.object({
   maxPrice: z.number().positive('Price must be positive').optional(),
   includedAirlineCodes: z.array(z.string()).optional(),
   excludedAirlineCodes: z.array(z.string()).optional(),
-}) satisfies z.ZodType<FlightOffersGetParams>
+}) satisfies z.ZodType<FlightOfferSimpleSearchRequest>
 
 type FlightSearchFormProps = {
-  onSubmit: (data: FlightOffersGetParams) => void
+  onSubmit: (data: FlightOfferSimpleSearchRequest) => void
   isLoading?: boolean
 }
 
@@ -81,7 +81,7 @@ export function FlightSearchForm({
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<FlightOffersGetParams>({
+  } = useForm<FlightOfferSimpleSearchRequest>({
     resolver: zodResolver(flightSearchSchema),
     defaultValues: FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES,
   })

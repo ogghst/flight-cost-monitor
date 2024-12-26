@@ -1,8 +1,4 @@
-import {
-    Itinerary,
-    TravelerPricing,
-} from '../clients/flight-offer/flight-offers-types.js'
-import { ExtendedPrice as Price } from './common.js'
+import type { Itinerary, TravelerPricing } from '../clients/flight-offer/flight-offers-types.js'
 
 // Shared enums
 export enum TravelClass {
@@ -12,6 +8,7 @@ export enum TravelClass {
     FIRST = 'FIRST',
 }
 
+// Traveler and Flight Types
 export type TravelerType =
     | 'ADULT'
     | 'CHILD'
@@ -20,11 +17,18 @@ export type TravelerType =
     | 'HELD_INFANT'
     | 'SEATED_INFANT'
     | 'STUDENT'
+
+export interface TravelerInfo {
+    id: string
+    travelerType: TravelerType
+    associatedAdultId?: string
+}
+
 export type FlightOfferSource = 'GDS'
 export type FareType = 'PUBLISHED' | 'NEGOTIATED' | 'CORPORATE'
 export type FeeType = 'TICKETING' | 'FORM_OF_PAYMENT' | 'SUPPLIER'
 
-// Error handling types
+// Error Types
 export interface ErrorSource {
     pointer?: string
     parameter?: string
@@ -43,13 +47,30 @@ export interface ErrorResponse {
     errors: ApiError[]
 }
 
-// Basic location info
+// Location Types
 export interface GeoCode {
     latitude: number
     longitude: number
 }
 
-// Common structures for flights
+export interface Address {
+    cityCode?: string
+    cityName?: string
+    countryName?: string
+    countryCode: string
+    regionCode?: string
+    stateCode?: string
+}
+
+export interface Location {
+    id: string
+    name: string
+    address: Address
+    geoCode: GeoCode
+    timeZoneOffset: string
+}
+
+// Flight Components
 export interface FlightEndPoint {
     iataCode: string
     terminal?: string
@@ -64,7 +85,15 @@ export interface OperatingFlight {
     carrierCode: string
 }
 
-// Price related types
+// Date and Time
+export interface DateTimeRange {
+    date: string // YYYY-MM-DD
+    time?: string // HH:mm:ss
+    dateWindow?: string // IxD, PxD, or MxD format
+    timeWindow?: string // xH format
+}
+
+// Price Types
 export interface Fee {
     amount: string
     type: FeeType
@@ -90,28 +119,24 @@ export interface ExtendedPrice extends BasePrice {
     refundableTaxes?: string
 }
 
-// Baggage related types
+// Baggage Types
 export interface BaggageAllowance {
     quantity?: number
     weight?: number
     weightUnit?: string
 }
 
-// Dictionary types
+// Response Types
 export interface Dictionaries {
-    locations?: Record<
-        string,
-        {
-            cityCode: string
-            countryCode: string
-        }
-    >
+    locations?: Record<string, {
+        cityCode: string
+        countryCode: string
+    }>
     aircraft?: Record<string, string>
     currencies?: Record<string, string>
     carriers?: Record<string, string>
 }
 
-// Common collection metadata
 export interface CollectionMeta {
     count?: number
     links?: {
@@ -124,33 +149,28 @@ export interface CollectionMeta {
     }
 }
 
-export interface Address {
-    cityCode?: string
-    cityName?: string
-    countryName?: string
-    countryCode: string
-    regionCode?: string
-    stateCode?: string
-}
-
-export interface Location {
+// Flight Offer Core Type
+export interface FlightOffer {
+    type: 'flight-offer'
     id: string
-    name: string
-    address: Address
-    geoCode: GeoCode
-    timeZoneOffset: string
+    source: FlightOfferSource
+    instantTicketingRequired: boolean
+    nonHomogeneous: boolean
+    oneWay: boolean
+    lastTicketingDate: string // YYYY-MM-DD
+    lastTicketingDateTime?: string // ISO8601
+    numberOfBookableSeats: number
+    itineraries: Itinerary[]
+    price: ExtendedPrice
+    pricingOptions: {
+        fareType: string[]
+        includedCheckedBagsOnly: boolean
+    }
+    validatingAirlineCodes: string[]
+    travelerPricings: TravelerPricing[]
 }
 
-export interface GetLocationResponse {
-    data: Location
-    meta: CollectionMeta
-}
-
-export interface SearchLocationsResponse {
-    data: Location[]
-    meta: CollectionMeta
-}
-
+// Search Types
 export type SearchLocationType =
     | 'AIRPORT'
     | 'CITY'
@@ -167,23 +187,4 @@ export interface SearchLocationsParams {
         limit?: number
         offset?: number
     }
-}
-export interface FlightOffer {
-    type: 'flight-offer'
-    id: string
-    source: FlightOfferSource
-    instantTicketingRequired: boolean
-    nonHomogeneous: boolean
-    oneWay: boolean
-    lastTicketingDate: string // YYYY-MM-DD
-    lastTicketingDateTime?: string // ISO8601
-    numberOfBookableSeats: number
-    itineraries: Itinerary[]
-    price: Price
-    pricingOptions: {
-        fareType: string[]
-        includedCheckedBagsOnly: boolean
-    }
-    validatingAirlineCodes: string[]
-    travelerPricings: TravelerPricing[]
 }
