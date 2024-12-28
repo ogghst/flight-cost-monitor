@@ -1,6 +1,7 @@
 {
   "extends": "@fcm/typescript-config/base.json",
   "compilerOptions": {
+    "declaration": true,
     "outDir": "dist",
     "baseUrl": "."
   },

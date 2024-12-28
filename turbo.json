@@ -8,7 +8,9 @@
     "AMADEUS_CLIENT_ID",
     "AMADEUS_CLIENT_SECRET",
     "AMADEUS_API_URL",
-    "AMADEUS_TIMEOUT"
+    "AMADEUS_TIMEOUT",
+    "AUTH_GITHUB_ID",
+    "AUTH_GITHUB_SECRET"
   ],
   "tasks": {
     "build": {

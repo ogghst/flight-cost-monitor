@@ -112,6 +112,8 @@ async function airportSearch(): Promise<void> {
     const clientConfig = new ClientConfig({
       clientId: process.env.AMADEUS_CLIENT_ID!,
       clientSecret: process.env.AMADEUS_CLIENT_SECRET!,
+      baseUrl: process.env.AMADEUS_API_URL!,
+      timeout: 5000,
     })
 
     const airportClient = new AirportCityClient(clientConfig)
@@ -147,6 +149,8 @@ async function simpleSearch(): Promise<void> {
     const clientConfig = new ClientConfig({
       clientId: process.env.AMADEUS_CLIENT_ID!,
       clientSecret: process.env.AMADEUS_CLIENT_SECRET!,
+      baseUrl: process.env.AMADEUS_API_URL!,
+      timeout: parseInt(process.env.AMADEUS_TIMEOUT!),
     })
 
     const flightClient = new FlightOfferClient(clientConfig)
@@ -176,6 +180,8 @@ async function advancedSearch(): Promise<void> {
     const clientConfig = new ClientConfig({
       clientId: process.env.AMADEUS_CLIENT_ID!,
       clientSecret: process.env.AMADEUS_CLIENT_SECRET!,
+      baseUrl: process.env.AMADEUS_API_URL!,
+      timeout: parseInt(process.env.AMADEUS_TIMEOUT!),
     })
 
     const flightClientAdvanced = new FlightOfferAdvancedClient(clientConfig)

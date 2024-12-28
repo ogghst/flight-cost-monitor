@@ -36,6 +36,8 @@ export class FlightOffersService {
     this.clientConfig = new ClientConfig({
       clientId: process.env.AMADEUS_CLIENT_ID!,
       clientSecret: process.env.AMADEUS_CLIENT_SECRET!,
+      baseUrl: process.env.AMADEUS_API_URL!,
+      timeout: parseInt(process.env.AMADEUS_TIMEOUT!),
     })
     this.flightClient = new FlightOfferClient(this.clientConfig)
     this.flightAdvancedClient = new FlightOfferAdvancedClient(this.clientConfig)

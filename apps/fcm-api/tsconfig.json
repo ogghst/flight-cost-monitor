@@ -1,13 +1,14 @@
 {
-    "extends": "@fcm/typescript-config/nestjs.json",
-    "compilerOptions": {
-        "paths": {
-            "#/*": ["./src/*"]
-        }
-    },
-    "include": [
-        "src/**/*.ts",
-        "src/flight-offers/dto/search-flight-offers.dto.ts"
-    ],
-    "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+  "extends": "@fcm/typescript-config/nestjs.json",
+  "compilerOptions": {
+    "paths": {
+      "#/*": ["./src/*"],
+      "@fcm/shared/*": ["../fcm-shared/src/*"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/flight-offers/dto/search-flight-offers.dto.ts"
+  ],
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }

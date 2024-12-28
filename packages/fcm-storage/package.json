@@ -1,0 +1,41 @@
+{
+  "name": "@fcm/storage",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b -v",
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "debug": "node --loader ts-node/esm src/examples.ts",
+    "clean": "rimraf node_modules .turbo .next dist out coverage",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@fcm/eslint-config": "workspace:*",
+    "@fcm/shared": "workspace:*",
+    "@fcm/typescript-config": "workspace:*",
+    "@types/node": "^20.17.10",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
+    "typescript": "5.7.2",
+    "prisma": "^6.1.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.1.0",
+    "zod": "^3.22.4"
+  }
+}

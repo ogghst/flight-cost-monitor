@@ -1,0 +1,38 @@
+'use server'
+import {
+  FlightOfferSimpleSearchResponse,
+  FlightOffersSimpleSearchRequest,
+} from '@fcm/shared/amadeus/clients/flight-offer'
+import type {
+  FlightOffersAdvancedResponse,
+  FlightOffersAdvancedSearchRequest,
+} from '@fcm/shared/amadeus/clients/flight-offer-advanced'
+import { axiosInstance } from '../axiosConfig'
+
+// Set timeout to 60 seconds
+axiosInstance.defaults.timeout = 60000
+
+export const searchFlightsSimple = async (
+  params: FlightOffersSimpleSearchRequest
+): Promise<FlightOfferSimpleSearchResponse> => {
+  const { data } = await axiosInstance.post<FlightOfferSimpleSearchResponse>(
+    '/flight-offers/simple',
+    params
+  )
+  console.debug('searchFlights response: \n', JSON.stringify(data, null, 2))
+  return data
+}
+
+export const searchFlightsAdvanced = async (
+  params: FlightOffersAdvancedSearchRequest
+): Promise<FlightOffersAdvancedResponse> => {
+  const { data } = await axiosInstance.post<FlightOffersAdvancedResponse>(
+    '/flight-offers/advanced',
+    params
+  )
+  console.debug(
+    'searchFlightsAdvanced response: \n',
+    JSON.stringify(data, null, 2)
+  )
+  return data
+}

@@ -1,26 +1,69 @@
-/** @type {import('next').NextConfig} */
-/*const nextConfig = {
-    env: {
-        NEXT_PUBLIC_AZURE_CLIENT_ID: process.env.NEXT_PUBLIC_AZURE_CLIENT_ID,
-        NEXT_PUBLIC_AZURE_TENANT_ID: process.env.NEXT_PUBLIC_AZURE_TENANT_ID,
-        NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-        NEXT_PUBLIC_API_SCOPE: process.env.NEXT_PUBLIC_API_SCOPE,
-    },
-    productionBrowserSourceMaps: true,
-    webpack: (config, { isServer }) => {
-        // Enable source maps in production
-        config.devtool = isServer ? 'source-map' : 'source-map'
-        return config
-    },
-}
-
-export default nextConfig
-*/
-
 import type { NextConfig } from 'next'
- 
+
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Enable source maps in production for better debugging
+  productionBrowserSourceMaps: true,
+
+  // Configure module resolution and transpilation
+  transpilePackages: ['@fcm/shared', '@fcm/shared-webui', '@fcm/storage'],
+
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    config.resolve.extensions = [
+      '.tsx',
+      '.ts',
+      '.js',
+      '.jsx',
+      ...config.resolve.extensions,
+    ]
+    // Enable source maps in all environments
+    config.devtool = isServer ? 'source-map' : 'source-map'
+    return config
+  },
+
+  // Enable experimental features
+  experimental: {
+    // Enable serverActions if needed
+
+    // Enable TypeScript Module Resolution if needed
+    typedRoutes: true,
+  },
+
+  // Environment variables that should be available in the browser
+  env: {
+    NEXT_PUBLIC_API_URL:
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  },
+
+  // Headers for security and optimization
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+        ],
+      },
+    ]
+  },
 }
- 
+
 export default nextConfig
