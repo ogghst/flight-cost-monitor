@@ -17,6 +17,7 @@ import {
   ListItemText,
   useTheme,
 } from '@mui/material'
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 interface SidebarProps {
@@ -43,15 +44,21 @@ export default function Sidebar({ open, onClose, drawerWidth }: SidebarProps) {
   const isMobile = useIsMobile()
   const pathname = usePathname()
 
+  const handleClick = () => {
+    if (isMobile) {
+      onClose()
+    }
+  }
+
   const drawerContent = (
     <List>
       {menuItems.map((item) => (
         <ListItem key={item.text} disablePadding>
           <ListItemButton
-            component="a"
+            component={Link}
             href={item.path}
             selected={pathname === item.path}
-            onClick={isMobile ? onClose : undefined}>
+            onClick={handleClick}>
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText primary={item.text} />
           </ListItemButton>
@@ -65,6 +72,9 @@ export default function Sidebar({ open, onClose, drawerWidth }: SidebarProps) {
       variant={isMobile ? 'temporary' : 'permanent'}
       open={open}
       onClose={onClose}
+      ModalProps={{
+        keepMounted: true, // Better mobile performance
+      }}
       sx={{
         width: drawerWidth,
         flexShrink: 0,

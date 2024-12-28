@@ -3,9 +3,10 @@
 import { useAuth } from '@/hooks/auth/useAuth'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import theme from '@/lib/theme'
-import { AccountCircle, Menu as MenuIcon } from '@mui/icons-material'
+import { Menu as MenuIcon } from '@mui/icons-material'
 import {
   AppBar,
+  Avatar,
   Box,
   Button,
   IconButton,
@@ -14,6 +15,7 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material'
+import { useSession } from 'next-auth/react'
 import { useState } from 'react'
 
 interface NavbarProps {
@@ -25,6 +27,7 @@ export default function Navbar({ onMenuClick, drawerWidth }: NavbarProps) {
   const isMobile = useIsMobile()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const { user, isAuthenticated, signOut } = useAuth()
+  const { data: session } = useSession()
 
   const handleProfileMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
@@ -74,7 +77,15 @@ export default function Navbar({ onMenuClick, drawerWidth }: NavbarProps) {
                 aria-haspopup="true"
                 onClick={handleProfileMenu}
                 color="inherit">
-                <AccountCircle />
+                {session?.user?.image ? (
+                  <>
+                    <Avatar
+                      alt={session.user.name || 'User Avatar'}
+                      src={session.user.image}
+                      sx={{ width: 32, height: 32 }}
+                    />
+                  </>
+                ) : null}
               </IconButton>
               <Menu
                 id="menu-appbar"
