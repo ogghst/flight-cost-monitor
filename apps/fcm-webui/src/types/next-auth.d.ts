@@ -1,19 +1,19 @@
-import 'next-auth'
 import { Role } from '@prisma/client'
+import 'next-auth'
 
 declare module 'next-auth' {
-  interface User {
-    role: Role
-  }
-  
   interface Session {
     user: {
       id: string
       email: string
-      role: Role
-      name?: string | null
-      image?: string | null
+      image?: string
+      roles: string[]
     }
+  }
+
+  interface User {
+    roles: string[]
+    githubId: string?
   }
 }
 

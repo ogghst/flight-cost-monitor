@@ -18,6 +18,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   roles     Role[]   @relation("UserRoles")
+    // Add OAuth fields
+  githubId      String?  @unique
+  githubProfile String?    // Store additional GitHub profile data
+  image         String?  // Profile image URL
 }
 
 model Role {

@@ -3,25 +3,24 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  await prisma.PermissionType.create({
-    data: {
-      id: 'READ',
-    },
-  })
-  await prisma.PermissionType.create({
-    data: {
-      id: 'WRITE',
-    },
+  // Create permission types
+  await prisma.permissionType.upsert({
+    where: { id: 'READ' },
+    update: {},
+    create: { id: 'READ' },
   })
 
-  // Create admin role
+  await prisma.permissionType.upsert({
+    where: { id: 'WRITE' },
+    update: {},
+    create: { id: 'WRITE' },
+  })
+
+  // Create admin role first
   const adminRole = await prisma.role.create({
     data: {
       name: 'ADMIN',
       description: 'Administrator role with full access',
-      permissions: {
-        connect: [{ id: 'READ' }, { id: 'WRITE' }],
-      },
     },
   })
 
@@ -30,9 +29,32 @@ async function main() {
     data: {
       name: 'USER',
       description: 'Regular user with basic access',
-      permissions: {
-        connect: [{ id: 'READ' }],
-      },
+    },
+  })
+
+  // Create permissions for admin role
+  await prisma.permission.create({
+    data: {
+      typeId: 'READ',
+      roleId: adminRole.id,
+      resource: '*',
+    },
+  })
+
+  await prisma.permission.create({
+    data: {
+      typeId: 'WRITE',
+      roleId: adminRole.id,
+      resource: '*',
+    },
+  })
+
+  // Create permissions for user role
+  await prisma.permission.create({
+    data: {
+      typeId: 'READ',
+      roleId: userRole.id,
+      resource: 'flights',
     },
   })
 
@@ -62,7 +84,7 @@ async function main() {
     },
   })
 
-  console.log('Database has been seeded')
+  console.log('Database has been seeded successfully')
 }
 
 main()
