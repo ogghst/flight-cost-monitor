@@ -1,3 +1,4 @@
+import { parseName } from '@/lib/utils'
 import { PrismaClient } from '@fcm/storage'
 import type { NextAuthConfig } from 'next-auth'
 import NextAuth from 'next-auth'
@@ -27,6 +28,7 @@ export const config = {
     async signIn({ user, account, profile }) {
       if (account?.provider === 'github') {
         try {
+          const { firstName, lastName } = parseName(profile?.name?.toString())
           await prisma.user.upsert({
             where: {
               email: user.email!,
@@ -35,7 +37,9 @@ export const config = {
               email: user.email!,
               githubId: profile?.id?.toString(),
               githubProfile: JSON.stringify(profile),
-              image: profile?.picture,
+              image: profile?.avatar_url?.toString(),
+              firstName: firstName,
+              lastName: lastName,
               active: true,
               roles: {
                 connect: {
@@ -47,7 +51,9 @@ export const config = {
             update: {
               githubId: profile?.id?.toString(),
               githubProfile: JSON.stringify(profile),
-              image: profile?.picture,
+              image: profile?.avatar_url?.toString(),
+              firstName: firstName,
+              lastName: lastName,
               updatedAt: new Date(),
             },
           })
