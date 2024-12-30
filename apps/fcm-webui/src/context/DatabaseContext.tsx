@@ -1,16 +1,26 @@
-import { userRepository } from '@/lib/storage'
-import { UserRepository } from '@fcm/storage'
+import {
+  permissionRepository,
+  PermissionRepository,
+  RoleRepository,
+  UserRepository,
+} from '@fcm/storage/repositories'
 import { createContext, ReactNode, useContext } from 'react'
 
 interface DatabaseContextType {
   userRepository: UserRepository
+  roleRepository: RoleRepository
+  permissionRepository: PermissionRepository
 }
 
 export const DatabaseContext = createContext<DatabaseContextType | null>(null)
 
 export function DatabaseProvider({ children }: { children: ReactNode }) {
+  const userRepository = new UserRepository()
+  const roleRepository = new RoleRepository()
   const contextValue: DatabaseContextType = {
     userRepository,
+    roleRepository,
+    permissionRepository,
   }
 
   return (

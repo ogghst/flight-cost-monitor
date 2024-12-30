@@ -34,7 +34,15 @@
     "clean": {
       "cache": false,
       "dependsOn": ["^clean"],
-      "outputs": ["node_modules", ".turbo", ".next", "dist", "out", "coverage"]
+      "outputs": [
+        "node_modules",
+        ".turbo",
+        ".next",
+        "dist",
+        "out",
+        "coverage",
+        "*.tsbuildinfo"
+      ]
     }
   }
 }

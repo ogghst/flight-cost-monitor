@@ -56,7 +56,7 @@ export default function Sidebar({ open, onClose, drawerWidth }: SidebarProps) {
         <ListItem key={item.text} disablePadding>
           <ListItemButton
             component={Link}
-            href={item.path}
+            href={{ pathname: item.path }}
             selected={pathname === item.path}
             onClick={handleClick}>
             <ListItemIcon>{item.icon}</ListItemIcon>

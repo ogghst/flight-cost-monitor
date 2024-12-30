@@ -12,7 +12,7 @@ export default async function DashboardPage() {
       <Box sx={{ mt: 2 }}>
         <Typography>Welcome back, {session?.user?.email}!</Typography>
         <Typography variant="body2" sx={{ mt: 1 }}>
-          Role: {session?.user?.role}
+          Role: {session?.user?.roles}
         </Typography>
       </Box>
     </Paper>

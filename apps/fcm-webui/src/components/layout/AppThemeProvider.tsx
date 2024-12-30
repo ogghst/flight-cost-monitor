@@ -1,7 +1,11 @@
 'use client'
-
 import { CssBaseline } from '@mui/material'
-import { createTheme, ThemeProvider } from '@mui/material/styles'
+import {
+  adaptV4Theme,
+  createTheme,
+  StyledEngineProvider,
+  ThemeProvider,
+} from '@mui/material/styles'
 import { createContext, useContext, useMemo, useState } from 'react'
 
 export const ColorModeContext = createContext({
@@ -26,47 +30,51 @@ export function AppThemeProvider({ children }: { children: React.ReactNode }) {
 
   const theme = useMemo(
     () =>
-      createTheme({
-        palette: {
-          mode,
-          ...(mode === 'light'
-            ? {
-                // Light mode colors
-                primary: {
-                  main: '#1976d2',
-                },
-                secondary: {
-                  main: '#dc004e',
-                },
-                background: {
-                  default: '#f5f5f5',
-                  paper: '#ffffff',
-                },
-              }
-            : {
-                // Dark mode colors
-                primary: {
-                  main: '#90caf9',
-                },
-                secondary: {
-                  main: '#f48fb1',
-                },
-                background: {
-                  default: '#121212',
-                  paper: '#1e1e1e',
-                },
-              }),
-        },
-      }),
+      createTheme(
+        adaptV4Theme({
+          palette: {
+            mode,
+            ...(mode === 'light'
+              ? {
+                  // Light mode colors
+                  primary: {
+                    main: '#1976d2',
+                  },
+                  secondary: {
+                    main: '#dc004e',
+                  },
+                  background: {
+                    default: '#f5f5f5',
+                    paper: '#ffffff',
+                  },
+                }
+              : {
+                  // Dark mode colors
+                  primary: {
+                    main: '#90caf9',
+                  },
+                  secondary: {
+                    main: '#f48fb1',
+                  },
+                  background: {
+                    default: '#121212',
+                    paper: '#1e1e1e',
+                  },
+                }),
+          },
+        })
+      ),
     [mode]
   )
 
   return (
     <ColorModeContext.Provider value={colorMode}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
+      <StyledEngineProvider injectFirst>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          {children}
+        </ThemeProvider>
+      </StyledEngineProvider>
     </ColorModeContext.Provider>
   )
 }

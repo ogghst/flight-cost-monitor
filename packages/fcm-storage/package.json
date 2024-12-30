@@ -9,7 +9,7 @@
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "debug": "node --loader ts-node/esm src/examples.ts",
-    "clean": "rimraf node_modules .turbo .next dist out coverage",
+    "clean": "rimraf node_modules .turbo .next dist out coverage .tsbuildinfo",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
@@ -22,6 +22,16 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "exports": {
+    "./repositories": {
+      "import": "./dist/repositories/index.js",
+      "types": "./dist/repositories/index.d.ts"
+    },
+    "./schema": {
+      "import": "./dist/schema/index.js",
+      "types": "./dist/schema/index.d.ts"
+    }
   },
   "devDependencies": {
     "@fcm/eslint-config": "workspace:*",

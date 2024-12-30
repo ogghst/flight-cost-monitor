@@ -1,16 +1,24 @@
 'use server'
+import type {
+  FlightOfferSimpleSearchRequest,
+  FlightOfferSimpleSearchResponse,
+} from '@fcm/shared/amadeus/clients/flight-offer'
 import { FlightOfferClient } from '@fcm/shared/amadeus/clients/flight-offer'
+import type {
+  FlightOffersAdvancedResponse,
+  FlightOffersAdvancedSearchRequest,
+} from '@fcm/shared/amadeus/clients/flight-offer-advanced'
 import { FlightOfferAdvancedClient } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
-import type { FlightOffersAdvancedSearchRequest, FlightOffersAdvancedResponse } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
-import type { FlightOfferSimpleSearchRequest, FlightOfferSimpleSearchResponse } from '@fcm/shared/amadeus/clients/flight-offer'
-import { amadeusConfig } from '../../config/amadeus'
+import { amadeusConfig } from '../../lib/config/amadeus'
 
 const flightClients = {
   simple: new FlightOfferClient(amadeusConfig),
   advanced: new FlightOfferAdvancedClient(amadeusConfig),
 }
 
-export async function searchFlights(params: FlightOfferSimpleSearchRequest): Promise<FlightOfferSimpleSearchResponse> {
+export async function searchFlightsAction(
+  params: FlightOfferSimpleSearchRequest
+): Promise<FlightOfferSimpleSearchResponse> {
   try {
     return await flightClients.simple.searchFlightOffers(params)
   } catch (error) {
@@ -19,7 +27,9 @@ export async function searchFlights(params: FlightOfferSimpleSearchRequest): Pro
   }
 }
 
-export async function searchFlightsAdvanced(params: FlightOffersAdvancedSearchRequest): Promise<FlightOffersAdvancedResponse> {
+export async function searchFlightsAdvancedAction(
+  params: FlightOffersAdvancedSearchRequest
+): Promise<FlightOffersAdvancedResponse> {
   try {
     return await flightClients.advanced.searchFlightOffersAdvanced(params)
   } catch (error) {

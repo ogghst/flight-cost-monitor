@@ -1,8 +1,12 @@
 'use client'
 
 import { FlightOfferList } from '@/components/flights/FlightOfferList'
+import { LoadSearchButton } from '@/components/search/LoadSearchButton'
+import { SaveSearchButton } from '@/components/search/SaveSearchButton'
+import { SearchType } from '@fcm/storage/schema'
 import {
   Alert,
+  Box,
   Container,
   debounce,
   LinearProgress,
@@ -11,10 +15,10 @@ import {
 } from '@mui/material'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { FlightSearchForm } from './components/FlightSearchForm'
 
-import { searchFlights } from '@/lib/api/flights/flight-search'
+import { searchFlightsAction } from '@/app/actions/flight-search'
 import {
   FlightOfferSimpleSearchRequest,
   FlightOfferSimpleSearchResponse,
@@ -28,6 +32,8 @@ axios.defaults.baseURL = API_URL
 
 export default function FlightSearchPage() {
   const queryClient = useQueryClient()
+  const [currentSearch, setCurrentSearch] =
+    useState<FlightOfferSimpleSearchRequest | null>(null)
 
   const {
     mutate: searchFlightMutation,
@@ -47,7 +53,7 @@ export default function FlightSearchPage() {
         return cachedData
       }
 
-      const data = await searchFlights(searchParams)
+      const data = await searchFlightsAction(searchParams)
       queryClient.setQueryData(['flightSearch', cacheKey], data)
       return data
     },
@@ -60,6 +66,7 @@ export default function FlightSearchPage() {
   // Debounced submit handler
   const debouncedSubmit = useCallback(
     debounce((data: FlightOfferSimpleSearchRequest) => {
+      setCurrentSearch(data)
       searchFlightMutation(data)
     }, DEBOUNCE_TIME),
     [searchFlightMutation]
@@ -67,6 +74,10 @@ export default function FlightSearchPage() {
 
   const handleSubmit = (data: FlightOfferSimpleSearchRequest) => {
     debouncedSubmit(data)
+  }
+
+  const handleLoadSearch = (criteria: FlightOfferSimpleSearchRequest) => {
+    handleSubmit(criteria)
   }
 
   return (
@@ -87,6 +98,20 @@ export default function FlightSearchPage() {
         )}
 
         <FlightSearchForm onSubmit={handleSubmit} isLoading={isPending} />
+
+        {currentSearch && (
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+            <SaveSearchButton
+              searchCriteria={JSON.stringify(currentSearch)}
+              searchType={SearchType.SIMPLE}
+              isSimpleSearch
+            />
+            <LoadSearchButton
+              searchType={SearchType.SIMPLE}
+              onLoadSearch={handleLoadSearch}
+            />
+          </Box>
+        )}
 
         {error && (
           <Alert severity="error">

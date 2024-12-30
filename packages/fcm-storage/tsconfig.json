@@ -1,12 +1,13 @@
 {
   "extends": "@fcm/typescript-config/base.json",
-
   "compilerOptions": {
-    "baseUrl": ".",
-    "rootDir": "src",
-    "outDir": "dist",
-    "declaration": true
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "target": "ES2020",
+    "moduleResolution": "node",
+    "module": "ESNext"
   },
-  "include": ["src"],
+
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

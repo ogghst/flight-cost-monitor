@@ -16,6 +16,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 interface NavbarProps {
@@ -28,6 +29,7 @@ export default function Navbar({ onMenuClick, drawerWidth }: NavbarProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const { user, isAuthenticated, signOut } = useAuth()
   const { data: session } = useSession()
+  const router = useRouter()
 
   const handleProfileMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
@@ -37,8 +39,13 @@ export default function Navbar({ onMenuClick, drawerWidth }: NavbarProps) {
     setAnchorEl(null)
   }
 
+  const handleProfileClick = () => {
+    handleProfileMenuClose()
+    router.push('/profile')
+  }
+
   return (
-    <AppBar
+    (<AppBar
       position="fixed"
       sx={{
         width:
@@ -58,7 +65,8 @@ export default function Navbar({ onMenuClick, drawerWidth }: NavbarProps) {
             aria-label="open drawer"
             onClick={onMenuClick}
             edge="start"
-            sx={{ mr: 2 }}>
+            sx={{ mr: 2 }}
+            size="large">
             <MenuIcon />
           </IconButton>
         )}
@@ -80,7 +88,7 @@ export default function Navbar({ onMenuClick, drawerWidth }: NavbarProps) {
                 {session?.user?.image ? (
                   <>
                     <Avatar
-                      alt={session.user.name || 'User Avatar'}
+                      alt={session.user.email || 'User Avatar'}
                       src={session.user.image}
                       sx={{ width: 32, height: 32 }}
                     />
@@ -101,7 +109,7 @@ export default function Navbar({ onMenuClick, drawerWidth }: NavbarProps) {
                 }}
                 open={Boolean(anchorEl)}
                 onClose={handleProfileMenuClose}>
-                <MenuItem onClick={handleProfileMenuClose}>Profile</MenuItem>
+                <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
                 <MenuItem onClick={handleProfileMenuClose}>My account</MenuItem>
                 <MenuItem onClick={() => signOut()}>Logout</MenuItem>
               </Menu>
@@ -113,6 +121,6 @@ export default function Navbar({ onMenuClick, drawerWidth }: NavbarProps) {
           )}
         </Box>
       </Toolbar>
-    </AppBar>
-  )
+    </AppBar>)
+  );
 }

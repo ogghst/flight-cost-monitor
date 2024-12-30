@@ -1,5 +1,6 @@
 'use client'
 
+import { searchFlightsAdvancedAction } from '@/app/actions/flight-search'
 import { FlightOfferList } from '@/components/flights/FlightOfferList'
 import {
   FlightOffersAdvancedResponse,
@@ -16,7 +17,6 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { useCallback } from 'react'
-import { searchFlightsAdvanced } from 'src/lib/api/flights/flight-search'
 import { FlightSearchAdvancedForm } from './components/FlightSearchAdvancedForm'
 
 const DEBOUNCE_TIME = 300 // 300ms
@@ -56,7 +56,7 @@ export default function FlightSearchAdvancedPage() {
         return cachedData
       }
 
-      const data = await searchFlightsAdvanced(searchParams)
+      const data = await searchFlightsAdvancedAction(searchParams)
       queryClient.setQueryData(['advancedFlightSearch', cacheKey], data)
       return data
     },

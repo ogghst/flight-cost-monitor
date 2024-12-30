@@ -37,7 +37,8 @@
     "next.config.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".old/DatabaseContext.tsx"
   ],
   "exclude": ["node_modules"]
 }

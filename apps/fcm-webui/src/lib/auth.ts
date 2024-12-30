@@ -1,10 +1,7 @@
 import { parseName } from '@/lib/utils'
-import { PrismaClient } from '@fcm/storage'
-import type { NextAuthConfig } from 'next-auth'
-import NextAuth from 'next-auth'
+import { userRepository } from '@fcm/storage/repositories'
+import NextAuth, { NextAuthConfig } from 'next-auth'
 import GitHub from 'next-auth/providers/github'
-
-const prisma = new PrismaClient()
 
 export const config = {
   providers: [
@@ -19,7 +16,7 @@ export const config = {
           image: profile.avatar_url,
           githubId: profile.id.toString(),
           githubProfile: profile,
-          roles: ['USER'], // Default role
+          roles: ['USER'],
         }
       },
     }),
@@ -29,34 +26,28 @@ export const config = {
       if (account?.provider === 'github') {
         try {
           const { firstName, lastName } = parseName(profile?.name?.toString())
-          await prisma.user.upsert({
-            where: {
-              email: user.email!,
-            },
-            create: {
+          const existingUser = await userRepository.findByEmail(user.email!)
+
+          if (existingUser) {
+            await userRepository.update(existingUser.id, {
+              githubId: profile?.id?.toString(),
+              githubProfile: JSON.stringify(profile),
+              image: profile?.avatar_url?.toString(),
+              firstName,
+              lastName,
+            })
+          } else {
+            await userRepository.create({
               email: user.email!,
               githubId: profile?.id?.toString(),
               githubProfile: JSON.stringify(profile),
               image: profile?.avatar_url?.toString(),
-              firstName: firstName,
-              lastName: lastName,
+              firstName,
+              lastName,
               active: true,
-              roles: {
-                connect: {
-                  name: 'USER', // Default role
-                },
-              },
               password: '',
-            },
-            update: {
-              githubId: profile?.id?.toString(),
-              githubProfile: JSON.stringify(profile),
-              image: profile?.avatar_url?.toString(),
-              firstName: firstName,
-              lastName: lastName,
-              updatedAt: new Date(),
-            },
-          })
+            })
+          }
           return true
         } catch (error) {
           console.error('Error persisting user:', error)
@@ -86,6 +77,6 @@ export const config = {
     error: '/auth/error',
     signOut: '/auth/signout',
   },
-} satisfies NextAuthConfig
+} as NextAuthConfig
 
-export const { handlers, auth, signIn, signOut } = NextAuth(config)
+export const { handlers, auth, signIn: sigIn, signOut } = NextAuth(config)

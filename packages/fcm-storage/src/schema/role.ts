@@ -1,24 +1,23 @@
 import { z } from 'zod'
-import { PermissionSchema } from './permission.js'
+import { baseEntitySchema } from './base-entity'
 
-export const RoleSchema = z.object({
-  id: z.string(),
+export const roleSchema = baseEntitySchema.extend({
   name: z.string(),
-  description: z.string().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  permissions: z.array(PermissionSchema).optional(),
+  description: z.string().optional()
 })
 
-export const CreateRoleSchema = RoleSchema.omit({
+// Schema for creating a new role
+export const createRoleSchema = roleSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  permissions: true,
+  deletedAt: true
 })
 
-export const UpdateRoleSchema = CreateRoleSchema.partial()
+// Schema for updating an existing role
+export const updateRoleSchema = createRoleSchema.partial()
 
-export type Role = z.infer<typeof RoleSchema>
-export type CreateRole = z.infer<typeof CreateRoleSchema>
-export type UpdateRole = z.infer<typeof UpdateRoleSchema>
+// TypeScript types
+export type Role = z.infer<typeof roleSchema>
+export type CreateRole = z.infer<typeof createRoleSchema>
+export type UpdateRole = z.infer<typeof updateRoleSchema>

@@ -1,35 +1,29 @@
 import { z } from 'zod'
-import { RoleSchema } from './role.js'
+import { baseEntitySchema } from './base-entity'
 
-export const UserSchema = z.object({
-  id: z.string(),
+export const userSchema = baseEntitySchema.extend({
   email: z.string().email(),
-  firstName: z.string().nullable(),
-  lastName: z.string().nullable(),
+  password: z.string(),
+  firstName: z.string().optional().nullable(),
+  lastName: z.string().optional().nullable(),
   active: z.boolean().default(true),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  roles: z.array(RoleSchema).optional(),
+  githubId: z.string().optional().nullable(),
+  githubProfile: z.string().optional().nullable(),
+  image: z.string().url().optional().nullable(),
 })
 
-export const CreateUserSchema = UserSchema.omit({
+// Schema for creating a new user
+export const createUserSchema = userSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  roles: true,
-}).extend({
-  password: z.string().min(8),
+  deletedAt: true,
 })
 
-export const UpdateUserSchema = UserSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  roles: true,
-}).extend({
-  password: z.string().min(8),
-})
+// Schema for updating an existing user
+export const updateUserSchema = createUserSchema.partial().omit({ email: true }) // Email cannot be updated
 
-export type User = z.infer<typeof UserSchema>
-export type CreateUser = z.infer<typeof CreateUserSchema>
-export type UpdateUser = z.infer<typeof UpdateUserSchema>
+// TypeScript types
+export type User = z.infer<typeof userSchema>
+export type CreateUser = z.infer<typeof createUserSchema>
+export type UpdateUser = z.infer<typeof updateUserSchema>

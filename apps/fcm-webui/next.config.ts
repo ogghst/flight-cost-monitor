@@ -2,12 +2,13 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   // Enable source maps in production for better debugging
-  productionBrowserSourceMaps: true,
+  //productionBrowserSourceMaps: true,
 
   // Configure module resolution and transpilation
-  transpilePackages: ['@fcm/shared', '@fcm/shared-webui', '@fcm/storage'],
+  //transpilePackages: ['@fcm/shared', '@fcm/shared-webui', '@fcm/storage'],
 
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+  webpack: (config, options) => {
+    /*
     config.resolve.extensions = [
       '.tsx',
       '.ts',
@@ -15,23 +16,33 @@ const nextConfig: NextConfig = {
       '.jsx',
       ...config.resolve.extensions,
     ]
-    // Enable source maps in all environments
-    config.devtool = isServer ? 'source-map' : 'source-map'
+
+    config.devtool = isServer ? false : 'source-map'
+
+    if (!isServer) {
+      config.resolve.fallback = {
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        global: false,
+      }
+    }
+      */
     return config
   },
 
   // Enable experimental features
   experimental: {
     // Enable serverActions if needed
-
     // Enable TypeScript Module Resolution if needed
-    typedRoutes: true,
+    //typedRoutes: true,
   },
 
   // Environment variables that should be available in the browser
   env: {
     NEXT_PUBLIC_API_URL:
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
   },
 
   // Headers for security and optimization

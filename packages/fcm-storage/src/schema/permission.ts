@@ -1,25 +1,27 @@
 import { z } from 'zod'
+import { baseEntitySchema } from './base-entity'
 
-export const PermissionTypeSchema = z.enum(['READ', 'WRITE', 'DELETE', 'ADMIN'])
-
-export const PermissionSchema = z.object({
-  id: z.string(),
+export const permissionSchema = baseEntitySchema.extend({
   typeId: z.string(),
-  resource: z.string(),
   roleId: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  action: z.string().default(''),
+  resource: z.string()
 })
 
-export const CreatePermissionSchema = PermissionSchema.omit({
+// Schema for creating a new permission
+export const createPermissionSchema = permissionSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  deletedAt: true
 })
 
-export const UpdatePermissionSchema = CreatePermissionSchema.partial()
+// Schema for updating an existing permission
+export const updatePermissionSchema = createPermissionSchema
+  .partial()
+  .omit({ typeId: true, roleId: true }) // These should not be updateable
 
-export type PermissionType = z.infer<typeof PermissionTypeSchema>
-export type Permission = z.infer<typeof PermissionSchema>
-export type CreatePermission = z.infer<typeof CreatePermissionSchema>
-export type UpdatePermission = z.infer<typeof UpdatePermissionSchema>
+// TypeScript types
+export type Permission = z.infer<typeof permissionSchema>
+export type CreatePermission = z.infer<typeof createPermissionSchema>
+export type UpdatePermission = z.infer<typeof updatePermissionSchema>
