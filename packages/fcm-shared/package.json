@@ -9,7 +9,7 @@
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "debug": "node --loader ts-node/esm src/examples.ts",
-    "clean": "rimraf node_modules .turbo .next dist out coverage .tsbuildinfo"
+    "clean": "rimraf node_modules .turbo .next dist out coverage tsconfig.tsbuildinfo tsconfig.build.tsbuildinfo"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

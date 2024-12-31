@@ -5,8 +5,6 @@ import type {
 } from './flight-offers-types.js'
 
 export class FlightOfferClient extends BaseClient {
-  private readonly basePath = '/v2/shopping/flight-offers'
-
   /**
    * Get flight offers using simplified parameters (GET endpoint)
    *
@@ -66,7 +64,7 @@ export class FlightOfferClient extends BaseClient {
     }
 
     return this.get<FlightOfferSimpleSearchResponse>(
-      `${this.basePath}?${searchParams.toString()}`
+      `${this.baseUrl}?${searchParams.toString()}`
     )
   }
 

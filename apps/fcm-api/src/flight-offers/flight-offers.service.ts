@@ -1,5 +1,5 @@
-import { InjectLogger } from '#/logging/decorators/inject-logger.decorator.js'
-import { formatError } from '#/utils/error.utils.js'
+import { InjectLogger } from '@/logging/decorators/inject-logger.decorator.js'
+import { formatError } from '@/utils/error.utils.js'
 import { AmadeusApiError, ClientConfig } from '@fcm/shared/amadeus/clients'
 import {
   FlightOfferClient,
@@ -33,14 +33,25 @@ export class FlightOffersService {
     @InjectLogger() private readonly logger: Logger,
     private readonly configService: ConfigService
   ) {
+    // Create client configuration using separate URLs for API and authentication
     this.clientConfig = new ClientConfig({
       clientId: process.env.AMADEUS_CLIENT_ID!,
       clientSecret: process.env.AMADEUS_CLIENT_SECRET!,
-      baseUrl: process.env.AMADEUS_API_URL!,
-      timeout: parseInt(process.env.AMADEUS_TIMEOUT!),
+      baseUrl: process.env.AMADEUS_FLIGHT_OFFER_API_URL!, // For API calls
+      authUrl: process.env.AMADEUS_AUTH_URL!, // For authentication only
+      timeout: parseInt(process.env.AMADEUS_TIMEOUT!) || 60000,
     })
+
+    // Initialize the clients with the new configuration
     this.flightClient = new FlightOfferClient(this.clientConfig)
     this.flightAdvancedClient = new FlightOfferAdvancedClient(this.clientConfig)
+
+    // Log the configuration (without sensitive data) for debugging
+    this.logger.debug('Initialized Amadeus clients', {
+      baseUrl: process.env.AMADEUS_FLIGHT_OFFER_API_URL,
+      authUrl: process.env.AMADEUS_AUTH_URL,
+      timeout: process.env.AMADEUS_TIMEOUT,
+    })
   }
 
   async searchFlightOffers(

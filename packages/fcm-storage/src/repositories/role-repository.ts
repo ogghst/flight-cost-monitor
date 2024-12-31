@@ -1,8 +1,7 @@
-// packages/fcm-storage/src/repositories/role-repository.ts
 import { Prisma } from '@prisma/client'
-import { CreateRole, UpdateRole } from '../schema'
-import { DatabaseError } from '../schema/types'
-import { fcmPrismaClient } from './prisma'
+import type { CreateRole, UpdateRole } from '../schema/role.js'
+import { DatabaseError } from '../schema/types.js'
+import { fcmPrismaClient } from './prisma.js'
 
 export class RoleRepository {
   private prisma = fcmPrismaClient
@@ -13,7 +12,7 @@ export class RoleRepository {
       return await client.role.findFirst({
         where: {
           id,
-          deletedAt: null, // Soft delete check
+          deletedAt: null,
         },
       })
     } catch (error) {
@@ -156,7 +155,6 @@ export class RoleRepository {
     }
   }
 
-  // Query helpers
   async findWithDeleted(tx?: Prisma.TransactionClient) {
     const client = tx || this.prisma
     try {
@@ -168,7 +166,6 @@ export class RoleRepository {
     }
   }
 
-  // Transaction helper
   async transaction<T>(
     callback: (tx: Prisma.TransactionClient) => Promise<T>
   ): Promise<T> {
@@ -179,7 +176,6 @@ export class RoleRepository {
     }
   }
 
-  // Example of complex transaction usage
   async assignUsersToRole(roleId: string, userIds: string[]) {
     return this.transaction(async (tx) => {
       const role = await this.findById(roleId, tx)

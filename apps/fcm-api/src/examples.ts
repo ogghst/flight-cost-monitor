@@ -112,8 +112,9 @@ async function airportSearch(): Promise<void> {
     const clientConfig = new ClientConfig({
       clientId: process.env.AMADEUS_CLIENT_ID!,
       clientSecret: process.env.AMADEUS_CLIENT_SECRET!,
-      baseUrl: process.env.AMADEUS_API_URL!,
-      timeout: 5000,
+      baseUrl: process.env.AMADEUS_FLIGHT_OFFER_API_URL!,
+      authUrl: process.env.AMADEUS_AUTH_URL!,
+      timeout: parseInt(process.env.AMADEUS_TIMEOUT!) || 60000,
     })
 
     const airportClient = new AirportCityClient(clientConfig)
@@ -149,8 +150,9 @@ async function simpleSearch(): Promise<void> {
     const clientConfig = new ClientConfig({
       clientId: process.env.AMADEUS_CLIENT_ID!,
       clientSecret: process.env.AMADEUS_CLIENT_SECRET!,
-      baseUrl: process.env.AMADEUS_API_URL!,
-      timeout: parseInt(process.env.AMADEUS_TIMEOUT!),
+      baseUrl: process.env.AMADEUS_FLIGHT_OFFER_API_URL!,
+      authUrl: process.env.AMADEUS_AUTH_URL!,
+      timeout: parseInt(process.env.AMADEUS_TIMEOUT!) || 60000,
     })
 
     const flightClient = new FlightOfferClient(clientConfig)
@@ -180,8 +182,9 @@ async function advancedSearch(): Promise<void> {
     const clientConfig = new ClientConfig({
       clientId: process.env.AMADEUS_CLIENT_ID!,
       clientSecret: process.env.AMADEUS_CLIENT_SECRET!,
-      baseUrl: process.env.AMADEUS_API_URL!,
-      timeout: parseInt(process.env.AMADEUS_TIMEOUT!),
+      baseUrl: process.env.AMADEUS_FLIGHT_OFFER_API_URL!,
+      authUrl: process.env.AMADEUS_AUTH_URL!,
+      timeout: parseInt(process.env.AMADEUS_TIMEOUT!) || 60000,
     })
 
     const flightClientAdvanced = new FlightOfferAdvancedClient(clientConfig)

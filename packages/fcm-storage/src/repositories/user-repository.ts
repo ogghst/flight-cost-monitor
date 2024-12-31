@@ -1,8 +1,7 @@
-// packages/fcm-storage/src/repositories/user-repository.ts
 import { Prisma } from '@prisma/client'
-import { CreateUser, UpdateUser, User } from '../schema'
-import { DatabaseError } from '../schema/types'
-import { fcmPrismaClient } from './prisma'
+import { DatabaseError } from '../schema/types.js'
+import type { CreateUser, UpdateUser, User } from '../schema/user.js'
+import { fcmPrismaClient } from './prisma.js'
 
 export class UserRepository {
   private prisma = fcmPrismaClient
@@ -99,7 +98,6 @@ export class UserRepository {
     }
   }
 
-  // Transaction helper
   async transaction<T>(
     callback: (tx: Prisma.TransactionClient) => Promise<T>
   ): Promise<T> {
@@ -141,14 +139,14 @@ export class UserRepository {
   }
 }
 
+// Helper function that demonstrates using transactions for complex operations
 async function createUserWithRole(
   userData: CreateUser,
   roleId: string
 ): Promise<User> {
   return userRepository.transaction(async (tx) => {
     const user = await userRepository.create(userData, tx)
-
-    // Update role assignments using the proper schema relation
+    
     await tx.role.update({
       where: { id: roleId },
       data: {

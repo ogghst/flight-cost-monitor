@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { baseEntitySchema } from './base-entity'
+import { baseEntitySchema } from './base-entity.js'
 
 // Base schema for user searches
 export const userSearchSchema = baseEntitySchema.extend({

@@ -13,7 +13,9 @@ import {
   Min,
 } from 'class-validator'
 
-export class SearchFlightOffersDto implements FlightOfferSimpleSearchRequest {
+export class FlightOfferSimpleSearchRequestDto
+  implements FlightOfferSimpleSearchRequest
+{
   @ApiProperty({ example: 'LHR', description: 'Origin airport IATA code' })
   @IsString()
   @Length(3, 3)

@@ -1,11 +1,11 @@
 import { Prisma } from '@prisma/client'
-import { DatabaseError } from '../schema/types'
-import {
+import { DatabaseError } from '../schema/types.js'
+import type {
   CreateUserSearch,
   UpdateUserSearch,
   UserSearch,
-} from '../schema/user-search'
-import { fcmPrismaClient } from './prisma'
+} from '../schema/user-search.js'
+import { fcmPrismaClient } from './prisma.js'
 
 export class UserSearchRepository {
   private prisma = fcmPrismaClient
@@ -161,7 +161,6 @@ export class UserSearchRepository {
     }
   }
 
-  // Transaction helper
   async transaction<T>(
     callback: (tx: Prisma.TransactionClient) => Promise<T>
   ): Promise<T> {

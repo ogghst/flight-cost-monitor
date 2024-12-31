@@ -12,19 +12,25 @@ export class AmadeusApiError extends Error {
   }
 }
 
+// Enhanced configuration class that separates API and authentication URLs
 export class ClientConfig {
-  baseUrl?: string
+  baseUrl: string
+  authUrl: string
   clientId: string
   clientSecret: string
   timeout: number
 
   constructor(config: {
-    baseUrl?: string
+    baseUrl: string
+    authUrl: string
     clientId: string
     clientSecret: string
     timeout: number
   }) {
-    this.baseUrl = config.baseUrl || 'https://test.api.amadeus.com'
+    // Set API endpoint URL - this is where most API calls will go
+    this.baseUrl = config.baseUrl
+    // Set authentication URL - this is specifically for getting access tokens
+    this.authUrl = config.authUrl
     this.clientId = config.clientId
     this.clientSecret = config.clientSecret
     this.timeout = config.timeout
@@ -33,6 +39,7 @@ export class ClientConfig {
 
 export abstract class BaseClient {
   protected baseUrl: string
+  protected authUrl: string
   protected accessToken: string | null
   protected clientId: string
   protected clientSecret: string
@@ -40,7 +47,9 @@ export abstract class BaseClient {
   protected timeout: number
 
   constructor(config: ClientConfig) {
-    this.baseUrl = config.baseUrl || 'https://test.api.amadeus.com'
+    // Store both URLs separately for their specific purposes
+    this.baseUrl = config.baseUrl
+    this.authUrl = config.authUrl
     this.clientId = config.clientId
     this.clientSecret = config.clientSecret
     this.accessToken = null
@@ -69,7 +78,8 @@ export abstract class BaseClient {
         client_secret: this.clientSecret,
       })
 
-      const url = `${this.baseUrl}/v1/security/oauth2/token`
+      // Use the dedicated authentication URL instead of constructing it
+      const url = this.authUrl
 
       console.log('Token request URL:', url)
       console.log('Client ID:', this.clientId)
@@ -111,8 +121,9 @@ export abstract class BaseClient {
   protected async request<T>(path: string, options: any = {}): Promise<T> {
     try {
       const accessToken = await this.ensureValidToken()
-      const url = `${this.baseUrl}${path}`
-      
+      // Use baseUrl for API requests, not authentication
+      const url = `${path}`
+
       const axiosConfig = {
         ...options,
         url,
@@ -125,7 +136,7 @@ export abstract class BaseClient {
       }
 
       console.log('Making API request to:', url)
-      console.log('Request config:', axiosConfig)
+      console.log('Request config:', JSON.stringify(axiosConfig, null, 2))
 
       const response = await axios(axiosConfig)
       return response.data as T
@@ -142,7 +153,11 @@ export abstract class BaseClient {
     return this.request<T>(path, { ...options, method: 'GET' })
   }
 
-  protected async post<T>(path: string, body: unknown, options: any = {}): Promise<T> {
+  protected async post<T>(
+    path: string,
+    body: unknown,
+    options: any = {}
+  ): Promise<T> {
     return this.request<T>(path, {
       ...options,
       method: 'POST',

@@ -9,7 +9,7 @@
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "debug": "node --loader ts-node/esm src/examples.ts",
-    "clean": "rimraf node_modules .turbo .next dist out coverage .tsbuildinfo",
+    "clean": "rimraf node_modules .turbo .next dist out coverage tsconfig.tsbuildinfo tsconfig.build.tsbuildinfo",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
@@ -24,6 +24,10 @@
     "access": "public"
   },
   "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
     "./repositories": {
       "import": "./dist/repositories/index.js",
       "types": "./dist/repositories/index.d.ts"
@@ -33,19 +37,29 @@
       "types": "./dist/schema/index.d.ts"
     }
   },
+  "typesVersions": {
+    "*": {
+      "schema": [
+        "./dist/schema/index.d.ts"
+      ],
+      "repositories": [
+        "./dist/repositories/index.d.ts"
+      ]
+    }
+  },
   "devDependencies": {
     "@fcm/eslint-config": "workspace:*",
     "@fcm/shared": "workspace:*",
     "@fcm/typescript-config": "workspace:*",
     "@types/node": "^20.17.10",
+    "prisma": "^6.1.0",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
-    "typescript": "5.7.2",
-    "prisma": "^6.1.0"
+    "typescript": "5.7.2"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",
-    "zod": "^3.22.4"
+    "zod": "^3.24.1"
   }
 }

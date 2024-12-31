@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { baseEntitySchema } from './base-entity'
+import { baseEntitySchema } from './base-entity.js'
 
 export const userSchema = baseEntitySchema.extend({
   email: z.string().email(),

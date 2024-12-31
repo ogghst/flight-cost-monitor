@@ -1,8 +1,7 @@
-// packages/fcm-storage/src/repositories/permission-repository.ts
 import { Prisma } from '@prisma/client'
-import { CreatePermission, UpdatePermission } from '../schema'
-import { DatabaseError } from '../schema/types'
-import { fcmPrismaClient } from './prisma'
+import type { CreatePermission, UpdatePermission } from '../schema/permission.js'
+import { DatabaseError } from '../schema/types.js'
+import { fcmPrismaClient } from './prisma.js'
 
 export class PermissionRepository {
   private prisma = fcmPrismaClient
@@ -175,7 +174,6 @@ export class PermissionRepository {
     }
   }
 
-  // Role permission management
   async assignToRole(
     permissionId: string,
     roleId: string,
@@ -260,7 +258,6 @@ export class PermissionRepository {
     }
   }
 
-  // Transaction helper
   async transaction<T>(
     callback: (tx: Prisma.TransactionClient) => Promise<T>
   ): Promise<T> {
@@ -271,7 +268,6 @@ export class PermissionRepository {
     }
   }
 
-  // Bulk operation example with transaction
   async assignMultipleToRole(permissionIds: string[], roleId: string) {
     return this.transaction(async (tx) => {
       const role = await tx.role.findFirst({

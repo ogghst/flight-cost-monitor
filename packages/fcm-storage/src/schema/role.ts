@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import { baseEntitySchema } from './base-entity'
+import { baseEntitySchema } from './base-entity.js'
 
 export const roleSchema = baseEntitySchema.extend({
   name: z.string(),
-  description: z.string().optional()
+  description: z.string().optional(),
 })
 
 // Schema for creating a new role
@@ -11,7 +11,7 @@ export const createRoleSchema = roleSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  deletedAt: true
+  deletedAt: true,
 })
 
 // Schema for updating an existing role

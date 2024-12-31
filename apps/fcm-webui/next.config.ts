@@ -42,7 +42,7 @@ const nextConfig: NextConfig = {
   // Environment variables that should be available in the browser
   env: {
     NEXT_PUBLIC_API_URL:
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
   },
 
   // Headers for security and optimization

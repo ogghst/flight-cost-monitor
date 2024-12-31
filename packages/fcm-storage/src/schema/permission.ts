@@ -1,11 +1,11 @@
 import { z } from 'zod'
-import { baseEntitySchema } from './base-entity'
+import { baseEntitySchema } from './base-entity.js'
 
 export const permissionSchema = baseEntitySchema.extend({
   typeId: z.string(),
   roleId: z.string(),
   action: z.string().default(''),
-  resource: z.string()
+  resource: z.string(),
 })
 
 // Schema for creating a new permission
@@ -13,7 +13,7 @@ export const createPermissionSchema = permissionSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  deletedAt: true
+  deletedAt: true,
 })
 
 // Schema for updating an existing permission

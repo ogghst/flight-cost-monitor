@@ -2,13 +2,9 @@
   "extends": "@fcm/typescript-config/nestjs.json",
   "compilerOptions": {
     "paths": {
-      "#/*": ["./src/*"],
-      "@fcm/shared/*": ["../fcm-shared/src/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "src/flight-offers/dto/search-flight-offers.dto.ts"
-  ],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }
