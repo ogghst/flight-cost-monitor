@@ -20,26 +20,32 @@ import { FlightSearchForm } from './components/FlightSearchForm'
 
 import { searchFlightsAction } from '@/app/actions/flight-search'
 import {
+  FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES,
   FlightOfferSimpleSearchRequest,
   FlightOfferSimpleSearchResponse,
 } from '@fcm/shared/amadeus/clients/flight-offer'
 
-const DEBOUNCE_TIME = 300 // 300ms
+const DEBOUNCE_TIME = 300
 
-// Configure axios once
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 axios.defaults.baseURL = API_URL
 
 export default function FlightSearchPage() {
   const queryClient = useQueryClient()
+  const [formData, setFormData] = useState<FlightOfferSimpleSearchRequest>(
+    FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES
+  )
   const [currentSearch, setCurrentSearch] =
-    useState<FlightOfferSimpleSearchRequest | null>(null)
+    useState<FlightOfferSimpleSearchRequest>(
+      FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES
+    )
 
   const {
     mutate: searchFlightMutation,
     isPending,
     error,
     data: searchResponse,
+    reset: resetSearchResults,
   } = useMutation({
     mutationFn: async (searchParams: FlightOfferSimpleSearchRequest) => {
       const cacheKey = JSON.stringify(searchParams)
@@ -63,7 +69,6 @@ export default function FlightSearchPage() {
     },
   })
 
-  // Debounced submit handler
   const debouncedSubmit = useCallback(
     debounce((data: FlightOfferSimpleSearchRequest) => {
       setCurrentSearch(data)
@@ -77,15 +82,35 @@ export default function FlightSearchPage() {
   }
 
   const handleLoadSearch = (criteria: FlightOfferSimpleSearchRequest) => {
-    handleSubmit(criteria)
+    // Clear previous search results when loading a saved search
+    resetSearchResults()
+    setFormData(criteria)
   }
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Stack spacing={3}>
-        <Typography variant="h4" component="h1">
-          Flight Search
-        </Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+          <Typography variant="h4" component="h1">
+            Flight Search
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <SaveSearchButton
+              searchCriteria={JSON.stringify(currentSearch)}
+              searchType={SearchType.SIMPLE}
+              isSimpleSearch
+            />
+            <LoadSearchButton
+              searchType={SearchType.SIMPLE}
+              onLoadSearch={handleLoadSearch}
+            />
+          </Box>
+        </Box>
 
         {isPending && (
           <LinearProgress
@@ -97,21 +122,11 @@ export default function FlightSearchPage() {
           />
         )}
 
-        <FlightSearchForm onSubmit={handleSubmit} isLoading={isPending} />
-
-        {currentSearch && (
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-            <SaveSearchButton
-              searchCriteria={JSON.stringify(currentSearch)}
-              searchType={SearchType.SIMPLE}
-              isSimpleSearch
-            />
-            <LoadSearchButton
-              searchType={SearchType.SIMPLE}
-              onLoadSearch={handleLoadSearch}
-            />
-          </Box>
-        )}
+        <FlightSearchForm
+          onSubmit={handleSubmit}
+          isLoading={isPending}
+          initialValues={formData}
+        />
 
         {error && (
           <Alert severity="error">

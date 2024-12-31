@@ -141,7 +141,7 @@ export interface FlightOfferSimpleSearchResponse {
   dictionaries?: Dictionaries
 }
 
-export const FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES: Partial<FlightOfferSimpleSearchRequest> =
+export const FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES: FlightOfferSimpleSearchRequest =
   {
     originLocationCode: 'MXP',
     destinationLocationCode: 'MIA',

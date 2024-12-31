@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import {
   FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES,
   FlightOfferSimpleSearchRequest,
@@ -70,21 +71,28 @@ const flightSearchSchema = z.object({
 
 type FlightSearchFormProps = {
   onSubmit: (data: FlightOfferSimpleSearchRequest) => void
+  initialValues?: FlightOfferSimpleSearchRequest
   isLoading?: boolean
 }
 
 export function FlightSearchForm({
   onSubmit,
+  initialValues = FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES,
   isLoading = false,
 }: FlightSearchFormProps) {
   const {
     control,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<FlightOfferSimpleSearchRequest>({
     resolver: zodResolver(flightSearchSchema),
-    defaultValues: FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES,
+    defaultValues: initialValues,
   })
+
+  useEffect(() => {
+    reset(initialValues)
+  }, [reset, initialValues])
 
   return (
     <Card>
