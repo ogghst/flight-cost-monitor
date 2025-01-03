@@ -1,3 +1,4 @@
+import type { SearchType } from '@fcm/shared/auth'
 import { Prisma } from '@prisma/client'
 import { DatabaseError } from '../schema/types.js'
 import type {
@@ -26,7 +27,7 @@ export class UserSearchRepository {
 
   async findByUser(
     userId: string,
-    searchType?: string,
+    searchType?: SearchType,
     tx?: Prisma.TransactionClient
   ): Promise<UserSearch[]> {
     const client = tx || this.prisma
@@ -37,9 +38,7 @@ export class UserSearchRepository {
           ...(searchType && { searchType }),
           deletedAt: null,
         },
-        orderBy: {
-          lastUsed: 'desc',
-        },
+        orderBy: { lastUsed: 'desc' },
       })
     } catch (error) {
       throw new DatabaseError('Failed to find user searches', error)
@@ -58,9 +57,7 @@ export class UserSearchRepository {
           favorite: true,
           deletedAt: null,
         },
-        orderBy: {
-          lastUsed: 'desc',
-        },
+        orderBy: { lastUsed: 'desc' },
       })
     } catch (error) {
       throw new DatabaseError('Failed to find favorite searches', error)
@@ -74,7 +71,10 @@ export class UserSearchRepository {
     const client = tx || this.prisma
     try {
       return await client.userSearch.create({
-        data,
+        data: {
+          ...data,
+          lastUsed: data.lastUsed || new Date(),
+        },
       })
     } catch (error) {
       throw new DatabaseError('Failed to create user search', error)
@@ -90,12 +90,14 @@ export class UserSearchRepository {
     try {
       return await client.userSearch.update({
         where: { id },
-        data: {
-          ...data,
-          updatedAt: new Date(),
-        },
+        data,
       })
     } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new DatabaseError('User search not found', error, 'NOT_FOUND')
+        }
+      }
       throw new DatabaseError('Failed to update user search', error)
     }
   }
@@ -110,10 +112,14 @@ export class UserSearchRepository {
         where: { id },
         data: {
           lastUsed: new Date(),
-          updatedAt: new Date(),
         },
       })
     } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new DatabaseError('User search not found', error, 'NOT_FOUND')
+        }
+      }
       throw new DatabaseError('Failed to update last used timestamp', error)
     }
   }
@@ -127,19 +133,36 @@ export class UserSearchRepository {
       const search = await client.userSearch.findUnique({
         where: { id },
       })
+
       if (!search) {
-        throw new Error('Search not found')
+        throw new DatabaseError('Search not found', null, 'NOT_FOUND')
       }
 
       return await client.userSearch.update({
         where: { id },
         data: {
           favorite: !search.favorite,
-          updatedAt: new Date(),
+          lastUsed: new Date(),
         },
       })
     } catch (error) {
       throw new DatabaseError('Failed to toggle favorite status', error)
+    }
+  }
+
+  async delete(id: string, tx?: Prisma.TransactionClient): Promise<UserSearch> {
+    const client = tx || this.prisma
+    try {
+      return await client.userSearch.delete({
+        where: { id },
+      })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new DatabaseError('User search not found', error, 'NOT_FOUND')
+        }
+      }
+      throw new DatabaseError('Failed to delete user search', error)
     }
   }
 
@@ -153,11 +176,58 @@ export class UserSearchRepository {
         where: { id },
         data: {
           deletedAt: new Date(),
-          updatedAt: new Date(),
         },
       })
     } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new DatabaseError('User search not found', error, 'NOT_FOUND')
+        }
+      }
       throw new DatabaseError('Failed to soft delete user search', error)
+    }
+  }
+
+  async restore(
+    id: string,
+    tx?: Prisma.TransactionClient
+  ): Promise<UserSearch> {
+    const client = tx || this.prisma
+    try {
+      return await client.userSearch.update({
+        where: { id },
+        data: {
+          deletedAt: null,
+        },
+      })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new DatabaseError('User search not found', error, 'NOT_FOUND')
+        }
+      }
+      throw new DatabaseError('Failed to restore user search', error)
+    }
+  }
+
+  async deleteOldSearches(
+    userId: string,
+    olderThan: Date,
+    tx?: Prisma.TransactionClient
+  ) {
+    const client = tx || this.prisma
+    try {
+      return await client.userSearch.deleteMany({
+        where: {
+          userId,
+          favorite: false,
+          lastUsed: {
+            lt: olderThan,
+          },
+        },
+      })
+    } catch (error) {
+      throw new DatabaseError('Failed to delete old searches', error)
     }
   }
 

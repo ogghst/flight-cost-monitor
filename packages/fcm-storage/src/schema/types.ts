@@ -9,9 +9,28 @@ export class DatabaseError extends Error {
   }
 }
 
-export const SearchType = {
-  SIMPLE: 'SIMPLE',
-  ADVANCED: 'ADVANCED',
-} as const
+export interface BaseRefreshToken {
+  id: string
+  token: string
+  userId: string
+  expiresAt: Date
+  revoked: boolean
+  replacedByToken?: string | null
+  family: string
+  generationNumber: number
+}
 
-export type SearchType = (typeof SearchType)[keyof typeof SearchType]
+/*
+export function toAuthUser(user: UserWithRelations): AuthUser {
+  return {
+    id: user.id,
+    email: user.email,
+    username: user.username || undefined,
+    firstName: user.firstName || undefined,
+    lastName: user.lastName || undefined,
+    authType: user.authType,
+    oauthProvider: user.oauthProvider || undefined,
+    roles: user.roles.map((r) => r.name),
+  }
+}
+*/

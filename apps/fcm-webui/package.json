@@ -40,8 +40,6 @@
   "devDependencies": {
     "@fcm/eslint-config": "workspace:*",
     "@fcm/jest-config": "workspace:*",
-    "@fcm/shared": "workspace:*",
-    "@fcm/storage": "workspace:*",
     "@fcm/typescript-config": "workspace:*",
     "@playwright/test": "^1.49.1",
     "@types/eslint": "^8.56.12",

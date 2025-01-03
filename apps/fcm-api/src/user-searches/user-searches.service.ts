@@ -1,3 +1,4 @@
+import { SearchType } from '@fcm/shared'
 import { userSearchRepository } from '@fcm/storage/repositories'
 import { DatabaseError } from '@fcm/storage/schema'
 import { Injectable, NotFoundException } from '@nestjs/common'
@@ -25,7 +26,7 @@ export class UserSearchesService {
     return search
   }
 
-  async findByUser(userId: string, searchType?: string) {
+  async findByUser(userId: string, searchType?: SearchType) {
     try {
       return await userSearchRepository.findByUser(userId, searchType)
     } catch (error) {

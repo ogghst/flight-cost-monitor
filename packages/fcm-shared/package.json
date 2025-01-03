@@ -44,6 +44,10 @@
       "import": "./dist/amadeus/types/index.js",
       "types": "./dist/amadeus/types/index.d.ts"
     },
+    "./auth": {
+      "import": "./dist/auth/index.js",
+      "types": "./dist/auth/index.d.ts"
+    },
     "./logging": {
       "import": "./dist/logging/index.js",
       "types": "./dist/logging/index.d.ts"

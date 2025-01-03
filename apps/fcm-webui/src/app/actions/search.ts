@@ -1,8 +1,8 @@
 'use server'
 
 import { auth } from '@/lib/auth'
+import { SearchType } from '@fcm/shared/auth'
 import { userRepository, userSearchRepository } from '@fcm/storage/repositories'
-import { SearchType } from '@fcm/storage/schema'
 
 export async function saveSearch(searchData: {
   searchType: (typeof SearchType)[keyof typeof SearchType]
@@ -22,8 +22,8 @@ export async function saveSearch(searchData: {
   return userSearchRepository.create({
     userId: user.id,
     searchType: searchData.searchType,
-    criteria: JSON.stringify(searchData.criteria),
-    title: searchData.title,
+    parameters: JSON.stringify(searchData.criteria),
+    name: searchData.title,
     favorite: false,
     lastUsed: new Date(),
   })
@@ -45,7 +45,7 @@ export async function getUserSearches(
   const searches = await userSearchRepository.findByUser(user.id, searchType)
   return searches.map((search) => ({
     ...search,
-    criteria: JSON.parse(search.criteria),
+    criteria: JSON.parse(search.parameters),
   }))
 }
 
@@ -63,7 +63,7 @@ export async function getFavoriteSearches() {
   const searches = await userSearchRepository.findFavorites(user.id)
   return searches.map((search) => ({
     ...search,
-    criteria: JSON.parse(search.criteria),
+    criteria: JSON.parse(search.parameters),
   }))
 }
 

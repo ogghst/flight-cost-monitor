@@ -3,7 +3,7 @@
 import { FlightOfferList } from '@/components/flights/FlightOfferList'
 import { LoadSearchButton } from '@/components/search/LoadSearchButton'
 import { SaveSearchButton } from '@/components/search/SaveSearchButton'
-import { SearchType } from '@fcm/storage/schema'
+
 import {
   Alert,
   Box,
@@ -24,6 +24,7 @@ import {
   FlightOfferSimpleSearchRequest,
   FlightOfferSimpleSearchResponse,
 } from '@fcm/shared/amadeus/clients/flight-offer'
+import { SearchType } from '@fcm/shared/auth'
 
 const DEBOUNCE_TIME = 300
 

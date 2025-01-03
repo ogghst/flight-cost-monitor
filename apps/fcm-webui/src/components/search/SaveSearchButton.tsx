@@ -1,7 +1,7 @@
 'use client'
 
 import { useSaveSearch } from '@/hooks/useSearches'
-import { SearchType } from '@fcm/storage/schema'
+import { SearchType } from '@fcm/shared/auth'
 import { BookmarkAdd } from '@mui/icons-material'
 import {
   Button,

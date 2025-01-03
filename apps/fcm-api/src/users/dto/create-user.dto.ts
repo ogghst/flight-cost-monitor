@@ -1,78 +1,77 @@
-import type { CreateUser } from '@fcm/storage/schema'
-import { ApiProperty } from '@nestjs/swagger'
+import { OAuthProvider } from '@fcm/shared'
+import type { CreateCredentialsUser, CreateOAuthUser } from '@fcm/storage'
 import {
-  IsBoolean,
   IsEmail,
-  IsNotEmpty,
+  IsEnum,
   IsOptional,
   IsString,
-  IsUrl,
+  Matches,
   MinLength,
 } from 'class-validator'
 
-// This DTO implements the CreateUser type from storage while adding API-specific decorators
-export class CreateUserDto implements CreateUser {
-  @ApiProperty({
-    description: 'User email address',
-    example: 'user@example.com',
-  })
+export class CreateUserWithCredentialsDto
+  implements Omit<CreateCredentialsUser, 'authType' | 'active'>
+{
   @IsEmail()
-  @IsNotEmpty()
   email: string
 
-  @ApiProperty({
-    description: 'Whether the user is active',
-  })
-  @IsBoolean()
-  @IsNotEmpty()
-  active: boolean
-
-  @ApiProperty({
-    description: 'User password - will be hashed before storage',
-    minLength: 8,
-  })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
+  username?: string
+
+  @IsString()
   @MinLength(8)
+  @Matches(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+    {
+      message:
+        'Password must contain uppercase, lowercase, number and special character',
+    }
+  )
   password: string
 
-  @ApiProperty({
-    description: 'User first name',
-    required: false,
-  })
   @IsString()
   @IsOptional()
-  firstName?: string | null
+  firstName?: string
 
-  @ApiProperty({
-    description: 'User last name',
-    required: false,
-  })
   @IsString()
   @IsOptional()
-  lastName?: string | null
+  lastName?: string
 
-  @ApiProperty({
-    description: 'GitHub ID if registering with GitHub',
-    required: false,
-  })
   @IsString()
   @IsOptional()
-  githubId?: string | null
+  image?: string
+}
 
-  @ApiProperty({
-    description: 'GitHub profile data in JSON format',
-    required: false,
-  })
+export class CreateUserWithOAuthDto
+  implements Omit<CreateOAuthUser, 'authType' | 'active'>
+{
+  @IsEmail()
+  email: string
+
   @IsString()
   @IsOptional()
-  githubProfile?: string | null
+  username?: string
 
-  @ApiProperty({
-    description: 'URL to user profile image',
-    required: false,
-  })
-  @IsUrl()
+  @IsString()
   @IsOptional()
-  image?: string | null
+  firstName?: string
+
+  @IsString()
+  @IsOptional()
+  lastName?: string
+
+  @IsString()
+  @IsOptional()
+  image?: string
+
+  @IsEnum(['GITHUB', 'GOOGLE'])
+  oauthProvider: OAuthProvider
+
+  @IsString()
+  oauthProviderId: string
+
+  @IsString()
+  @IsOptional()
+  oauthProfile?: string
 }

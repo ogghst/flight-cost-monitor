@@ -5,7 +5,7 @@ import {
   markSearchUsed,
   saveSearch,
 } from '@/app/actions/search'
-import { SearchType } from '@fcm/storage/schema'
+import { SearchType } from '@fcm/shared/auth'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 export function useUserSearches(

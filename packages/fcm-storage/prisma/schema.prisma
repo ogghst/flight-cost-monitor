@@ -1,86 +1,98 @@
-// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model User {
-  id            String  @id @default(uuid())
-  email         String  @unique
-  password      String // Hashed password
-  firstName     String?
-  lastName      String?
-  active        Boolean @default(true)
-  // Add OAuth fields
-  githubId      String? @unique
-  githubProfile String? // Store additional GitHub profile data
-  image         String? // Profile image URL
+  id        String  @id @default(cuid())
+  email     String  @unique
+  username  String? @unique
+  password  String?
+  firstName String?
+  lastName  String?
+  active    Boolean @default(true)
 
-  roles    Role[]       @relation("UserRoles")
-  searches UserSearch[] // User's saved searches
+  authType        String  @default("CREDENTIALS")
+  oauthProvider   String?
+  oauthProviderId String?
+  oauthProfile    String?
+
+  image                String?
+  lastLogin            DateTime?
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime?
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+
+  refreshTokens RefreshToken[]
+  roles        Role[]         @relation("UserRoles")
+  searches     UserSearch[]
+
+  @@unique([oauthProvider, oauthProviderId])
+  @@index([email])
+  @@index([username])
+} 
+
+model RefreshToken {
+  id               String   @id @default(cuid())
+  token            String   @unique
+  userId           String
+  expiresAt        DateTime
+  revoked          Boolean  @default(false)
+  replacedByToken  String?
+  family           String
+  generationNumber Int
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([token])
 }
 
 model Role {
-  id          String  @id @default(uuid())
-  name        String  @unique
+  id          String       @id @default(cuid())
+  name        String       @unique
   description String?
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  users       User[]       @relation("UserRoles")
   permissions Permission[]
-}
-
-// Enum for different types of permissions
-model PermissionType {
-  id         String       @unique
-  Permission Permission[]
+  users       User[]       @relation("UserRoles")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
 }
 
 model Permission {
-  id       String         @id @default(uuid())
-  typeId   String
-  roleId   String
-  action   String         @default("")
-  resource String // The resource this permission applies to
-  type     PermissionType @relation(fields: [typeId], references: [id])
-  role     Role           @relation(fields: [roleId], references: [id])
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  @@unique([roleId, typeId, resource])
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  roles       Role[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 }
 
 model UserSearch {
-  id         String   @id @default(uuid())
-  userId     String
-  searchType String // 'SIMPLE' or 'ADVANCED'
-  criteria   String // JSON string of search parameters
-  title      String? // Optional user-given name for the search
-  favorite   Boolean  @default(false)
-  lastUsed   DateTime @default(now())
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  searchType  String    // "FLIGHT", "HOTEL", etc.
+  parameters  String    // JSON string of search parameters
+  name        String?   // Optional saved search name
+  favorite    Boolean   @default(false)
+  lastUsed    DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
-  // Metadata
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  // Relations
-  user User @relation(fields: [userId], references: [id])
-
-  @@index([userId, searchType])
-  @@index([userId, favorite])
-  @@index([lastUsed])
+  @@index([userId])
+  @@index([searchType])
 }

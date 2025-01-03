@@ -1,3 +1,4 @@
+import { SearchType } from '@fcm/shared'
 import {
   Body,
   Controller,
@@ -50,7 +51,8 @@ export class UserSearchesController {
     @Param('userId') userId: string,
     @Query('searchType') searchType?: string
   ): Promise<UserSearchDto[]> {
-    return await this.userSearchesService.findByUser(userId, searchType)
+    const type = searchType as SearchType
+    return await this.userSearchesService.findByUser(userId, type)
   }
 
   @Get('user/:userId/favorites')

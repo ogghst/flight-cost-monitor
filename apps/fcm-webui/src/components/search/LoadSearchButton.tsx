@@ -1,7 +1,7 @@
 'use client'
 
 import { useLoadSearch, useUserSearches } from '@/hooks/useSearches'
-import { SearchType } from '@fcm/storage/schema'
+import { SearchType } from '@fcm/shared/auth'
 import { BookmarkOutlined, Star } from '@mui/icons-material'
 import {
   Box,
@@ -144,7 +144,7 @@ export function LoadSearchButton({
                       <ListItemText
                         primary={
                           <Typography variant="subtitle1" component="div">
-                            {search.title || 'Untitled Search'}
+                            {search.name || 'Untitled Search'}
                           </Typography>
                         }
                         secondary={

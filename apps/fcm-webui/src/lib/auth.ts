@@ -1,4 +1,5 @@
 import { parseName } from '@/lib/utils'
+import { AuthType, OAuthProvider } from '@fcm/shared/auth'
 import { userRepository } from '@fcm/storage/repositories'
 import NextAuth, { NextAuthConfig } from 'next-auth'
 import GitHub from 'next-auth/providers/github'
@@ -30,22 +31,23 @@ export const config = {
 
           if (existingUser) {
             await userRepository.update(existingUser.id, {
-              githubId: profile?.id?.toString(),
-              githubProfile: JSON.stringify(profile),
+              oauthProviderId: profile?.id?.toString(),
+              oauthProfile: JSON.stringify(profile),
               image: profile?.avatar_url?.toString(),
               firstName,
               lastName,
             })
           } else {
-            await userRepository.create({
+            await userRepository.createOAuthUser({
               email: user.email!,
-              githubId: profile?.id?.toString(),
-              githubProfile: JSON.stringify(profile),
+              oauthProviderId: profile?.id?.toString() || '',
+              oauthProfile: JSON.stringify(profile),
               image: profile?.avatar_url?.toString(),
               firstName,
               lastName,
               active: true,
-              password: '',
+              authType: AuthType.OAUTH,
+              oauthProvider: OAuthProvider.GITHUB,
             })
           }
           return true

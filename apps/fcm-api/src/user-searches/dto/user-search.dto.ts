@@ -12,14 +12,14 @@ export class UserSearchDto implements UserSearch {
   @ApiProperty({ description: 'Type of search (SIMPLE or ADVANCED)' })
   searchType: string
 
-  @ApiProperty({ description: 'Search criteria in JSON format' })
-  criteria: string
+  @ApiProperty({ description: 'Search parameters in JSON format' })
+  parameters: string
 
   @ApiProperty({
     description: 'Optional user-given name for the search',
     required: false,
   })
-  title?: string | null
+  name?: string | null
 
   @ApiProperty({ description: 'Whether this search is marked as favorite' })
   favorite: boolean
