@@ -1,11 +1,44 @@
 import { parseName } from '@/lib/utils'
 import { AuthType, OAuthProvider } from '@fcm/shared/auth'
-import { userRepository } from '@fcm/storage/repositories'
 import NextAuth, { NextAuthConfig } from 'next-auth'
+import CredentialsProvider from 'next-auth/providers/credentials'
 import GitHub from 'next-auth/providers/github'
 
 export const config = {
   providers: [
+    CredentialsProvider({
+      name: 'Credentials',
+      credentials: {
+        username: { label: 'Username', type: 'text' },
+        password: { label: 'Password', type: 'password' },
+      },
+      async authorize(credentials) {
+        try {
+          const response = await fetch(`${process.env.API_URL}/auth/login`, {
+            method: 'POST',
+            body: JSON.stringify(credentials),
+            headers: { 'Content-Type': 'application/json' },
+          })
+
+          if (!response.ok) {
+            return null
+          }
+
+          const data = await response.json()
+          return {
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.username,
+            roles: data.user.roles,
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+          }
+        } catch (error) {
+          console.error('Login error:', error)
+          return null
+        }
+      },
+    }),
     GitHub({
       clientId: process.env.AUTH_GITHUB_ID!,
       clientSecret: process.env.AUTH_GITHUB_SECRET!,
@@ -59,6 +92,10 @@ export const config = {
       return true
     },
     async jwt({ token, user, profile }) {
+      if (user?.accessToken) {
+        token.accessToken = user.accessToken
+        token.refreshToken = user.refreshToken
+      }
       if (profile) {
         token.githubId = profile.id
         token.image = profile.avatar_url
@@ -70,6 +107,10 @@ export const config = {
       if (session.user) {
         session.user.image = token.image as string
         session.user.roles = token.roles as string[]
+        if (token.accessToken) {
+          session.accessToken = token.accessToken as string
+          session.refreshToken = token.refreshToken as string
+        }
       }
       return session
     },

@@ -28,9 +28,6 @@ import { SearchType } from '@fcm/shared/auth'
 
 const DEBOUNCE_TIME = 300
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-axios.defaults.baseURL = API_URL
-
 export default function FlightSearchPage() {
   const queryClient = useQueryClient()
   const [formData, setFormData] = useState<FlightOfferSimpleSearchRequest>(

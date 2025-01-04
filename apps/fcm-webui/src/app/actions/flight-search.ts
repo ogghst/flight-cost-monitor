@@ -22,12 +22,22 @@ export async function searchFlightsAction(
   params: FlightOfferSimpleSearchRequest
 ): Promise<FlightOfferSimpleSearchResponse> {
   try {
-    // Call the API endpoint instead of directly using the client
+    //const session = await auth()
+    //if (!session?.accessToken) {
+    //  throw new Error('Authentication required')
+    //}
+
+    // Call the API endpoint with auth token
     const response = await axiosInstance.post('/flight-offers/simple', params)
+    //  , {
+    //  headers: {
+    //    Authorization: `Bearer ${session.accessToken}`
+    //  }
+    //})
     return response.data
   } catch (error) {
     console.error('Simple search error:', error)
-    throw new Error('Failed to search flights')
+    throw error
   }
 }
 
@@ -35,12 +45,12 @@ export async function searchFlightsAdvancedAction(
   params: FlightOffersAdvancedSearchRequest
 ): Promise<FlightOffersAdvancedResponse> {
   try {
-    // Call the API endpoint instead of directly using the client
+    // Call the API endpoint with auth token
     const response = await axiosInstance.post('/flight-offers/advanced', params)
     return response.data
   } catch (error) {
     console.error('Advanced search error:', error)
-    throw new Error('Failed to search flights')
+    throw error
   }
 }
 

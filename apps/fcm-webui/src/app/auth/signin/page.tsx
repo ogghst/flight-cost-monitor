@@ -1,7 +1,8 @@
 'use client'
 import { GitHub } from '@mui/icons-material'
-import { Box, Button, Container, Typography } from '@mui/material'
+import { Box, Button, Container, Typography, Divider, Paper } from '@mui/material'
 import { signIn } from 'next-auth/react'
+import { LoginForm } from '@/components/auth/LoginForm'
 
 export default function SignIn() {
   return (
@@ -13,19 +14,24 @@ export default function SignIn() {
           flexDirection: 'column',
           alignItems: 'center',
         }}>
-        <Typography component="h1" variant="h5">
-          Sign in
-        </Typography>
-        <Box sx={{ mt: 1 }}>
-          <Button
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
-            startIcon={<GitHub />}
-            onClick={() => signIn('github', { callbackUrl: '/' })}>
-            Sign in with GitHub
-          </Button>
-        </Box>
+        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
+          <Typography component="h1" variant="h5" align="center" gutterBottom>
+            Sign in to FCM
+          </Typography>
+          <Box sx={{ mt: 1, width: '100%' }}>
+            <LoginForm />
+            <Divider sx={{ my: 2 }}>OR</Divider>
+            <Button
+              fullWidth
+              variant="contained"
+              color="secondary"
+              sx={{ mt: 1, mb: 2 }}
+              startIcon={<GitHub />}
+              onClick={() => signIn('github', { callbackUrl: '/' })}>
+              Sign in with GitHub
+            </Button>
+          </Box>
+        </Paper>
       </Box>
     </Container>
   )

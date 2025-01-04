@@ -4,6 +4,8 @@ import { NestFactory } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { FcmWinstonLogger } from './logging/fcm-winston-logger.js'
 import { formatError } from './utils/error.utils.js'
+import { LoggingInterceptor } from './interceptors/logging.interceptor.js'
+import { UnauthorizedExceptionFilter } from './filters/unauthorized-exception.filter.js'
 
 async function bootstrap() {
   // Create logger instance for bootstrapping
@@ -17,8 +19,16 @@ async function bootstrap() {
 
     const app = await NestFactory.create(AppModule, {
       logger: logger,
+      // This ensures we capture all requests, even before middleware
+      bufferLogs: true,
     })
 
+    // Register global interceptor - will log all requests
+    app.useGlobalInterceptors(new LoggingInterceptor())
+    
+    // Register unauthorized exception filter
+    app.useGlobalFilters(new UnauthorizedExceptionFilter())
+    
     app.useGlobalPipes(new ValidationPipe({ transform: true }))
 
     // Configure Swagger
