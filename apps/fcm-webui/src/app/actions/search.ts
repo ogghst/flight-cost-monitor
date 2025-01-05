@@ -1,154 +1,156 @@
 'use server'
 
-import axiosInstance from '@/lib/api/axiosConfig'
+import { makeServerRequest } from '@/lib/api/axiosConfig'
 import { auth } from '@/lib/auth'
-import { SearchType } from '@fcm/shared/auth'
-import { AxiosError } from 'axios'
+import {
+  CreateUserSearchDto,
+  SearchQueryParams,
+  UserSearchDto,
+} from '@fcm/shared/user-search/types'
 
-export async function saveSearch(searchData: {
-  searchType: (typeof SearchType)[keyof typeof SearchType]
-  criteria: any
-  title?: string
-}) {
+export async function saveSearch(
+  searchData: CreateUserSearchDto
+): Promise<UserSearchDto> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error('User not authenticated')
+  }
+
   try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      throw new Error('User not authenticated')
-    }
-
-    const { data } = await axiosInstance.post('/search', {
-      searchType: searchData.searchType,
-      parameters: searchData.criteria,
-      name: searchData.title,
+    const payload = {
+      ...searchData,
+      userId: session.user.id,
       favorite: false,
-    })
-
-    return data
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      throw new Error(error.response?.data?.message || 'Failed to save search')
+      parameters:
+        typeof searchData.parameters === 'string'
+          ? searchData.parameters
+          : JSON.stringify(searchData.parameters),
+      lastUsed: new Date(),
     }
-    throw error
+
+    return await makeServerRequest<UserSearchDto>(
+      'POST',
+      '/user-searches',
+      payload
+    )
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to save search: ${error.message}`)
+    }
+    throw new Error('Failed to save search')
   }
 }
 
 export async function getUserSearches(
-  searchType?: (typeof SearchType)[keyof typeof SearchType]
-) {
+  params?: SearchQueryParams
+): Promise<UserSearchDto[]> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error('User not authenticated')
+  }
+
   try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      throw new Error('User not authenticated')
-    }
+    const searches = await makeServerRequest<UserSearchDto[]>(
+      'GET',
+      `/user-searches/user/${session.user.email}`,
+      undefined,
+      params as Record<string, any>
+    )
 
-    const { data } = await axiosInstance.get('/search', {
-      params: searchType ? { type: searchType } : undefined,
-    })
-
-    return data.map((search: any) => ({
+    return searches.map((search) => ({
       ...search,
-      criteria:
+      parameters:
         typeof search.parameters === 'string'
           ? JSON.parse(search.parameters)
           : search.parameters,
     }))
   } catch (error) {
-    if (error instanceof AxiosError) {
-      throw new Error(
-        error.response?.data?.message || 'Failed to fetch searches'
-      )
+    if (error instanceof Error) {
+      throw new Error(`Failed to fetch searches: ${error.message}`)
     }
-    throw error
+    throw new Error('Failed to fetch searches')
   }
 }
 
-export async function getFavoriteSearches() {
+export async function getFavoriteSearches(): Promise<UserSearchDto[]> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error('User not authenticated')
+  }
+
   try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      throw new Error('User not authenticated')
-    }
+    const searches = await makeServerRequest<UserSearchDto[]>(
+      'GET',
+      `/user-searches/user/${session.user.id}/favorites`
+    )
 
-    const { data } = await axiosInstance.get('/search/favorites')
-
-    return data.map((search: any) => ({
+    return searches.map((search) => ({
       ...search,
-      criteria:
+      parameters:
         typeof search.parameters === 'string'
           ? JSON.parse(search.parameters)
           : search.parameters,
     }))
   } catch (error) {
-    if (error instanceof AxiosError) {
-      throw new Error(
-        error.response?.data?.message || 'Failed to fetch favorite searches'
-      )
+    if (error instanceof Error) {
+      throw new Error(`Failed to fetch favorite searches: ${error.message}`)
     }
-    throw error
+    throw new Error('Failed to fetch favorite searches')
   }
 }
 
-export async function markSearchUsed(searchId: string) {
-  try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      throw new Error('User not authenticated')
-    }
+export async function markSearchUsed(searchId: string): Promise<UserSearchDto> {
+  const session = await auth()
+  if (!session?.user?.email) {
+    throw new Error('User not authenticated')
+  }
 
-    const { data } = await axiosInstance.patch('/search/' + searchId + '/used')
-    return data
+  try {
+    return await makeServerRequest<UserSearchDto>(
+      'POST',
+      `/user-searches/${searchId}/used`
+    )
   } catch (error) {
-    if (error instanceof AxiosError) {
-      throw new Error(
-        error.response?.data?.message || 'Failed to mark search as used'
-      )
+    if (error instanceof Error) {
+      throw new Error(`Failed to mark search as used: ${error.message}`)
     }
-    throw error
+    throw new Error('Failed to mark search as used')
   }
 }
 
 export async function toggleSearchFavorite(
-  searchId: string,
-  favorite: boolean
-) {
-  try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      throw new Error('User not authenticated')
-    }
+  searchId: string
+): Promise<UserSearchDto> {
+  const session = await auth()
+  if (!session?.user?.email) {
+    throw new Error('User not authenticated')
+  }
 
-    const { data } = await axiosInstance.patch(
-      '/search/' + searchId + '/favorite',
-      {
-        favorite,
-      }
+  try {
+    return await makeServerRequest<UserSearchDto>(
+      'POST',
+      `/user-searches/${searchId}/toggle-favorite`
     )
-    return data
   } catch (error) {
-    if (error instanceof AxiosError) {
-      throw new Error(
-        error.response?.data?.message || 'Failed to toggle favorite status'
-      )
+    if (error instanceof Error) {
+      throw new Error(`Failed to toggle favorite status: ${error.message}`)
     }
-    throw error
+    throw new Error('Failed to toggle favorite status')
   }
 }
 
 export async function deleteSearch(searchId: string) {
-  try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      throw new Error('User not authenticated')
-    }
+  const session = await auth()
+  if (!session?.user?.email) {
+    throw new Error('User not authenticated')
+  }
 
-    const { data } = await axiosInstance.delete('/search/' + searchId)
-    return data
+  try {
+    await makeServerRequest('DELETE', `/user-searches/${searchId}`)
   } catch (error) {
-    if (error instanceof AxiosError) {
-      throw new Error(
-        error.response?.data?.message || 'Failed to delete search'
-      )
+    if (error instanceof Error) {
+      throw new Error(`Failed to delete search: ${error.message}`)
     }
-    throw error
+    throw new Error('Failed to delete search')
   }
 }

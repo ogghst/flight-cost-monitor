@@ -18,15 +18,18 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger'
+import { Public } from '../decorators/public.decorator.js'
 import { CurrentUser } from '../decorators/user.decorator.js'
 import { AuthUserDto } from '../dto/auth-user.dto.js'
+import { LoginDto } from '../dto/login.dto.js'
+import { OAuthLoginDto } from '../dto/oauth-login.dto.js'
+import { RegisterDto } from '../dto/register.dto.js'
+import {
+  RequestPasswordResetDto,
+  ResetPasswordDto,
+} from '../dto/reset-password.dto.js'
 import { JwtAuthGuard } from '../guards/jwt.guard.js'
 import { AuthService } from '../services/auth.service.js'
-import { RequestPasswordResetDto, ResetPasswordDto } from '../dto/reset-password.dto.js'
-import { Public } from '../decorators/public.decorator.js'
-import { OAuthLoginDto } from '../dto/oauth-login.dto.js'
-import { LoginDto } from '../dto/login.dto.js'
-import { RegisterDto } from '../dto/register.dto.js'
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -208,14 +211,13 @@ export class AuthController {
   })
   async getProfile(@CurrentUser() user: AuthUser): Promise<AuthUserDto> {
     // Fetch full user data including roles
-    const userData = await this.userRepository.findById(user.id)
+    const userData = await this.userRepository.findByEmail(user.email)
     if (!userData) {
       throw new NotFoundException('User not found')
     }
 
     // Convert to AuthUserDto
     return {
-      id: userData.id,
       email: userData.email,
       username: userData.username,
       firstName: userData.firstName,

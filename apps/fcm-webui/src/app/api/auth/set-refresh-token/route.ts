@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Set refresh token in httpOnly cookie
-    cookies().set('fcm_refresh_token', token, {
+    (await cookies()).set('fcm_refresh_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

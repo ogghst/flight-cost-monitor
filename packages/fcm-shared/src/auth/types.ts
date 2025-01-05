@@ -42,7 +42,6 @@ export interface AuthResponse extends AccessTokenResponse {
 }
 
 export interface AuthUser {
-  id: string
   email: string
   username?: string
   firstName?: string

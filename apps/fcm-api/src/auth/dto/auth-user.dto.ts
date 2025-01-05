@@ -1,17 +1,13 @@
 import { AuthType, AuthUser, OAuthProvider } from '@fcm/shared/auth'
 import { ApiProperty } from '@nestjs/swagger'
+import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator'
 
 export class AuthUserDto implements AuthUser {
-  @ApiProperty({
-    description: 'User ID',
-    example: 'cl8f9x3u50000qw2j8zk1q2j5',
-  })
-  id: string
-
   @ApiProperty({
     description: 'User email',
     example: 'user@example.com',
   })
+  @IsEmail()
   email: string
 
   @ApiProperty({
@@ -20,6 +16,8 @@ export class AuthUserDto implements AuthUser {
     required: false,
     nullable: true,
   })
+  @IsString()
+  @IsOptional()
   username?: string | null
 
   @ApiProperty({
@@ -28,6 +26,8 @@ export class AuthUserDto implements AuthUser {
     required: false,
     nullable: true,
   })
+  @IsString()
+  @IsOptional()
   firstName?: string | null
 
   @ApiProperty({
@@ -36,6 +36,8 @@ export class AuthUserDto implements AuthUser {
     required: false,
     nullable: true,
   })
+  @IsString()
+  @IsOptional()
   lastName?: string | null
 
   @ApiProperty({
@@ -50,6 +52,7 @@ export class AuthUserDto implements AuthUser {
     enum: AuthType,
     example: AuthType.CREDENTIAL,
   })
+  @IsEnum(AuthType)
   authType: AuthType
 
   @ApiProperty({
@@ -57,15 +60,21 @@ export class AuthUserDto implements AuthUser {
     enum: OAuthProvider,
     example: OAuthProvider.GITHUB,
   })
-  oauthProvider: OAuthProvider
+  @IsOptional()
+  @IsEnum(OAuthProvider)
+  oauthProvider?: OAuthProvider
 
   @ApiProperty({
     description: 'User profile',
   })
-  profile: string
+  @IsString()
+  @IsOptional()
+  profile?: string
 
   @ApiProperty({
     description: 'User image',
   })
-  image: string
+  @IsString()
+  @IsOptional()
+  image?: string
 }

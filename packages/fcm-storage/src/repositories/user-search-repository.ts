@@ -1,11 +1,11 @@
 import type { SearchType } from '@fcm/shared/auth'
-import { Prisma } from '@prisma/client'
-import { DatabaseError } from '../schema/types.js'
 import type {
-  CreateUserSearch,
-  UpdateUserSearch,
-  UserSearch,
-} from '../schema/user-search.js'
+  CreateUserSearchDto,
+  UpdateUserSearchDto,
+  UserSearchDto,
+} from '@fcm/shared/user-search/types'
+import { Prisma, type UserSearch } from '@prisma/client'
+import { DatabaseError } from '../schema/types.js'
 import { fcmPrismaClient } from './prisma.js'
 
 export class UserSearchRepository {
@@ -14,84 +14,141 @@ export class UserSearchRepository {
   async findById(
     id: string,
     tx?: Prisma.TransactionClient
-  ): Promise<UserSearch | null> {
+  ): Promise<UserSearchDto | null> {
     const client = tx || this.prisma
     try {
-      return await client.userSearch.findUnique({
+      const search = await client.userSearch.findUnique({
         where: { id },
+        include: {
+          user: true,
+        },
       })
+      return search
+        ? {
+            ...search,
+            userEmail: search.user.email,
+            name: search.name ?? undefined,
+          }
+        : null
     } catch (error) {
       throw new DatabaseError('Failed to find user search by ID', error)
     }
   }
 
-  async findByUser(
-    userId: string,
+  async findByUserEmail(
+    userEmail: string,
     searchType?: SearchType,
     tx?: Prisma.TransactionClient
-  ): Promise<UserSearch[]> {
+  ): Promise<UserSearchDto[]> {
     const client = tx || this.prisma
     try {
-      return await client.userSearch.findMany({
+      const searches = await client.userSearch.findMany({
         where: {
-          userId,
+          user: {
+            email: userEmail,
+          },
           ...(searchType && { searchType }),
           deletedAt: null,
         },
         orderBy: { lastUsed: 'desc' },
+        include: {
+          user: true,
+        },
       })
+      return searches.map((search) => ({
+        ...search,
+        userEmail: userEmail,
+        name: search.name ?? undefined,
+      }))
     } catch (error) {
       throw new DatabaseError('Failed to find user searches', error)
     }
   }
 
   async findFavorites(
-    userId: string,
+    userEmail: string,
     tx?: Prisma.TransactionClient
-  ): Promise<UserSearch[]> {
+  ): Promise<UserSearchDto[]> {
     const client = tx || this.prisma
     try {
-      return await client.userSearch.findMany({
+      const searches = await client.userSearch.findMany({
         where: {
-          userId,
+          user: {
+            email: userEmail,
+          },
           favorite: true,
           deletedAt: null,
         },
         orderBy: { lastUsed: 'desc' },
+        include: {
+          user: true,
+        },
       })
+      return searches.map((search) => ({
+        ...search,
+        userEmail,
+        name: search.name ?? undefined,
+      }))
     } catch (error) {
       throw new DatabaseError('Failed to find favorite searches', error)
     }
   }
 
   async create(
-    data: CreateUserSearch,
+    data: CreateUserSearchDto,
     tx?: Prisma.TransactionClient
-  ): Promise<UserSearch> {
+  ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
-      return await client.userSearch.create({
+      // Create search with user ID
+      const createdSearch = await client.userSearch.create({
         data: {
-          ...data,
-          lastUsed: data.lastUsed || new Date(),
+          searchType: data.searchType,
+          parameters: data.parameters,
+          name: data.name,
+          favorite: data.favorite,
+          lastUsed: new Date(),
+          user: {
+            connect: { email: data.userEmail },
+          },
+        },
+        include: {
+          user: true,
         },
       })
+
+      return {
+        ...createdSearch,
+        userEmail: data.userEmail,
+        name: createdSearch.name ?? undefined,
+      }
     } catch (error) {
+      if (error instanceof DatabaseError) {
+        throw error
+      }
       throw new DatabaseError('Failed to create user search', error)
     }
   }
 
   async update(
     id: string,
-    data: UpdateUserSearch,
+    data: UpdateUserSearchDto,
     tx?: Prisma.TransactionClient
-  ): Promise<UserSearch> {
+  ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
-      return await client.userSearch.update({
+      const updatedSearch = await client.userSearch.update({
         where: { id },
         data,
+        include: {
+          user: true,
+        },
       })
+      return {
+        ...updatedSearch,
+        userEmail: updatedSearch.user.email,
+        name: updatedSearch.name ?? undefined,
+      }
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
@@ -105,15 +162,23 @@ export class UserSearchRepository {
   async updateLastUsed(
     id: string,
     tx?: Prisma.TransactionClient
-  ): Promise<UserSearch> {
+  ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
-      return await client.userSearch.update({
+      const updatedSearch = await client.userSearch.update({
         where: { id },
         data: {
           lastUsed: new Date(),
         },
+        include: {
+          user: true,
+        },
       })
+      return {
+        ...updatedSearch,
+        userEmail: updatedSearch.user.email,
+        name: updatedSearch.name ?? undefined,
+      }
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
@@ -127,7 +192,7 @@ export class UserSearchRepository {
   async toggleFavorite(
     id: string,
     tx?: Prisma.TransactionClient
-  ): Promise<UserSearch> {
+  ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
       const search = await client.userSearch.findUnique({
@@ -138,24 +203,43 @@ export class UserSearchRepository {
         throw new DatabaseError('Search not found', null, 'NOT_FOUND')
       }
 
-      return await client.userSearch.update({
+      const updatedSearch = await client.userSearch.update({
         where: { id },
         data: {
           favorite: !search.favorite,
           lastUsed: new Date(),
         },
+        include: {
+          user: true,
+        },
       })
+      return {
+        ...updatedSearch,
+        userEmail: updatedSearch.user.email,
+        name: updatedSearch.name ?? undefined,
+      }
     } catch (error) {
       throw new DatabaseError('Failed to toggle favorite status', error)
     }
   }
 
-  async delete(id: string, tx?: Prisma.TransactionClient): Promise<UserSearch> {
+  async delete(
+    id: string,
+    tx?: Prisma.TransactionClient
+  ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
-      return await client.userSearch.delete({
+      const deletedSearch = await client.userSearch.delete({
         where: { id },
+        include: {
+          user: true,
+        },
       })
+      return {
+        ...deletedSearch,
+        userEmail: deletedSearch.user.email,
+        name: deletedSearch.name ?? undefined,
+      }
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
@@ -169,15 +253,23 @@ export class UserSearchRepository {
   async softDelete(
     id: string,
     tx?: Prisma.TransactionClient
-  ): Promise<UserSearch> {
+  ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
-      return await client.userSearch.update({
+      const deletedSearch = await client.userSearch.update({
         where: { id },
         data: {
           deletedAt: new Date(),
         },
+        include: {
+          user: true,
+        },
       })
+      return {
+        ...deletedSearch,
+        userEmail: deletedSearch.user.email,
+        name: deletedSearch.name ?? undefined,
+      }
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
@@ -191,15 +283,23 @@ export class UserSearchRepository {
   async restore(
     id: string,
     tx?: Prisma.TransactionClient
-  ): Promise<UserSearch> {
+  ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
-      return await client.userSearch.update({
+      const restoredSearch = await client.userSearch.update({
         where: { id },
         data: {
           deletedAt: null,
         },
+        include: {
+          user: true,
+        },
       })
+      return {
+        ...restoredSearch,
+        userEmail: restoredSearch.user.email,
+        name: restoredSearch.name ?? undefined,
+      }
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
@@ -211,7 +311,7 @@ export class UserSearchRepository {
   }
 
   async deleteOldSearches(
-    userId: string,
+    userEmail: string,
     olderThan: Date,
     tx?: Prisma.TransactionClient
   ) {
@@ -219,7 +319,9 @@ export class UserSearchRepository {
     try {
       return await client.userSearch.deleteMany({
         where: {
-          userId,
+          user: {
+            email: userEmail,
+          },
           favorite: false,
           lastUsed: {
             lt: olderThan,

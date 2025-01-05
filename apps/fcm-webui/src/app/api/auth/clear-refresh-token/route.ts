@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 export async function POST() {
   try {
     // Clear refresh token cookie
-    cookies().delete('fcm_refresh_token');
+    (await cookies()).delete('fcm_refresh_token');
     
     return NextResponse.json({ success: true });
   } catch (error) {

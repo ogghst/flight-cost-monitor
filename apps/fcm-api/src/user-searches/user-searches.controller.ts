@@ -47,12 +47,12 @@ export class UserSearchesController {
     description: 'Returns the list of user searches.',
     type: [UserSearchDto],
   })
-  async findByUser(
+  async findByUserEmail(
     @Param('userId') userId: string,
-    @Query('searchType') searchType?: string
+    @Query('searchType') searchType?: SearchType
   ): Promise<UserSearchDto[]> {
     const type = searchType as SearchType
-    return await this.userSearchesService.findByUser(userId, type)
+    return await this.userSearchesService.findByUserEmail(userId, type)
   }
 
   @Get('user/:userId/favorites')
@@ -63,9 +63,9 @@ export class UserSearchesController {
     type: [UserSearchDto],
   })
   async findFavorites(
-    @Param('userId') userId: string
+    @Param('userEmail') userEmail: string
   ): Promise<UserSearchDto[]> {
-    return await this.userSearchesService.findFavorites(userId)
+    return await this.userSearchesService.findFavorites(userEmail)
   }
 
   @Get(':id')

@@ -1,20 +1,27 @@
-import type { CreateUserSearch } from '@fcm/storage/schema'
+import { SearchType } from '@fcm/shared/auth'
+import type { CreateUserSearchDto as SharedDto } from '@fcm/shared/user-search/types'
 import { ApiProperty } from '@nestjs/swagger'
-import { IsBoolean, IsJSON, IsOptional, IsString } from 'class-validator'
+import {
+  IsBoolean,
+  IsEnum,
+  IsJSON,
+  IsOptional,
+  IsString,
+} from 'class-validator'
 
-export class CreateUserSearchDto implements CreateUserSearch {
+export class CreateUserSearchDto implements SharedDto {
   @ApiProperty({
-    description: 'ID of the user creating the search',
+    description: 'Email of the user creating the search',
   })
   @IsString()
-  userId: string
+  userEmail: string
 
   @ApiProperty({
     description: 'Type of search (SIMPLE or ADVANCED)',
     example: 'SIMPLE',
   })
-  @IsString()
-  searchType: string
+  @IsEnum(SearchType)
+  searchType: SearchType
 
   @ApiProperty({
     description: 'Search criteria in JSON format',
@@ -39,10 +46,4 @@ export class CreateUserSearchDto implements CreateUserSearch {
   @IsBoolean()
   @IsOptional()
   favorite: boolean = false
-
-  @ApiProperty({
-    description: 'When this search was last used',
-    default: 'Current timestamp',
-  })
-  lastUsed: Date = new Date()
 }

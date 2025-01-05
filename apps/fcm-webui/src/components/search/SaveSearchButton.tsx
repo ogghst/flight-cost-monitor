@@ -11,29 +11,33 @@ import {
   DialogTitle,
   TextField,
 } from '@mui/material'
+import { useSession } from 'next-auth/react'
 import { useState } from 'react'
 
 interface SaveSearchButtonProps {
-  searchCriteria: string
+  searchParameter: string
   searchType: (typeof SearchType)[keyof typeof SearchType]
   isSimpleSearch?: boolean
 }
 
 export function SaveSearchButton({
-  searchCriteria,
+  searchParameter,
   searchType,
   isSimpleSearch,
 }: SaveSearchButtonProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const { mutate: saveSearch, isPending } = useSaveSearch()
+  const { data: session } = useSession()
 
   const handleSave = () => {
     saveSearch(
       {
         searchType,
-        criteria: searchCriteria,
-        title: title.trim() || undefined,
+        parameters: searchParameter,
+        name: title.trim() || undefined,
+        userEmail: session?.user.email || '',
+        favorite: false, // Set default value
       },
       {
         onSuccess: () => {

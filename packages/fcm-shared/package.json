@@ -51,6 +51,10 @@
     "./logging": {
       "import": "./dist/logging/index.js",
       "types": "./dist/logging/index.d.ts"
+    },
+    "./user-search/types": {
+      "import": "./dist/user-search/types.js",
+      "types": "./dist/user-search/types.d.ts"
     }
   },
   "typesVersions": {
@@ -66,6 +70,9 @@
       ],
       "logging": [
         "./dist/logging/index.d.ts"
+      ],
+      "user-search/types": [
+        "./dist/user-search/types/types.d.ts"
       ]
     }
   },

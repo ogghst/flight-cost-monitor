@@ -13,7 +13,7 @@ export function useUserSearches(
 ) {
   return useQuery({
     queryKey: ['user-searches', searchType],
-    queryFn: () => getUserSearches(searchType),
+    queryFn: () => getUserSearches({ searchType }),
   })
 }
 

@@ -99,7 +99,7 @@ export default function FlightSearchPage() {
           </Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <SaveSearchButton
-              searchCriteria={JSON.stringify(currentSearch)}
+              searchParameter={JSON.stringify(currentSearch)}
               searchType={SearchType.SIMPLE}
               isSimpleSearch
             />

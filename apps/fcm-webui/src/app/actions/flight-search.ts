@@ -1,5 +1,6 @@
 'use server'
-import axiosInstance from '@/lib/api/axiosConfig'
+
+import { makeServerRequest } from '@/lib/api/axiosConfig'
 import { amadeusConfig } from '@/lib/config/amadeus'
 import type {
   FlightOfferSimpleSearchRequest,
@@ -22,22 +23,17 @@ export async function searchFlightsAction(
   params: FlightOfferSimpleSearchRequest
 ): Promise<FlightOfferSimpleSearchResponse> {
   try {
-    //const session = await auth()
-    //if (!session?.accessToken) {
-    //  throw new Error('Authentication required')
-    //}
-
-    // Call the API endpoint with auth token
-    const response = await axiosInstance.post('/flight-offers/simple', params)
-    //  , {
-    //  headers: {
-    //    Authorization: `Bearer ${session.accessToken}`
-    //  }
-    //})
-    return response.data
+    return await makeServerRequest<FlightOfferSimpleSearchResponse>(
+      'POST',
+      '/flight-offers/simple',
+      JSON.stringify(params)
+    )
   } catch (error) {
     console.error('Simple search error:', error)
-    throw error
+    if (error instanceof Error) {
+      throw new Error(`Failed to search flights: ${error.message}`)
+    }
+    throw new Error('Failed to search flights')
   }
 }
 
@@ -45,12 +41,17 @@ export async function searchFlightsAdvancedAction(
   params: FlightOffersAdvancedSearchRequest
 ): Promise<FlightOffersAdvancedResponse> {
   try {
-    // Call the API endpoint with auth token
-    const response = await axiosInstance.post('/flight-offers/advanced', params)
-    return response.data
+    return await makeServerRequest<FlightOffersAdvancedResponse>(
+      'POST',
+      '/flight-offers/advanced',
+      JSON.stringify(params)
+    )
   } catch (error) {
     console.error('Advanced search error:', error)
-    throw error
+    if (error instanceof Error) {
+      throw new Error(`Failed to search flights: ${error.message}`)
+    }
+    throw new Error('Failed to search flights')
   }
 }
 

@@ -32,7 +32,6 @@ export function toAuthUser(
   user: User & { roles: { name: string }[] }
 ): AuthUser {
   return {
-    id: user.id,
     email: user.email,
     username: user.username,
     firstName: user.firstName,

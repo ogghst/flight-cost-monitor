@@ -28,9 +28,9 @@ interface LoadSearchButtonProps {
   onLoadSearch: (criteria: any) => void
 }
 
-function formatSearchDetails(criteria: any) {
+function formatSearchDetails(parameters: any) {
   const searchCriteria =
-    typeof criteria === 'string' ? JSON.parse(criteria) : criteria
+    typeof parameters === 'string' ? JSON.parse(parameters) : parameters
 
   const details = [
     `${searchCriteria.originLocationCode} → ${searchCriteria.destinationLocationCode}`,
@@ -82,9 +82,9 @@ export function LoadSearchButton({
   const { data: searches, isLoading } = useUserSearches(searchType)
   const { mutate: markUsed } = useLoadSearch()
 
-  const handleLoadSearch = (searchId: string, criteria: any) => {
+  const handleLoadSearch = (searchId: string, parameters: any) => {
     const parsedCriteria =
-      typeof criteria === 'string' ? JSON.parse(criteria) : criteria
+      typeof parameters === 'string' ? JSON.parse(parameters) : parameters
     onLoadSearch(parsedCriteria)
     markUsed(searchId)
     setOpen(false)
@@ -118,7 +118,7 @@ export function LoadSearchButton({
               {searches.map((search) => {
                 const timeInfo = formatTimeInfo(
                   search.createdAt,
-                  search.lastUsed
+                  search.lastUsed ?? search.createdAt
                 )
                 return (
                   <ListItem
@@ -133,7 +133,7 @@ export function LoadSearchButton({
                     }>
                     <ListItemButton
                       onClick={() =>
-                        handleLoadSearch(search.id, search.criteria)
+                        handleLoadSearch(search.id, search.parameters)
                       }
                       sx={{
                         py: 2,
@@ -153,7 +153,7 @@ export function LoadSearchButton({
                               variant="body2"
                               color="text.secondary"
                               sx={{ mb: 1 }}>
-                              {formatSearchDetails(search.criteria)}
+                              {formatSearchDetails(search.parameters)}
                             </Typography>
                             <Typography
                               variant="caption"

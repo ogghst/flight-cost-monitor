@@ -38,7 +38,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".old/DatabaseContext.tsx"
-  ],
+    ".old/DatabaseContext.tsx.old"
+, ".old/axiosClientConfig.ts.old"  ],
   "exclude": ["node_modules"]
 }

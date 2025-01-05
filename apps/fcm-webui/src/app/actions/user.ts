@@ -1,30 +1,28 @@
 'use server'
 
-import axiosInstance from '@/lib/api/axiosConfig'
+import { makeServerRequest } from '@/lib/api/axiosConfig'
 import { auth } from '@/lib/auth'
 import { AuthUser } from '@fcm/shared/auth'
-import { AxiosError } from 'axios'
 
 export async function getCurrentUser(): Promise<AuthUser> {
-  try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      throw new Error('User not present in session')
-    }
-
-    const { data } = await axiosInstance.get('/auth/me')
-    if (!data) {
-      throw new Error('User not found')
-    }
-    return data
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      throw new Error(
-        error.response?.data?.message || 'Failed to fetch user data'
-      )
-    }
-    throw error
+  const session = await auth()
+  if (!session?.user?.email) {
+    throw new Error('User not present in session')
   }
+
+  try {
+    return await makeServerRequest<AuthUser>('GET', '/auth/me')
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to fetch user data: ${error.message}`)
+    }
+    throw new Error('Failed to fetch user data')
+  }
+}
+
+interface UpdateProfileResponse {
+  user: AuthUser
+  message: string
 }
 
 export async function updateUserProfile(profileData: {
@@ -32,63 +30,76 @@ export async function updateUserProfile(profileData: {
   lastName?: string
   username?: string
 }) {
-  try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      throw new Error('User not authenticated')
-    }
-
-    const { data } = await axiosInstance.patch('/users/profile', profileData)
-    return data
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      throw new Error(
-        error.response?.data?.message || 'Failed to update profile'
-      )
-    }
-    throw error
+  const session = await auth()
+  if (!session?.user?.email) {
+    throw new Error('User not authenticated')
   }
+
+  try {
+    return await makeServerRequest<UpdateProfileResponse>(
+      'PATCH',
+      '/users/profile',
+      JSON.stringify(profileData)
+    )
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to update profile: ${error.message}`)
+    }
+    throw new Error('Failed to update profile')
+  }
+}
+
+interface PasswordChangeResponse {
+  message: string
+  success: boolean
 }
 
 export async function changePassword(passwordData: {
   currentPassword: string
   newPassword: string
 }) {
-  try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      throw new Error('User not authenticated')
-    }
-
-    const { data } = await axiosInstance.post(
-      '/auth/password/change',
-      passwordData
-    )
-    return data
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      throw new Error(
-        error.response?.data?.message || 'Failed to change password'
-      )
-    }
-    throw error
+  const session = await auth()
+  if (!session?.user?.email) {
+    throw new Error('User not authenticated')
   }
+
+  try {
+    return await makeServerRequest<PasswordChangeResponse>(
+      'POST',
+      '/auth/password/change',
+      JSON.stringify(passwordData)
+    )
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to change password: ${error.message}`)
+    }
+    throw new Error('Failed to change password')
+  }
+}
+
+interface PasswordResetRequestResponse {
+  message: string
+  success: boolean
 }
 
 export async function requestPasswordReset(email: string) {
   try {
-    const { data } = await axiosInstance.post('/auth/password/reset-request', {
-      email,
-    })
-    return data
+    return await makeServerRequest<PasswordResetRequestResponse>(
+      'POST',
+      '/auth/password/reset-request',
+      JSON.stringify({ email })
+    )
   } catch (error) {
-    if (error instanceof AxiosError) {
-      throw new Error(
-        error.response?.data?.message || 'Failed to request password reset'
-      )
+    if (error instanceof Error) {
+      throw new Error(`Failed to request password reset: ${error.message}`)
     }
-    throw error
+    throw new Error('Failed to request password reset')
   }
+}
+
+interface PasswordResetResponse {
+  message: string
+  success: boolean
 }
 
 export async function resetPassword(resetData: {
@@ -96,14 +107,15 @@ export async function resetPassword(resetData: {
   password: string
 }) {
   try {
-    const { data } = await axiosInstance.post('/auth/password/reset', resetData)
-    return data
+    return await makeServerRequest<PasswordResetResponse>(
+      'POST',
+      '/auth/password/reset',
+      JSON.stringify(resetData)
+    )
   } catch (error) {
-    if (error instanceof AxiosError) {
-      throw new Error(
-        error.response?.data?.message || 'Failed to reset password'
-      )
+    if (error instanceof Error) {
+      throw new Error(`Failed to reset password: ${error.message}`)
     }
-    throw error
+    throw new Error('Failed to reset password')
   }
 }

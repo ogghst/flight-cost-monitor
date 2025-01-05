@@ -54,7 +54,6 @@ export class AuthService {
     return {
       ...tokens,
       user: {
-        id: user.id,
         email: user.email,
         username: user.username,
         firstName: user.firstName,
@@ -94,7 +93,6 @@ export class AuthService {
     return {
       ...tokens,
       user: {
-        id: user.id,
         email: user.email,
         username: user.username,
         firstName: user.firstName,
@@ -148,7 +146,6 @@ export class AuthService {
     return {
       ...tokens,
       user: {
-        id: user.id,
         email: user.email,
         username: user.username,
         firstName: user.firstName,
@@ -183,7 +180,6 @@ export class AuthService {
     return {
       ...tokens,
       user: {
-        id: user.id,
         email: user.email,
         username: user.username,
         firstName: user.firstName,
