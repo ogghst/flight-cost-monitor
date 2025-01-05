@@ -1,87 +1,154 @@
 'use server'
 
+import axiosInstance from '@/lib/api/axiosConfig'
 import { auth } from '@/lib/auth'
 import { SearchType } from '@fcm/shared/auth'
-import { userRepository, userSearchRepository } from '@fcm/storage/repositories'
+import { AxiosError } from 'axios'
 
 export async function saveSearch(searchData: {
   searchType: (typeof SearchType)[keyof typeof SearchType]
   criteria: any
   title?: string
 }) {
-  const session = await auth()
-  if (!session?.user?.email) {
-    throw new Error('User not authenticated')
-  }
+  try {
+    const session = await auth()
+    if (!session?.user?.email) {
+      throw new Error('User not authenticated')
+    }
 
-  const user = await userRepository.findByEmail(session.user.email)
-  if (!user) {
-    throw new Error('User not found')
-  }
+    const { data } = await axiosInstance.post('/search', {
+      searchType: searchData.searchType,
+      parameters: searchData.criteria,
+      name: searchData.title,
+      favorite: false,
+    })
 
-  return userSearchRepository.create({
-    userId: user.id,
-    searchType: searchData.searchType,
-    parameters: JSON.stringify(searchData.criteria),
-    name: searchData.title,
-    favorite: false,
-    lastUsed: new Date(),
-  })
+    return data
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      throw new Error(error.response?.data?.message || 'Failed to save search')
+    }
+    throw error
+  }
 }
 
 export async function getUserSearches(
   searchType?: (typeof SearchType)[keyof typeof SearchType]
 ) {
-  const session = await auth()
-  if (!session?.user?.email) {
-    throw new Error('User not authenticated')
-  }
+  try {
+    const session = await auth()
+    if (!session?.user?.email) {
+      throw new Error('User not authenticated')
+    }
 
-  const user = await userRepository.findByEmail(session.user.email)
-  if (!user) {
-    throw new Error('User not found')
-  }
+    const { data } = await axiosInstance.get('/search', {
+      params: searchType ? { type: searchType } : undefined,
+    })
 
-  const searches = await userSearchRepository.findByUser(user.id, searchType)
-  return searches.map((search) => ({
-    ...search,
-    criteria: JSON.parse(search.parameters),
-  }))
+    return data.map((search: any) => ({
+      ...search,
+      criteria:
+        typeof search.parameters === 'string'
+          ? JSON.parse(search.parameters)
+          : search.parameters,
+    }))
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      throw new Error(
+        error.response?.data?.message || 'Failed to fetch searches'
+      )
+    }
+    throw error
+  }
 }
 
 export async function getFavoriteSearches() {
-  const session = await auth()
-  if (!session?.user?.email) {
-    throw new Error('User not authenticated')
-  }
+  try {
+    const session = await auth()
+    if (!session?.user?.email) {
+      throw new Error('User not authenticated')
+    }
 
-  const user = await userRepository.findByEmail(session.user.email)
-  if (!user) {
-    throw new Error('User not found')
-  }
+    const { data } = await axiosInstance.get('/search/favorites')
 
-  const searches = await userSearchRepository.findFavorites(user.id)
-  return searches.map((search) => ({
-    ...search,
-    criteria: JSON.parse(search.parameters),
-  }))
+    return data.map((search: any) => ({
+      ...search,
+      criteria:
+        typeof search.parameters === 'string'
+          ? JSON.parse(search.parameters)
+          : search.parameters,
+    }))
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      throw new Error(
+        error.response?.data?.message || 'Failed to fetch favorite searches'
+      )
+    }
+    throw error
+  }
 }
 
 export async function markSearchUsed(searchId: string) {
-  const session = await auth()
-  if (!session?.user?.email) {
-    throw new Error('User not authenticated')
-  }
+  try {
+    const session = await auth()
+    if (!session?.user?.email) {
+      throw new Error('User not authenticated')
+    }
 
-  const user = await userRepository.findByEmail(session.user.email)
-  if (!user) {
-    throw new Error('User not found')
+    const { data } = await axiosInstance.patch('/search/' + searchId + '/used')
+    return data
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      throw new Error(
+        error.response?.data?.message || 'Failed to mark search as used'
+      )
+    }
+    throw error
   }
+}
 
-  const search = await userSearchRepository.findById(searchId)
-  if (!search || search.userId !== user.id) {
-    throw new Error('Search not found or unauthorized')
+export async function toggleSearchFavorite(
+  searchId: string,
+  favorite: boolean
+) {
+  try {
+    const session = await auth()
+    if (!session?.user?.email) {
+      throw new Error('User not authenticated')
+    }
+
+    const { data } = await axiosInstance.patch(
+      '/search/' + searchId + '/favorite',
+      {
+        favorite,
+      }
+    )
+    return data
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      throw new Error(
+        error.response?.data?.message || 'Failed to toggle favorite status'
+      )
+    }
+    throw error
   }
+}
 
-  return userSearchRepository.updateLastUsed(searchId)
+export async function deleteSearch(searchId: string) {
+  try {
+    const session = await auth()
+    if (!session?.user?.email) {
+      throw new Error('User not authenticated')
+    }
+
+    const { data } = await axiosInstance.delete('/search/' + searchId)
+    return data
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      throw new Error(
+        error.response?.data?.message || 'Failed to delete search'
+      )
+    }
+    throw error
+  }
 }

@@ -8,31 +8,21 @@ export enum AuthType {
   CREDENTIAL = 'CREDENTIAL',
 }
 
-/*
-export enum Auth {
-  OAUTH = 'OAUTH',
-  CREDENTIAL = 'CREDENTIAL', // Add other types if needed
-}
-*/
-
 export const _PROVIDERS = ['GITHUB', 'GOOGLE'] as const
 export enum OAuthProvider {
   GITHUB = 'GITHUB',
   GOOGLE = 'GOOGLE',
 }
 
-/*
 export interface TokenPayload {
   sub: string
   email: string
   authType: AuthType
   roles: string[]
   iat: number
-
   exp: number
 }
-*/
-/*
+
 export interface RefreshTokenPayload {
   sub: string // User ID
   jti: string // Token ID
@@ -46,13 +36,11 @@ export interface AccessTokenResponse {
   refreshToken: string
   expiresIn: number
 }
-*/
-/*
+
 export interface AuthResponse extends AccessTokenResponse {
   user: AuthUser
 }
-*/
-/*
+
 export interface AuthUser {
   id: string
   email: string
@@ -61,10 +49,11 @@ export interface AuthUser {
   lastName?: string
   authType: AuthType
   oauthProvider?: OAuthProvider
+  profile?: string
   roles: string[]
+  image?: string
 }
-*/
-/*
+
 export interface OAuthUserData {
   provider: OAuthProvider
   providerId: string
@@ -75,8 +64,7 @@ export interface OAuthUserData {
   image?: string
   profile?: any
 }
-*/
-/*
+
 export interface LoginCredentials {
   username: string // Can be username or email
   password: string
@@ -91,4 +79,3 @@ export interface PasswordReset {
   password: string
   confirmPassword: string
 }
-*/

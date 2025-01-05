@@ -2,8 +2,7 @@
 
 import { getCurrentUser } from '@/app/actions/user'
 import { withErrorBoundary } from '@/components/error-boundary'
-import { OAuthProvider } from '@fcm/shared/auth'
-import { User } from '@fcm/storage/schema'
+import { AuthUser, OAuthProvider } from '@fcm/shared/auth'
 import { GitHub } from '@mui/icons-material'
 import {
   Avatar,
@@ -21,7 +20,7 @@ import Grid from '@mui/material/Grid2'
 import { useQuery } from '@tanstack/react-query'
 
 function ProfilePage() {
-  const { data: userData, isLoading } = useQuery<User>({
+  const { data: userData, isLoading } = useQuery<AuthUser>({
     queryKey: ['user-profile'],
     queryFn: getCurrentUser,
     retry: 2,
@@ -50,9 +49,7 @@ function ProfilePage() {
     throw new Error('Failed to load user profile')
   }
 
-  const oauthProfile = userData.oauthProfile
-    ? JSON.parse(userData.oauthProfile)
-    : null
+  const oauthProfile = userData.profile ? JSON.parse(userData.profile) : null
 
   return (
     <Box sx={{ p: 3 }}>

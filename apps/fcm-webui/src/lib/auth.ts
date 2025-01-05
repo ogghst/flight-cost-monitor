@@ -1,23 +1,25 @@
 import { parseName } from '@/lib/utils'
-import { AuthType, OAuthProvider } from '@fcm/shared/auth'
+import { OAuthProvider } from '@fcm/shared/auth'
 import NextAuth, { NextAuthConfig } from 'next-auth'
-import CredentialsProvider from 'next-auth/providers/credentials'
 import GitHub from 'next-auth/providers/github'
+import CredentialsProvider from 'next-auth/providers/credentials'
+import { tokenStorage } from './auth/token-storage'
 
 export const config = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        username: { label: 'Username', type: 'text' },
-        password: { label: 'Password', type: 'password' },
+        username: { label: "Username", type: "text" },
+        password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
         try {
+          // Call your API endpoint for credentials verification
           const response = await fetch(`${process.env.API_URL}/auth/login`, {
             method: 'POST',
-            body: JSON.stringify(credentials),
             headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(credentials)
           })
 
           if (!response.ok) {
@@ -25,94 +27,108 @@ export const config = {
           }
 
           const data = await response.json()
+          
+          // Store access token in memory
+          await tokenStorage.setAccessToken(data.accessToken)
+
+          // Return user data in the format expected by NextAuth
           return {
             id: data.user.id,
             email: data.user.email,
-            name: data.user.username,
+            name: data.user.username || data.user.email,
+            image: data.user.avatar || null, // Add image for avatar
             roles: data.user.roles,
             accessToken: data.accessToken,
-            refreshToken: data.refreshToken,
           }
         } catch (error) {
-          console.error('Login error:', error)
+          console.error('Authentication failed:', error)
           return null
         }
-      },
+      }
     }),
     GitHub({
       clientId: process.env.AUTH_GITHUB_ID!,
       clientSecret: process.env.AUTH_GITHUB_SECRET!,
-      profile(profile) {
-        return {
-          id: profile.id.toString(),
-          name: profile.name || profile.login,
-          email: profile.email,
-          image: profile.avatar_url,
-          githubId: profile.id.toString(),
-          githubProfile: profile,
-          roles: ['USER'],
+      async profile(profile, tokens) {
+        const { firstName, lastName } = parseName(profile.name ?? undefined)
+
+        try {
+          const response = await fetch(
+            `${process.env.API_URL}/auth/oauth/github`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                provider: OAuthProvider.GITHUB,
+                providerId: profile.id.toString(),
+                email: profile.email,
+                firstName,
+                lastName,
+                avatar: profile.avatar_url,
+                accessToken: tokens.access_token,
+              }),
+              credentials: 'include',
+            }
+          )
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            console.error('OAuth exchange failed:', errorData)
+            throw new Error('Failed to exchange OAuth token')
+          }
+
+          const data = await response.json()
+
+          // Store access token in memory
+          await tokenStorage.setAccessToken(data.accessToken)
+          
+          return {
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.username || data.user.email,
+            image: profile.avatar_url,
+            roles: data.user.roles,
+            accessToken: data.accessToken,
+          }
+        } catch (error) {
+          console.error('OAuth token exchange failed:', error)
+          throw new Error('Authentication failed')
         }
       },
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
-      if (account?.provider === 'github') {
-        try {
-          const { firstName, lastName } = parseName(profile?.name?.toString())
-          const existingUser = await userRepository.findByEmail(user.email!)
-
-          if (existingUser) {
-            await userRepository.update(existingUser.id, {
-              oauthProviderId: profile?.id?.toString(),
-              oauthProfile: JSON.stringify(profile),
-              image: profile?.avatar_url?.toString(),
-              firstName,
-              lastName,
-            })
-          } else {
-            await userRepository.createOAuthUser({
-              email: user.email!,
-              oauthProviderId: profile?.id?.toString() || '',
-              oauthProfile: JSON.stringify(profile),
-              image: profile?.avatar_url?.toString(),
-              firstName,
-              lastName,
-              active: true,
-              authType: AuthType.OAUTH,
-              oauthProvider: OAuthProvider.GITHUB,
-            })
-          }
-          return true
-        } catch (error) {
-          console.error('Error persisting user:', error)
-          return '/auth/error?error=DatabaseError'
-        }
-      }
-      return true
+    async signIn({ user }) {
+      return !!user
     },
-    async jwt({ token, user, profile }) {
-      if (user?.accessToken) {
+
+    async jwt({ token, user }) {
+      if (user) {
         token.accessToken = user.accessToken
-        token.refreshToken = user.refreshToken
-      }
-      if (profile) {
-        token.githubId = profile.id
-        token.image = profile.avatar_url
         token.roles = user.roles
+        // Make sure to include the image in the token
+        token.picture = user.image || null
+        token.email = user.email
+        token.name = user.name
       }
       return token
     },
+
     async session({ session, token }) {
-      if (session.user) {
-        session.user.image = token.image as string
-        session.user.roles = token.roles as string[]
-        if (token.accessToken) {
-          session.accessToken = token.accessToken as string
-          session.refreshToken = token.refreshToken as string
-        }
+      return {
+        ...session,
+        accessToken: token.accessToken as string,
+        user: {
+          ...session.user,
+          id: token.sub,
+          name: token.name,
+          email: token.email,
+          image: token.picture as string, // Ensure image is passed to session
+          roles: token.roles as string[],
+        },
       }
-      return session
     },
   },
   pages: {
@@ -120,6 +136,9 @@ export const config = {
     error: '/auth/error',
     signOut: '/auth/signout',
   },
-} as NextAuthConfig
+  session: {
+    strategy: 'jwt',
+  },
+} satisfies NextAuthConfig
 
-export const { handlers, auth, signIn: sigIn, signOut } = NextAuth(config)
+export const { handlers, auth, signIn, signOut } = NextAuth(config)

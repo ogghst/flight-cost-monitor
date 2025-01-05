@@ -1,49 +1,56 @@
+import type { AuthUser } from '@fcm/shared'
+import type { UserRepository } from '@fcm/storage'
 import {
-  Controller,
-  Post,
   Body,
-  UseGuards,
+  Controller,
   Get,
-  UnauthorizedException,
   HttpStatus,
+  Inject,
+  NotFoundException,
+  Post,
+  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common'
-import { AuthService } from '../services/auth.service.js'
-import { JwtAuthGuard } from '../guards/jwt.guard.js'
-import { LoginDto } from '../dto/login.dto.js'
-import { RegisterDto } from '../dto/register.dto.js'
-import { OAuthLoginDto } from '../dto/oauth-login.dto.js'
-import { RequestPasswordResetDto, ResetPasswordDto } from '../dto/reset-password.dto.js'
-import { Public } from '../decorators/public.decorator.js'
-import { CurrentUser } from '../decorators/user.decorator.js'
-import type { AuthUser } from '../auth.types.js'
-import { 
-  ApiTags, 
-  ApiOperation, 
-  ApiResponse, 
+import {
   ApiBearerAuth,
   ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger'
+import { CurrentUser } from '../decorators/user.decorator.js'
+import { AuthUserDto } from '../dto/auth-user.dto.js'
+import { JwtAuthGuard } from '../guards/jwt.guard.js'
+import { AuthService } from '../services/auth.service.js'
+import { RequestPasswordResetDto, ResetPasswordDto } from '../dto/reset-password.dto.js'
+import { Public } from '../decorators/public.decorator.js'
+import { OAuthLoginDto } from '../dto/oauth-login.dto.js'
+import { LoginDto } from '../dto/login.dto.js'
+import { RegisterDto } from '../dto/register.dto.js'
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    @Inject('USER_REPOSITORY') private readonly userRepository: UserRepository
+  ) {}
 
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register new user' })
   @ApiBody({ type: RegisterDto })
-  @ApiResponse({ 
-    status: HttpStatus.CREATED, 
+  @ApiResponse({
+    status: HttpStatus.CREATED,
     description: 'User successfully registered',
   })
-  @ApiResponse({ 
-    status: HttpStatus.BAD_REQUEST, 
-    description: 'Invalid input data' 
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
   })
-  @ApiResponse({ 
-    status: HttpStatus.CONFLICT, 
-    description: 'Username/email already exists' 
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Username/email already exists',
   })
   register(@Body() data: RegisterDto) {
     return this.authService.register(data)
@@ -53,28 +60,28 @@ export class AuthController {
   @Post('login')
   @ApiOperation({ summary: 'Login with username/email and password' })
   @ApiBody({ type: LoginDto })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
+  @ApiResponse({
+    status: HttpStatus.OK,
     description: 'Successfully logged in',
     schema: {
       type: 'object',
       properties: {
         accessToken: { type: 'string' },
         refreshToken: { type: 'string' },
-        user: { 
+        user: {
           type: 'object',
           properties: {
             id: { type: 'string' },
             email: { type: 'string' },
             username: { type: 'string' },
-          }
-        }
-      }
-    }
+          },
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: HttpStatus.UNAUTHORIZED, 
-    description: 'Invalid credentials' 
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid credentials',
   })
   login(@Body() data: LoginDto) {
     return this.authService.login(data)
@@ -84,13 +91,13 @@ export class AuthController {
   @Post('oauth/login')
   @ApiOperation({ summary: 'Login with OAuth provider' })
   @ApiBody({ type: OAuthLoginDto })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Successfully logged in with OAuth'
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successfully logged in with OAuth',
   })
-  @ApiResponse({ 
-    status: HttpStatus.BAD_REQUEST, 
-    description: 'Invalid OAuth data' 
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid OAuth data',
   })
   oauthLogin(@Body() data: OAuthLoginDto) {
     return this.authService.oauthLogin(data)
@@ -99,22 +106,22 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token' })
-  @ApiBody({ 
+  @ApiBody({
     schema: {
       type: 'object',
       required: ['refreshToken'],
       properties: {
-        refreshToken: { type: 'string' }
-      }
-    }
+        refreshToken: { type: 'string' },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'New access token generated' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'New access token generated',
   })
-  @ApiResponse({ 
-    status: HttpStatus.UNAUTHORIZED, 
-    description: 'Invalid refresh token' 
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid refresh token',
   })
   refresh(@Body('refreshToken') refreshToken: string) {
     if (!refreshToken) {
@@ -127,22 +134,22 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Logout user' })
-  @ApiBody({ 
+  @ApiBody({
     schema: {
       type: 'object',
       required: ['refreshToken'],
       properties: {
-        refreshToken: { type: 'string' }
-      }
-    }
+        refreshToken: { type: 'string' },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Successfully logged out' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successfully logged out',
   })
-  @ApiResponse({ 
-    status: HttpStatus.UNAUTHORIZED, 
-    description: 'Invalid token' 
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid token',
   })
   async logout(@Body('refreshToken') refreshToken: string) {
     if (!refreshToken) {
@@ -156,9 +163,9 @@ export class AuthController {
   @Post('password/reset-request')
   @ApiOperation({ summary: 'Request password reset' })
   @ApiBody({ type: RequestPasswordResetDto })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Reset email sent if account exists' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Reset email sent if account exists',
   })
   async requestPasswordReset(@Body() data: RequestPasswordResetDto) {
     await this.authService.requestPasswordReset(data)
@@ -169,13 +176,13 @@ export class AuthController {
   @Post('password/reset')
   @ApiOperation({ summary: 'Reset password with token' })
   @ApiBody({ type: ResetPasswordDto })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Password successfully reset' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Password successfully reset',
   })
-  @ApiResponse({ 
-    status: HttpStatus.BAD_REQUEST, 
-    description: 'Invalid or expired token' 
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid or expired token',
   })
   async resetPassword(@Body() data: ResetPasswordDto) {
     await this.authService.resetPassword(data)
@@ -186,29 +193,38 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
+  @ApiResponse({
+    status: HttpStatus.OK,
     description: 'Current user profile',
-    schema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-        email: { type: 'string' },
-        username: { type: 'string' },
-        roles: { 
-          type: 'array',
-          items: {
-            type: 'string'
-          }
-        }
-      }
+    type: AuthUserDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Not authenticated',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found',
+  })
+  async getProfile(@CurrentUser() user: AuthUser): Promise<AuthUserDto> {
+    // Fetch full user data including roles
+    const userData = await this.userRepository.findById(user.id)
+    if (!userData) {
+      throw new NotFoundException('User not found')
     }
-  })
-  @ApiResponse({ 
-    status: HttpStatus.UNAUTHORIZED, 
-    description: 'Not authenticated' 
-  })
-  getProfile(@CurrentUser() user: AuthUser) {
-    return user
+
+    // Convert to AuthUserDto
+    return {
+      id: userData.id,
+      email: userData.email,
+      username: userData.username,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      roles: userData.roles.map((role) => role.name),
+      authType: userData.authType,
+      oauthProvider: userData.oauthProvider,
+      profile: userData.oauthProfile,
+      image: userData.image,
+    }
   }
 }

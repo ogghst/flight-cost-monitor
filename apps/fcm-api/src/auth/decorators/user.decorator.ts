@@ -1,5 +1,5 @@
+import { AuthUser } from '@fcm/shared'
 import { createParamDecorator, ExecutionContext } from '@nestjs/common'
-import type { AuthUser } from '../auth.types.js'
 
 export const CurrentUser = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): AuthUser => {

@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
 import { userRepository, refreshTokenRepository } from '@fcm/storage'
 import { AuthController } from './controllers/auth.controller.js'
+import { OAuthController } from './controllers/oauth.controller.js'
 import { JwtAuthGuard } from './guards/jwt.guard.js'
 import { RolesGuard } from './guards/roles.guard.js'
 import { AuthService } from './services/auth.service.js'
@@ -24,7 +25,7 @@ import { UsersModule } from '@/users/users.module.js'
       }),
       inject: [ConfigService],
     }),
-    UsersModule, // Import UsersModule for UsersService
+    UsersModule,
   ],
   providers: [
     {
@@ -47,7 +48,7 @@ import { UsersModule } from '@/users/users.module.js'
       useClass: RolesGuard,
     },
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, OAuthController],
   exports: [AuthService, TokenService],
 })
 export class AuthModule {}

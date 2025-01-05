@@ -60,6 +60,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         roles: user.roles.map((r) => r.name),
+        authType: user.authType,
       },
     }
   }
@@ -99,6 +100,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         roles: user.roles.map((r) => r.name),
+        authType: user.authType,
       },
     }
   }
@@ -152,6 +154,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         roles: user.roles.map((r) => r.name),
+        authType: user.authType,
       },
     }
   }
@@ -186,6 +189,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         roles: user.roles.map((r) => r.name),
+        authType: user.authType,
       },
     }
   }
