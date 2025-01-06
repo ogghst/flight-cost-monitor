@@ -8,8 +8,8 @@ import type {
 } from '@fcm/shared/amadeus/clients/flight-offer'
 import { FlightOfferClient } from '@fcm/shared/amadeus/clients/flight-offer'
 import type {
+  FlightOfferAdvancedSearchRequest,
   FlightOffersAdvancedResponse,
-  FlightOffersAdvancedSearchRequest,
 } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
 import { FlightOfferAdvancedClient } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
 
@@ -38,7 +38,7 @@ export async function searchFlightsAction(
 }
 
 export async function searchFlightsAdvancedAction(
-  params: FlightOffersAdvancedSearchRequest
+  params: FlightOfferAdvancedSearchRequest
 ): Promise<FlightOffersAdvancedResponse> {
   try {
     return await makeServerRequest<FlightOffersAdvancedResponse>(
@@ -68,7 +68,7 @@ export async function searchFlightsActionLocal(
 }
 
 export async function searchFlightsAdvancedActionLocal(
-  params: FlightOffersAdvancedSearchRequest
+  params: FlightOfferAdvancedSearchRequest
 ): Promise<FlightOffersAdvancedResponse> {
   try {
     return await flightClients.advanced.searchFlightOffersAdvanced(params)

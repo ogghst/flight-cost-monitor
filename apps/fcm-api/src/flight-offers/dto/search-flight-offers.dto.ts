@@ -1,5 +1,5 @@
+import { TravelClass } from '@fcm/shared'
 import { FlightOfferSimpleSearchRequest } from '@fcm/shared/amadeus/clients/flight-offer'
-import { TravelClass } from '@fcm/shared/amadeus/types'
 import { ApiProperty } from '@nestjs/swagger'
 import {
   IsArray,

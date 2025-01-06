@@ -1,7 +1,7 @@
 import { BaseClient } from '../base.js'
 import {
+  FlightOfferAdvancedSearchRequest,
   FlightOffersAdvancedResponse,
-  FlightOffersAdvancedSearchRequest,
 } from './flight-offers-advanced-types.js'
 
 export class FlightOfferAdvancedClient extends BaseClient {
@@ -10,7 +10,7 @@ export class FlightOfferAdvancedClient extends BaseClient {
    * @param request Advanced search request with detailed criteria
    */
   async searchFlightOffersAdvanced(
-    request: FlightOffersAdvancedSearchRequest
+    request: FlightOfferAdvancedSearchRequest
   ): Promise<FlightOffersAdvancedResponse> {
     const headers = {
       'Content-Type': 'application/json',

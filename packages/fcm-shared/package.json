@@ -55,6 +55,10 @@
     "./user-search/types": {
       "import": "./dist/user-search/types.js",
       "types": "./dist/user-search/types.d.ts"
+    },
+    "./flight-offer-search": {
+      "import": "./dist/flight-offer-search/index.js",
+      "types": "./dist/flight-offer-search/types.d.ts"
     }
   },
   "typesVersions": {
@@ -73,6 +77,9 @@
       ],
       "user-search/types": [
         "./dist/user-search/types/types.d.ts"
+      ],
+      "/flight-offer-search": [
+        "./dist/flight-offer-search/index.d.ts"
       ]
     }
   },
@@ -80,7 +87,8 @@
     "@nestjs/mapped-types": "^2.0.6",
     "axios": "^1.7.9",
     "winston": "^3.17.0",
-    "winston-daily-rotate-file": "^5.0.0"
+    "winston-daily-rotate-file": "^5.0.0",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@fcm/eslint-config": "workspace:*",

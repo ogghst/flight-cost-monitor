@@ -30,9 +30,10 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  refreshTokens RefreshToken[]
-  roles         Role[]         @relation("UserRoles")
-  searches      UserSearch[]
+  refreshTokens      RefreshToken[]
+  roles             Role[]         @relation("UserRoles")
+  searches          UserSearch[]
+  flightOfferSearches FlightOfferSearch[]
 
   @@unique([oauthProvider, oauthProviderId])
   @@index([email])
@@ -92,6 +93,7 @@ model UserSearch {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime?
+  flightOfferSearches FlightOfferSearch[]
 
   @@index([userId])
   @@index([searchType])
@@ -106,4 +108,41 @@ model AuditLog {
   newData   String // Current state
   userId    String? // Optional: who made the change
   timestamp DateTime @default(now())
+}
+
+model FlightOfferSearch {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  searchType    String    // "SIMPLE" or "ADVANCED"
+  parameters    String    // JSON string of search parameters
+  savedSearchId String?   // Optional reference to UserSearch if this was from a saved search
+  userSearch    UserSearch? @relation(fields: [savedSearchId], references: [id])
+  status        String    // "COMPLETED", "FAILED", "PARTIAL"
+  totalResults  Int
+  results       FlightOfferResult[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  @@index([userId])
+  @@index([searchType])
+}
+
+model FlightOfferResult {
+  id                String    @id @default(cuid())
+  searchId          String
+  search           FlightOfferSearch @relation(fields: [searchId], references: [id])
+  offerId          String    // Amadeus offer ID
+  price            Decimal
+  validatingCarrier String
+  segments         String    // JSON array of flight segments
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  @@index([searchId])
+  @@index([offerId])
 }

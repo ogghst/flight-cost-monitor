@@ -9,10 +9,16 @@ import {
 import {
   FlightOfferAdvancedClient,
   FlightOffersAdvancedResponse,
-  FlightOffersAdvancedSearchRequest,
 } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
+import {
+  CreateFlightOfferSearchDto,
+  FlightOffersAdvancedSearchRequest,
+  FlightOfferSearchDto,
+  FlightOfferSearchParams,
+} from '@fcm/shared/flight-offer-search'
 
 import type { Logger } from '@fcm/shared/logging'
+import { flightOfferSearchRepository } from '@fcm/storage/repositories'
 import {
   BadRequestException,
   Injectable,
@@ -33,20 +39,17 @@ export class FlightOffersService {
     @InjectLogger() private readonly logger: Logger,
     private readonly configService: ConfigService
   ) {
-    // Create client configuration using separate URLs for API and authentication
     this.clientConfig = new ClientConfig({
       clientId: process.env.AMADEUS_CLIENT_ID!,
       clientSecret: process.env.AMADEUS_CLIENT_SECRET!,
-      baseUrl: process.env.AMADEUS_FLIGHT_OFFER_API_URL!, // For API calls
-      authUrl: process.env.AMADEUS_AUTH_URL!, // For authentication only
+      baseUrl: process.env.AMADEUS_FLIGHT_OFFER_API_URL!,
+      authUrl: process.env.AMADEUS_AUTH_URL!,
       timeout: parseInt(process.env.AMADEUS_TIMEOUT!) || 60000,
     })
 
-    // Initialize the clients with the new configuration
     this.flightClient = new FlightOfferClient(this.clientConfig)
     this.flightAdvancedClient = new FlightOfferAdvancedClient(this.clientConfig)
 
-    // Log the configuration (without sensitive data) for debugging
     this.logger.debug('Initialized Amadeus clients', {
       baseUrl: process.env.AMADEUS_FLIGHT_OFFER_API_URL,
       authUrl: process.env.AMADEUS_AUTH_URL,
@@ -54,12 +57,47 @@ export class FlightOffersService {
     })
   }
 
+  private async storeSearchResults(
+    userEmail: string,
+    searchType: 'SIMPLE' | 'ADVANCED',
+    parameters:
+      | FlightOfferSimpleSearchRequest
+      | FlightOffersAdvancedSearchRequest,
+    response: FlightOfferSimpleSearchResponse | FlightOffersAdvancedResponse,
+    savedSearchId?: string
+  ): Promise<FlightOfferSearchDto> {
+    try {
+      const createDto: CreateFlightOfferSearchDto = {
+        searchType,
+        parameters: JSON.stringify(parameters),
+        savedSearchId,
+        status: 'COMPLETED',
+        totalResults: response.data.length,
+        results: response.data.map((offer) => ({
+          offerId: offer.id,
+          price: parseFloat(offer.price.total),
+          validatingCarrier: offer.validatingAirlineCodes[0],
+          segments: offer.itineraries[0].segments,
+        })),
+        userEmail,
+      }
+
+      return await flightOfferSearchRepository.create(createDto)
+    } catch (error) {
+      this.logger.error('Failed to store search results', formatError(error))
+      throw new InternalServerErrorException('Failed to store search results')
+    }
+  }
+
   async searchFlightOffers(
-    params: FlightOfferSimpleSearchRequest
+    params: FlightOfferSimpleSearchRequest,
+    userEmail: string,
+    savedSearchId?: string
   ): Promise<FlightOfferSimpleSearchResponse> {
     try {
       this.logger.info('Starting flight offers search', {
         params,
+        userEmail,
       })
 
       const response = await this.flightClient.searchFlightOffers({
@@ -69,6 +107,15 @@ export class FlightOffersService {
       this.logger.info('Flight offers search completed', {
         count: response.data.length,
       })
+
+      // Store search results
+      await this.storeSearchResults(
+        userEmail,
+        'SIMPLE',
+        params,
+        response,
+        savedSearchId
+      )
 
       return response
     } catch (error) {
@@ -110,11 +157,14 @@ export class FlightOffersService {
   }
 
   async searchFlightOffersAdvanced(
-    params: FlightOffersAdvancedSearchRequest
+    params: FlightOffersAdvancedSearchRequest,
+    userEmail: string,
+    savedSearchId?: string
   ): Promise<FlightOffersAdvancedResponse> {
     try {
       this.logger.info('Starting advanced flight offers search', {
         params,
+        userEmail,
       })
 
       const response =
@@ -123,6 +173,15 @@ export class FlightOffersService {
       this.logger.info('Advanced flight offers search completed', {
         count: response.meta.count,
       })
+
+      // Store search results
+      await this.storeSearchResults(
+        userEmail,
+        'ADVANCED',
+        params,
+        response,
+        savedSearchId
+      )
 
       return response
     } catch (error) {
@@ -160,6 +219,44 @@ export class FlightOffersService {
         error: error instanceof Error ? error.message : 'INTERNAL_SERVER_ERROR',
         status: 500,
       })
+    }
+  }
+
+  async getUserSearchHistory(
+    userEmail: string,
+    params?: FlightOfferSearchParams
+  ): Promise<FlightOfferSearchDto[]> {
+    try {
+      return await flightOfferSearchRepository.findByUserEmail(
+        userEmail,
+        params
+      )
+    } catch (error) {
+      this.logger.error(
+        'Failed to retrieve user search history',
+        formatError(error)
+      )
+      throw new InternalServerErrorException(
+        'Failed to retrieve search history'
+      )
+    }
+  }
+
+  async getSearchById(id: string): Promise<FlightOfferSearchDto | null> {
+    try {
+      return await flightOfferSearchRepository.findById(id)
+    } catch (error) {
+      this.logger.error('Failed to retrieve search by ID', formatError(error))
+      throw new InternalServerErrorException('Failed to retrieve search')
+    }
+  }
+
+  async deleteSearch(id: string): Promise<void> {
+    try {
+      await flightOfferSearchRepository.softDelete(id)
+    } catch (error) {
+      this.logger.error('Failed to delete search', formatError(error))
+      throw new InternalServerErrorException('Failed to delete search')
     }
   }
 }

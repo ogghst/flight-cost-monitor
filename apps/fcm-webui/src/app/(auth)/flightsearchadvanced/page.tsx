@@ -3,8 +3,8 @@
 import { searchFlightsAdvancedAction } from '@/app/actions/flight-search'
 import { FlightOfferList } from '@/components/flights/FlightOfferList'
 import {
+  FlightOfferAdvancedSearchRequest,
   FlightOffersAdvancedResponse,
-  FlightOffersAdvancedSearchRequest,
 } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
 import {
   Alert,
@@ -46,7 +46,7 @@ export default function FlightSearchAdvancedPage() {
     error,
     data: searchResponse,
   } = useMutation({
-    mutationFn: async (searchParams: FlightOffersAdvancedSearchRequest) => {
+    mutationFn: async (searchParams: FlightOfferAdvancedSearchRequest) => {
       const cacheKey = JSON.stringify(searchParams)
       const cachedData = queryClient.getQueryData<FlightOffersAdvancedResponse>(
         ['advancedFlightSearch', cacheKey]
@@ -68,13 +68,13 @@ export default function FlightSearchAdvancedPage() {
 
   // Debounced submit handler
   const debouncedSubmit = useCallback(
-    debounce((data: FlightOffersAdvancedSearchRequest) => {
+    debounce((data: FlightOfferAdvancedSearchRequest) => {
       searchFlights(data)
     }, DEBOUNCE_TIME),
     [searchFlights]
   )
 
-  const handleSubmit = (data: FlightOffersAdvancedSearchRequest) => {
+  const handleSubmit = (data: FlightOfferAdvancedSearchRequest) => {
     debouncedSubmit(data)
   }
 
