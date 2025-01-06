@@ -31,13 +31,13 @@ model User {
   deletedAt DateTime?
 
   refreshTokens RefreshToken[]
-  roles        Role[]         @relation("UserRoles")
-  searches     UserSearch[]
+  roles         Role[]         @relation("UserRoles")
+  searches      UserSearch[]
 
   @@unique([oauthProvider, oauthProviderId])
   @@index([email])
   @@index([username])
-} 
+}
 
 model RefreshToken {
   id               String   @id @default(cuid())
@@ -81,18 +81,29 @@ model Permission {
 }
 
 model UserSearch {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
-  searchType  String    // "FLIGHT", "HOTEL", etc.
-  parameters  String    // JSON string of search parameters
-  name        String?   // Optional saved search name
-  favorite    Boolean   @default(false)
-  lastUsed    DateTime  @default(now())
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  searchType String // "FLIGHT", "HOTEL", etc.
+  parameters String // JSON string of search parameters
+  name       String? // Optional saved search name
+  favorite   Boolean   @default(false)
+  lastUsed   DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
 
   @@index([userId])
   @@index([searchType])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  tableName String
+  recordId  String
+  action    String // INSERT, UPDATE, DELETE
+  oldData   String? // For updates, store previous state
+  newData   String // Current state
+  userId    String? // Optional: who made the change
+  timestamp DateTime @default(now())
 }

@@ -4,16 +4,21 @@ import type {
   UpdateUserSearchDto,
   UserSearchDto,
 } from '@fcm/shared/user-search/types'
-import { Prisma, type UserSearch } from '@prisma/client'
+import { Prisma } from '@prisma/client'
+import type { ITXClientDenyList } from '@prisma/client/runtime/library'
 import { DatabaseError } from '../schema/types.js'
-import { fcmPrismaClient } from './prisma.js'
+import {
+  fcmPrismaClient,
+  type ExtendedPrismaClient,
+  type ExtendedTransactionClient,
+} from './prisma.js'
 
 export class UserSearchRepository {
-  private prisma = fcmPrismaClient
+  private prisma: ExtendedPrismaClient = fcmPrismaClient
 
   async findById(
     id: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<UserSearchDto | null> {
     const client = tx || this.prisma
     try {
@@ -38,7 +43,7 @@ export class UserSearchRepository {
   async findByUserEmail(
     userEmail: string,
     searchType?: SearchType,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<UserSearchDto[]> {
     const client = tx || this.prisma
     try {
@@ -67,7 +72,7 @@ export class UserSearchRepository {
 
   async findFavorites(
     userEmail: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<UserSearchDto[]> {
     const client = tx || this.prisma
     try {
@@ -96,7 +101,7 @@ export class UserSearchRepository {
 
   async create(
     data: CreateUserSearchDto,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
@@ -133,7 +138,7 @@ export class UserSearchRepository {
   async update(
     id: string,
     data: UpdateUserSearchDto,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
@@ -161,7 +166,7 @@ export class UserSearchRepository {
 
   async updateLastUsed(
     id: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
@@ -191,7 +196,7 @@ export class UserSearchRepository {
 
   async toggleFavorite(
     id: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
@@ -225,7 +230,7 @@ export class UserSearchRepository {
 
   async delete(
     id: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
@@ -252,7 +257,7 @@ export class UserSearchRepository {
 
   async softDelete(
     id: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
@@ -282,7 +287,7 @@ export class UserSearchRepository {
 
   async restore(
     id: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
@@ -313,7 +318,7 @@ export class UserSearchRepository {
   async deleteOldSearches(
     userEmail: string,
     olderThan: Date,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ) {
     const client = tx || this.prisma
     try {
@@ -334,10 +339,12 @@ export class UserSearchRepository {
   }
 
   async transaction<T>(
-    callback: (tx: Prisma.TransactionClient) => Promise<T>
+    callback: (
+      tx: Omit<ExtendedTransactionClient, ITXClientDenyList>
+    ) => Promise<T>
   ): Promise<T> {
     try {
-      return await this.prisma.$transaction(callback)
+      return (await this.prisma.$transaction(callback)) as T
     } catch (error) {
       throw new DatabaseError('Transaction failed', error)
     }

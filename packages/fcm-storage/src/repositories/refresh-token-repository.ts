@@ -1,10 +1,10 @@
-import { Prisma } from '@prisma/client'
+import type { ITXClientDenyList } from '@prisma/client/runtime/library'
 import type { RefreshToken } from '../schema/refresh-token.js'
 import { DatabaseError } from '../schema/types.js'
-import { fcmPrismaClient } from './prisma.js'
+import { fcmPrismaClient, type ExtendedPrismaClient, type ExtendedTransactionClient } from './prisma.js'
 
 export class RefreshTokenRepository {
-  private prisma = fcmPrismaClient
+  private prisma: ExtendedPrismaClient = fcmPrismaClient
 
   private mapPrismaToRefreshToken(prismaToken: any): RefreshToken {
     const token = {
@@ -33,7 +33,7 @@ export class RefreshTokenRepository {
 
   async create(
     data: Omit<RefreshToken, 'id' | 'createdAt' | 'updatedAt'>,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<RefreshToken> {
     const client = tx || this.prisma
     try {
@@ -47,7 +47,7 @@ export class RefreshTokenRepository {
 
   async findByToken(
     token: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<RefreshToken | null> {
     const client = tx || this.prisma
     try {
@@ -65,7 +65,7 @@ export class RefreshTokenRepository {
 
   async findByUserId(
     userId: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<RefreshToken[]> {
     const client = tx || this.prisma
     try {
@@ -81,7 +81,7 @@ export class RefreshTokenRepository {
   async revokeToken(
     token: string,
     replacedByToken?: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<RefreshToken> {
     const client = tx || this.prisma
     try {
@@ -100,7 +100,7 @@ export class RefreshTokenRepository {
 
   async revokeTokenFamily(
     family: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<void> {
     const client = tx || this.prisma
     try {
@@ -113,7 +113,7 @@ export class RefreshTokenRepository {
     }
   }
 
-  async deleteExpired(tx?: Prisma.TransactionClient): Promise<number> {
+  async deleteExpired(tx?: ExtendedTransactionClient): Promise<number> {
     const client = tx || this.prisma
     try {
       const result = await client.refreshToken.deleteMany({
@@ -129,7 +129,7 @@ export class RefreshTokenRepository {
 
   async findValidToken(
     token: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<RefreshToken | null> {
     const client = tx || this.prisma
     try {
@@ -152,6 +152,18 @@ export class RefreshTokenRepository {
         : null
     } catch (error) {
       throw new DatabaseError('Failed to find valid token', error)
+    }
+  }
+
+  async transaction<T>(
+    callback: (
+      tx: Omit<ExtendedTransactionClient, ITXClientDenyList>
+    ) => Promise<T>
+  ): Promise<T> {
+    try {
+      return (await this.prisma.$transaction(callback)) as T
+    } catch (error) {
+      throw new DatabaseError('Transaction failed', error)
     }
   }
 }

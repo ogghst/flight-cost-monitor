@@ -78,7 +78,9 @@
   },
   "dependencies": {
     "@nestjs/mapped-types": "^2.0.6",
-    "axios": "^1.7.9"
+    "axios": "^1.7.9",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "@fcm/eslint-config": "workspace:*",

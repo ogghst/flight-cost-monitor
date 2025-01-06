@@ -1,18 +1,23 @@
 import { Prisma } from '@prisma/client'
+import type { ITXClientDenyList } from '@prisma/client/runtime/library'
 import type {
   CreatePermission,
   Permission,
   UpdatePermission,
 } from '../schema/permission.js'
 import { DatabaseError } from '../schema/types.js'
-import { fcmPrismaClient } from './prisma.js'
+import {
+  fcmPrismaClient,
+  type ExtendedPrismaClient,
+  type ExtendedTransactionClient,
+} from './prisma.js'
 
 export class PermissionRepository {
-  private prisma = fcmPrismaClient
+  private prisma: ExtendedPrismaClient = fcmPrismaClient
 
   async findById(
     id: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<Permission | null> {
     const client = tx || this.prisma
     try {
@@ -26,7 +31,7 @@ export class PermissionRepository {
 
   async findByName(
     name: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<Permission | null> {
     const client = tx || this.prisma
     try {
@@ -51,7 +56,7 @@ export class PermissionRepository {
 
   async create(
     data: CreatePermission,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<Permission | null> {
     const client = tx || this.prisma
     try {
@@ -75,7 +80,7 @@ export class PermissionRepository {
   async update(
     id: string,
     data: UpdatePermission,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<Permission | null> {
     const client = tx || this.prisma
     try {
@@ -102,7 +107,7 @@ export class PermissionRepository {
 
   async delete(
     id: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<Permission | null> {
     const client = tx || this.prisma
     try {
@@ -122,7 +127,7 @@ export class PermissionRepository {
   async assignToRole(
     permissionId: string,
     roleId: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<Permission | null> {
     const client = tx || this.prisma
     try {
@@ -154,7 +159,7 @@ export class PermissionRepository {
   async removeFromRole(
     permissionId: string,
     roleId: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<Permission | null> {
     const client = tx || this.prisma
     try {
@@ -185,7 +190,7 @@ export class PermissionRepository {
 
   async getRolePermissions(
     roleId: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<Permission[] | null> {
     const client = tx || this.prisma
     try {
@@ -204,7 +209,7 @@ export class PermissionRepository {
   async assignMultipleToRole(
     permissionIds: string[],
     roleId: string,
-    tx?: Prisma.TransactionClient
+    tx?: ExtendedTransactionClient
   ): Promise<Permission | null> {
     const client = tx || this.prisma
     try {
@@ -237,10 +242,12 @@ export class PermissionRepository {
   }
 
   async transaction<T>(
-    callback: (tx: Prisma.TransactionClient) => Promise<T>
+    callback: (
+      tx: Omit<ExtendedTransactionClient, ITXClientDenyList>
+    ) => Promise<T>
   ): Promise<T> {
     try {
-      return await this.prisma.$transaction(callback)
+      return (await this.prisma.$transaction(callback)) as T
     } catch (error) {
       throw new DatabaseError('Transaction failed', error)
     }

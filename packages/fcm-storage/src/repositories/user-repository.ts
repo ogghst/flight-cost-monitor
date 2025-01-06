@@ -1,5 +1,6 @@
 import { AuthType, OAuthProvider } from '@fcm/shared/auth'
 import { Prisma, type User as PrismaUser } from '@prisma/client'
+import type { ITXClientDenyList } from '@prisma/client/runtime/library'
 import { DatabaseError } from '../schema/types.js'
 import type {
   CreateCredentialsUser,
@@ -7,10 +8,10 @@ import type {
 } from '../schema/user/create.js'
 import type { UserWithRelations } from '../schema/user/types.js'
 import type { UpdateUser } from '../schema/user/update.js'
-import { fcmPrismaClient } from './prisma.js'
+import { fcmPrismaClient, type ExtendedPrismaClient, type ExtendedTransactionClient } from './prisma.js'
 
 export class UserRepository {
-  private prisma = fcmPrismaClient
+  private prisma: ExtendedPrismaClient = fcmPrismaClient
 
   private mapPrismaToUser(
     prismaUser: PrismaUser & { refreshTokens?: any[] }
@@ -409,10 +410,12 @@ export class UserRepository {
   }
 
   async transaction<T>(
-    callback: (tx: Prisma.TransactionClient) => Promise<T>
+    callback: (
+      tx: Omit<ExtendedTransactionClient, ITXClientDenyList>
+    ) => Promise<T>
   ): Promise<T> {
     try {
-      return await this.prisma.$transaction(callback)
+      return (await this.prisma.$transaction(callback)) as T
     } catch (error) {
       throw new DatabaseError('Transaction failed', error)
     }

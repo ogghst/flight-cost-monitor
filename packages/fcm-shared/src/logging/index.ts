@@ -1,3 +1,5 @@
 export * from './base-logger.js'
 export * from './console-logger.js'
+export * from './fcm-winston-logger.js'
+export * from './logging.config.js'
 export * from './types.js'

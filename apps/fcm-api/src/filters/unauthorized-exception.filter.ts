@@ -1,22 +1,18 @@
+import { FcmWinstonLogger } from '@fcm/shared/logging'
 import {
-  ExceptionFilter,
-  Catch,
   ArgumentsHost,
+  Catch,
+  ExceptionFilter,
   UnauthorizedException,
-  Inject,
 } from '@nestjs/common'
 import { Request, Response } from 'express'
-import { FcmWinstonLogger } from '../logging/fcm-winston-logger.js'
 
 @Catch(UnauthorizedException)
 export class UnauthorizedExceptionFilter implements ExceptionFilter {
   private readonly logger: FcmWinstonLogger
 
   constructor() {
-    this.logger = new FcmWinstonLogger({
-      context: 'Authorization',
-      minLevel: 'warn'
-    })
+    this.logger = FcmWinstonLogger.getInstance()
   }
 
   catch(exception: UnauthorizedException, host: ArgumentsHost) {
@@ -26,7 +22,10 @@ export class UnauthorizedExceptionFilter implements ExceptionFilter {
 
     // Get the error message and ensure it's a string
     const errorMessage = exception.message || 'Unauthorized'
-    const message = typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : String(errorMessage)
+    const message =
+      typeof errorMessage === 'object'
+        ? JSON.stringify(errorMessage)
+        : String(errorMessage)
 
     // Log unauthorized attempt using FcmWinstonLogger
     this.logger.warn('Unauthorized Request', {
@@ -36,34 +35,39 @@ export class UnauthorizedExceptionFilter implements ExceptionFilter {
       query: request.query,
       body: this.sanitizeBody(request.body),
       error: message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     })
 
     response.status(401).json({
       statusCode: 401,
       timestamp: new Date().toISOString(),
       path: request.url,
-      message: 'Unauthorized access'
+      message: 'Unauthorized access',
     })
   }
 
-  private sanitizeHeaders(headers: Record<string, unknown>): Record<string, unknown> {
+  private sanitizeHeaders(
+    headers: Record<string, unknown>
+  ): Record<string, unknown> {
     const sensitiveHeaders = ['authorization', 'cookie', 'set-cookie']
-    return Object.keys(headers).reduce((acc, key) => {
-      if (sensitiveHeaders.includes(key.toLowerCase())) {
-        acc[key] = '[REDACTED]'
-      } else {
-        acc[key] = headers[key]
-      }
-      return acc
-    }, {} as Record<string, unknown>)
+    return Object.keys(headers).reduce(
+      (acc, key) => {
+        if (sensitiveHeaders.includes(key.toLowerCase())) {
+          acc[key] = '[REDACTED]'
+        } else {
+          acc[key] = headers[key]
+        }
+        return acc
+      },
+      {} as Record<string, unknown>
+    )
   }
 
   private sanitizeBody(body: any): any {
     if (!body) return body
     const sanitized = { ...body }
     const sensitiveFields = ['password', 'token', 'refreshToken', 'secret']
-    
+
     for (const field of sensitiveFields) {
       if (field in sanitized) {
         sanitized[field] = '[REDACTED]'
