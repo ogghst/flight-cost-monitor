@@ -1,5 +1,6 @@
 import { InjectLogger } from '@/logging/decorators/inject-logger.decorator.js'
 import { formatError } from '@/utils/error.utils.js'
+import { SearchType } from '@fcm/shared'
 import { AmadeusApiError, ClientConfig } from '@fcm/shared/amadeus/clients'
 import {
   FlightOfferClient,
@@ -59,7 +60,7 @@ export class FlightOffersService {
 
   private async storeSearchResults(
     userEmail: string,
-    searchType: 'SIMPLE' | 'ADVANCED',
+    searchType: SearchType,
     parameters:
       | FlightOfferSimpleSearchRequest
       | FlightOffersAdvancedSearchRequest,
@@ -69,15 +70,19 @@ export class FlightOffersService {
     try {
       const createDto: CreateFlightOfferSearchDto = {
         searchType,
-        parameters: JSON.stringify(parameters),
+        parameters,
         savedSearchId,
         status: 'COMPLETED',
         totalResults: response.data.length,
         results: response.data.map((offer) => ({
+          id: undefined, // This will be set by the database
+          searchId: undefined, // This will be set by the database
           offerId: offer.id,
           price: parseFloat(offer.price.total),
           validatingCarrier: offer.validatingAirlineCodes[0],
           segments: offer.itineraries[0].segments,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         })),
         userEmail,
       }
@@ -111,7 +116,7 @@ export class FlightOffersService {
       // Store search results
       await this.storeSearchResults(
         userEmail,
-        'SIMPLE',
+        SearchType.SIMPLE,
         params,
         response,
         savedSearchId
@@ -177,7 +182,7 @@ export class FlightOffersService {
       // Store search results
       await this.storeSearchResults(
         userEmail,
-        'ADVANCED',
+        SearchType.ADVANCED,
         params,
         response,
         savedSearchId

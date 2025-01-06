@@ -87,6 +87,12 @@ export class FlightOfferSearchRepository {
           searchType: data.searchType,
           parameters: JSON.stringify(data.parameters),
           status: '',
+          results: {
+            create: data.results.map((result) => ({
+              ...result,
+              segments: JSON.stringify(result.segments),
+            })),
+          },
           totalResults: 0,
         },
         include: {
@@ -113,6 +119,15 @@ export class FlightOfferSearchRepository {
           parameters: JSON.stringify(data.parameters),
           status: data.status,
           totalResults: data.totalResults,
+          results: {
+            update: data.results.map((result) => ({
+              where: { id: result.id },
+              data: {
+                ...result,
+                segments: JSON.stringify(result.segments),
+              },
+            })),
+          },
         },
         include: {
           results: {

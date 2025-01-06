@@ -5,6 +5,7 @@ import axios, { AxiosRequestConfig } from 'axios'
 import { headers } from 'next/headers'
 
 const API_URL = process.env.API_URL || 'http://localhost:3001'
+const API_TIMEOUT = Number(process.env.API_TIMEOUT) || 60000
 
 export async function createServerAxiosInstance() {
   const session = await auth()
@@ -20,7 +21,7 @@ export async function createServerAxiosInstance() {
       Cookie: (await headersList).get('cookie') || '',
     },
     withCredentials: true,
-    timeout: 10000,
+    timeout: API_TIMEOUT,
   })
 }
 
@@ -36,9 +37,9 @@ export async function makeServerRequest<T>(
       method,
       url,
       ...(data && { data }),
-      ...(params && { params })
+      ...(params && { params }),
     }
-    
+
     const response = await axiosInstance.request<T>(config)
     return response.data
   } catch (error) {

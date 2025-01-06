@@ -18,11 +18,11 @@ export type FlightOfferSearchStatus = 'COMPLETED' | 'FAILED' | 'PARTIAL'
 export interface CreateFlightOfferSearchDto {
   userEmail: string
   searchType: SearchType
-  parameters: string
+  parameters: FlightOfferSimpleSearchRequest | FlightOfferAdvancedSearchRequest
   savedSearchId?: string
   status: FlightOfferSearchStatus
   totalResults: number
-  results: CreateFlightOfferResultDto[]
+  results: FlightOfferResultDto[]
 }
 
 export interface CreateFlightOfferResultDto {
@@ -36,6 +36,7 @@ export interface UpdateFlightOfferSearchDto {
   status?: FlightOfferSearchStatus
   parameters?: FlightOfferSimpleSearchRequest | FlightOfferAdvancedSearchRequest
   totalResults?: number
+  results: FlightOfferResultDto[]
 }
 
 export interface FlightOfferResultDto {

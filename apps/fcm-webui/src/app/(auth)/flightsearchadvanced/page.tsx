@@ -22,7 +22,7 @@ import { FlightSearchAdvancedForm } from './components/FlightSearchAdvancedForm'
 const DEBOUNCE_TIME = 300 // 300ms
 
 // Configure axios once
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+const API_URL = process.env.API_URL || 'http://localhost:3001'
 axios.defaults.baseURL = API_URL
 
 interface Warning {
