@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useSearchForm } from '@/components/context/SearchFormContext'
 import {
   FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES,
   FlightOfferSimpleSearchRequest,
 } from '@fcm/shared/amadeus/clients/flight-offer'
 import { TravelClass } from '@fcm/shared/amadeus/types'
+import { SearchType } from '@fcm/shared/auth'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Box,
@@ -20,9 +21,11 @@ import {
 } from '@mui/material'
 import { DatePicker } from '@mui/x-date-pickers'
 import dayjs from 'dayjs'
-import { Controller, useForm } from 'react-hook-form'
+import { useEffect } from 'react'
+import { Controller, useForm, useFormState } from 'react-hook-form'
 import { z } from 'zod'
 
+// Schema to validate the flight search form
 const flightSearchSchema = z.object({
   originLocationCode: z
     .string()
@@ -32,8 +35,8 @@ const flightSearchSchema = z.object({
     .string()
     .length(3, 'Airport code must be exactly 3 characters')
     .toUpperCase(),
-  departureDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
-  returnDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
+  departureDate: z.string(), //.regex(/^\\d{4}-\\d{2}-\\d{2}$/, 'Invalid date format'),
+  returnDate: z.string(), //.regex(/^\\d{4}-\\d{2}-\\d{2}$/, 'Invalid date format'),
   adults: z
     .number()
     .int('Must be a whole number')
@@ -73,32 +76,105 @@ type FlightSearchFormProps = {
   onSubmit: (data: FlightOfferSimpleSearchRequest) => void
   initialValues?: FlightOfferSimpleSearchRequest
   isLoading?: boolean
+  isFieldsDisabled?: boolean
 }
 
 export function FlightSearchForm({
   onSubmit,
   initialValues = FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES,
   isLoading = false,
+  isFieldsDisabled = false,
 }: FlightSearchFormProps) {
-  const {
+  const { currentSearch, setCurrentSearch } = useSearchForm()
+
+  // Parse the current search parameters if they exist
+  const getInitialValues = () => {
+    if (currentSearch?.parameters) {
+      try {
+        return JSON.parse(currentSearch.parameters)
+      } catch {
+        return initialValues
+      }
+    }
+    return initialValues
+  }
+
+  const { control, handleSubmit, reset, getValues } =
+    useForm<FlightOfferSimpleSearchRequest>({
+      resolver: zodResolver(flightSearchSchema),
+      defaultValues: getInitialValues(),
+    })
+
+  const { errors, dirtyFields } = useFormState({
     control,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<FlightOfferSimpleSearchRequest>({
-    resolver: zodResolver(flightSearchSchema),
-    defaultValues: initialValues,
   })
 
+  // Update context when form fields change
   useEffect(() => {
-    reset(initialValues)
-  }, [reset, initialValues])
+    if (Object.keys(dirtyFields).length > 0) {
+      const formValues = getValues()
+
+      if (currentSearch) {
+        setCurrentSearch({
+          ...currentSearch,
+          parameters: JSON.stringify(formValues),
+        })
+      } else {
+        setCurrentSearch({
+          id: '',
+          name: 'Untitled Search',
+          searchType: SearchType.SIMPLE,
+          parameters: JSON.stringify(formValues),
+          userEmail: '',
+          createdAt: new Date(),
+          lastUsed: new Date(),
+          updatedAt: new Date(),
+          favorite: false,
+        })
+      }
+    }
+  }, [dirtyFields, getValues, currentSearch, setCurrentSearch])
+
+  // Reset form when initialValues or currentSearch changes
+  useEffect(() => {
+    const newValues = getInitialValues()
+    reset(newValues)
+  }, [reset, initialValues, currentSearch])
+
+  const handleFormSubmit = (data: FlightOfferSimpleSearchRequest) => {
+    if (currentSearch) {
+      setCurrentSearch({
+        ...currentSearch,
+        parameters: JSON.stringify(data),
+        lastUsed: new Date(),
+        updatedAt: new Date(),
+      })
+    } else {
+      setCurrentSearch({
+        id: '',
+        name: 'Untitled Search',
+        searchType: SearchType.SIMPLE,
+        parameters: JSON.stringify(data),
+        userEmail: '',
+        createdAt: new Date(),
+        lastUsed: new Date(),
+        updatedAt: new Date(),
+        favorite: false,
+      })
+    }
+
+    onSubmit(data)
+  }
 
   return (
     <Card>
       <CardContent>
-        <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <Box
+          component="form"
+          onSubmit={handleSubmit(handleFormSubmit)}
+          noValidate>
           <Stack spacing={3}>
+            {/* Location Selection */}
             <Box
               display="grid"
               gridTemplateColumns={{
@@ -112,6 +188,7 @@ export function FlightSearchForm({
                 render={({ field }) => (
                   <TextField
                     {...field}
+                    disabled={isFieldsDisabled || isLoading}
                     fullWidth
                     label="Origin Airport"
                     error={!!errors.originLocationCode}
@@ -130,6 +207,7 @@ export function FlightSearchForm({
                 render={({ field }) => (
                   <TextField
                     {...field}
+                    disabled={isFieldsDisabled || isLoading}
                     fullWidth
                     label="Destination Airport"
                     error={!!errors.destinationLocationCode}
@@ -143,6 +221,7 @@ export function FlightSearchForm({
               />
             </Box>
 
+            {/* Dates */}
             <Box
               display="grid"
               gridTemplateColumns={{
@@ -156,10 +235,12 @@ export function FlightSearchForm({
                 render={({ field }) => (
                   <DatePicker
                     {...field}
+                    disabled={isFieldsDisabled || isLoading}
                     value={dayjs(field.value)}
                     label="Departure Date"
                     slotProps={{
                       textField: {
+                        disabled: isFieldsDisabled || isLoading,
                         fullWidth: true,
                         error: !!errors.departureDate,
                         helperText: errors.departureDate?.message,
@@ -180,11 +261,13 @@ export function FlightSearchForm({
                 render={({ field }) => (
                   <DatePicker
                     {...field}
+                    disabled={isFieldsDisabled || isLoading}
                     value={dayjs(field.value)}
                     label="Return Date"
                     slotProps={{
                       textField: {
                         fullWidth: true,
+                        disabled: isFieldsDisabled || isLoading,
                         error: !!errors.returnDate,
                         helperText: errors.returnDate?.message,
                       },
@@ -199,6 +282,7 @@ export function FlightSearchForm({
               />
             </Box>
 
+            {/* Passenger Information */}
             <Box
               display="grid"
               gridTemplateColumns={{
@@ -212,6 +296,7 @@ export function FlightSearchForm({
                 render={({ field }) => (
                   <TextField
                     {...field}
+                    disabled={isFieldsDisabled || isLoading}
                     fullWidth
                     type="number"
                     label="Adults"
@@ -228,6 +313,7 @@ export function FlightSearchForm({
                 render={({ field }) => (
                   <TextField
                     {...field}
+                    disabled={isFieldsDisabled || isLoading}
                     fullWidth
                     type="number"
                     label="Children"
@@ -244,6 +330,7 @@ export function FlightSearchForm({
                 render={({ field }) => (
                   <TextField
                     {...field}
+                    disabled={isFieldsDisabled || isLoading}
                     fullWidth
                     type="number"
                     label="Infants (under 2)"
@@ -258,6 +345,7 @@ export function FlightSearchForm({
               />
             </Box>
 
+            {/* Travel Class and Currency */}
             <Box
               display="grid"
               gridTemplateColumns={{
@@ -271,6 +359,7 @@ export function FlightSearchForm({
                 render={({ field }) => (
                   <TextField
                     {...field}
+                    disabled={isFieldsDisabled || isLoading}
                     select
                     fullWidth
                     label="Travel Class"
@@ -294,6 +383,7 @@ export function FlightSearchForm({
                 render={({ field }) => (
                   <TextField
                     {...field}
+                    disabled={isFieldsDisabled || isLoading}
                     fullWidth
                     label="Currency Code"
                     error={!!errors.currencyCode}
@@ -307,52 +397,7 @@ export function FlightSearchForm({
               />
             </Box>
 
-            <Box
-              display="grid"
-              gridTemplateColumns={{
-                xs: '1fr',
-                sm: '1fr 1fr',
-              }}
-              gap={3}>
-              <Controller
-                name="includedAirlineCodes"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    fullWidth
-                    label="Included Airlines"
-                    error={!!errors.includedAirlineCodes}
-                    helperText={
-                      errors.includedAirlineCodes?.message ||
-                      'Comma-separated IATA codes'
-                    }
-                    placeholder="AA,BA,LH"
-                    onChange={(e) => field.onChange(e.target.value.split(','))}
-                  />
-                )}
-              />
-
-              <Controller
-                name="excludedAirlineCodes"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    fullWidth
-                    label="Excluded Airlines"
-                    error={!!errors.excludedAirlineCodes}
-                    helperText={
-                      errors.excludedAirlineCodes?.message ||
-                      'Comma-separated IATA codes'
-                    }
-                    placeholder="FR,U2,W6"
-                    onChange={(e) => field.onChange(e.target.value.split(','))}
-                  />
-                )}
-              />
-            </Box>
-
+            {/* Price and Non-Stop Flight Option */}
             <Box
               display="grid"
               gridTemplateColumns={{
@@ -366,6 +411,7 @@ export function FlightSearchForm({
                 render={({ field }) => (
                   <TextField
                     {...field}
+                    disabled={isFieldsDisabled || isLoading}
                     fullWidth
                     type="number"
                     label="Maximum Price"
@@ -385,6 +431,7 @@ export function FlightSearchForm({
                     control={
                       <Checkbox
                         checked={field.value}
+                        disabled={isFieldsDisabled || isLoading}
                         onChange={(e) => field.onChange(e.target.checked)}
                       />
                     }
@@ -394,12 +441,71 @@ export function FlightSearchForm({
               />
             </Box>
 
+            {/* Airline Preferences */}
+            <Box
+              display="grid"
+              gridTemplateColumns={{
+                xs: '1fr',
+                sm: '1fr 1fr',
+              }}
+              gap={3}>
+              <Controller
+                name="includedAirlineCodes"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    disabled={isFieldsDisabled || isLoading}
+                    fullWidth
+                    label="Included Airlines"
+                    error={!!errors.includedAirlineCodes}
+                    helperText={
+                      errors.includedAirlineCodes?.message ||
+                      'Comma-separated IATA codes'
+                    }
+                    placeholder="AA,BA,LH"
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? e.target.value.split(',') : []
+                      )
+                    }
+                  />
+                )}
+              />
+
+              <Controller
+                name="excludedAirlineCodes"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    disabled={isFieldsDisabled || isLoading}
+                    fullWidth
+                    label="Excluded Airlines"
+                    error={!!errors.excludedAirlineCodes}
+                    helperText={
+                      errors.excludedAirlineCodes?.message ||
+                      'Comma-separated IATA codes'
+                    }
+                    placeholder="FR,U2,W6"
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? e.target.value.split(',') : []
+                      )
+                    }
+                  />
+                )}
+              />
+            </Box>
+
+            {/* Results Limit */}
             <Controller
               name="maxResults"
               control={control}
               render={({ field }) => (
                 <TextField
                   {...field}
+                  disabled={isFieldsDisabled || isLoading}
                   fullWidth
                   type="number"
                   label="Max Results"
@@ -413,6 +519,7 @@ export function FlightSearchForm({
               )}
             />
 
+            {/* Search Button */}
             <Button
               type="submit"
               variant="contained"

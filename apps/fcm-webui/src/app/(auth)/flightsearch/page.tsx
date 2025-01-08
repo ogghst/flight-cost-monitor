@@ -1,9 +1,6 @@
 'use client'
 
 import { FlightOfferList } from '@/components/flights/FlightOfferList'
-import { LoadSearchButton } from '@/components/search/LoadSearchButton'
-import { SaveSearchButton } from '@/components/search/SaveSearchButton'
-
 import {
   Alert,
   Box,
@@ -16,28 +13,28 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { useCallback, useState } from 'react'
-import { FlightSearchForm } from './components/FlightSearchForm'
 
 import { searchFlightsAction } from '@/app/actions/flight-search'
+import { useSearchForm } from '@/components/context/SearchFormContext'
+import { LoadSearchButton } from '@/components/search/LoadSearchButton'
+import { SaveSearchButton } from '@/components/search/SaveSearchButton'
 import {
   FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES,
   FlightOfferSimpleSearchRequest,
   FlightOfferSimpleSearchResponse,
 } from '@fcm/shared/amadeus/clients/flight-offer'
 import { SearchType } from '@fcm/shared/auth'
+import { FlightSearchForm } from './components/FlightSearchForm'
 
 const DEBOUNCE_TIME = 300
 
 export default function FlightSearchPage() {
+  // Access our centralized search context
+  const { currentSearch } = useSearchForm()
   const queryClient = useQueryClient()
-  const [formData, setFormData] = useState<FlightOfferSimpleSearchRequest>(
-    FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES
-  )
-  const [currentSearch, setCurrentSearch] =
-    useState<FlightOfferSimpleSearchRequest>(
-      FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES
-    )
+  const [isUserSearchActive, setIsUserSearchActive] = useState(false)
 
+  // Define the search mutation with proper error handling
   const {
     mutate: searchFlightMutation,
     isPending,
@@ -46,6 +43,7 @@ export default function FlightSearchPage() {
     reset: resetSearchResults,
   } = useMutation({
     mutationFn: async (searchParams: FlightOfferSimpleSearchRequest) => {
+      // Use the search parameters as the cache key
       const cacheKey = JSON.stringify(searchParams)
       const cachedData =
         queryClient.getQueryData<FlightOfferSimpleSearchResponse>([
@@ -53,11 +51,15 @@ export default function FlightSearchPage() {
           cacheKey,
         ])
 
+      // Return cached data if available
       if (cachedData) {
         return cachedData
       }
 
-      const data = await searchFlightsAction(searchParams)
+      // Include the savedSearchId if we're using a saved search
+      const data = await searchFlightsAction(searchParams, currentSearch?.id)
+
+      // Cache the response for future use
       queryClient.setQueryData(['flightSearch', cacheKey], data)
       return data
     },
@@ -67,27 +69,32 @@ export default function FlightSearchPage() {
     },
   })
 
+  // Create a debounced submit function to prevent too many API calls
   const debouncedSubmit = useCallback(
     debounce((data: FlightOfferSimpleSearchRequest) => {
-      setCurrentSearch(data)
       searchFlightMutation(data)
     }, DEBOUNCE_TIME),
     [searchFlightMutation]
   )
 
+  // Handle form submissions
   const handleSubmit = (data: FlightOfferSimpleSearchRequest) => {
     debouncedSubmit(data)
   }
 
+  // Handle loading a saved search
   const handleLoadSearch = (criteria: FlightOfferSimpleSearchRequest) => {
-    // Clear previous search results when loading a saved search
     resetSearchResults()
-    setFormData(criteria)
+    // The search context is already updated by LoadSearchButton
+    // Just need to trigger the search with the loaded criteria
+    searchFlightMutation(criteria)
+    setIsUserSearchActive(true)
   }
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Stack spacing={3}>
+        {/* Header with search actions */}
         <Box
           sx={{
             display: 'flex',
@@ -98,11 +105,8 @@ export default function FlightSearchPage() {
             Flight Search
           </Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <SaveSearchButton
-              searchParameter={JSON.stringify(currentSearch)}
-              searchType={SearchType.SIMPLE}
-              isSimpleSearch
-            />
+            {/* Search management buttons */}
+            <SaveSearchButton searchType={SearchType.SIMPLE} />
             <LoadSearchButton
               searchType={SearchType.SIMPLE}
               onLoadSearch={handleLoadSearch}
@@ -110,6 +114,7 @@ export default function FlightSearchPage() {
           </Box>
         </Box>
 
+        {/* Loading indicator */}
         {isPending && (
           <LinearProgress
             sx={{
@@ -120,12 +125,19 @@ export default function FlightSearchPage() {
           />
         )}
 
+        {/* Search form */}
         <FlightSearchForm
           onSubmit={handleSubmit}
           isLoading={isPending}
-          initialValues={formData}
+          isFieldsDisabled={isUserSearchActive}
+          initialValues={
+            currentSearch
+              ? currentSearch.parameters
+              : FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES
+          }
         />
 
+        {/* Error display */}
         {error && (
           <Alert severity="error">
             {axios.isAxiosError(error)
@@ -134,6 +146,7 @@ export default function FlightSearchPage() {
           </Alert>
         )}
 
+        {/* Search results */}
         {searchResponse && (
           <FlightOfferList
             offers={searchResponse.data}

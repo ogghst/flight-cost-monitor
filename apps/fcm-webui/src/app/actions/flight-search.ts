@@ -20,13 +20,15 @@ const flightClients = {
 }
 
 export async function searchFlightsAction(
-  params: FlightOfferSimpleSearchRequest
+  params: FlightOfferSimpleSearchRequest,
+  savedSearchId?: string
 ): Promise<FlightOfferSimpleSearchResponse> {
   try {
     return await makeServerRequest<FlightOfferSimpleSearchResponse>(
       'POST',
       '/flight-offers/simple',
-      JSON.stringify(params)
+      JSON.stringify(params),
+      { savedSearchId }
     )
   } catch (error) {
     console.error('Simple search error:', error)

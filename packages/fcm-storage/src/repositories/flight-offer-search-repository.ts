@@ -78,11 +78,17 @@ export class FlightOfferSearchRepository {
     tx?: ExtendedTransactionClient
   ): Promise<FlightOfferSearchDto> {
     const client = tx || this.prisma
+    if (data.savedSearchId == undefined) data.savedSearchId = ''
     try {
       const created = await client.flightOfferSearch.create({
         data: {
           user: {
             connect: { email: data.userEmail },
+          },
+          userSearch: {
+            connect: {
+              id: data.savedSearchId, // This will properly set the savedSearchId field
+            },
           },
           searchType: data.searchType,
           parameters: JSON.stringify(data.parameters),
