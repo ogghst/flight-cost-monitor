@@ -5,10 +5,11 @@ import { useLoadSearch, useUserSearches } from '@/hooks/useSearches'
 import { FlightOfferSimpleSearchRequest } from '@fcm/shared/amadeus/clients/flight-offer'
 import { SearchType } from '@fcm/shared/auth'
 import { UserSearchDto } from '@fcm/shared/user-search/types'
-import { BookmarkOutlined, CheckCircle, Star } from '@mui/icons-material'
+import { BookmarkOutlined, CheckCircle, Clear, Star } from '@mui/icons-material'
 import {
   Box,
   Button,
+  ButtonGroup,
   Dialog,
   DialogActions,
   DialogContent,
@@ -23,6 +24,7 @@ import {
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { useState } from 'react'
+import { showNotification } from '@/services/NotificationService'
 
 dayjs.extend(relativeTime)
 
@@ -97,18 +99,47 @@ export function LoadSearchButton({
     onLoadSearch(parsedParameters)
 
     setOpen(false)
+    showNotification.success(`Loaded search: ${search.name || 'Untitled Search'}`)
+  }
+
+  const handleClearSearch = () => {
+    setCurrentSearch(null)
+    showNotification.info('Search cleared')
+  }
+
+  const LoadButton = () => {
+    if (!currentSearch) {
+      return (
+        <Button
+          variant="outlined"
+          startIcon={<BookmarkOutlined />}
+          onClick={() => setOpen(true)}
+          color="primary"
+          size="small">
+          Load Search
+        </Button>
+      )
+    }
+
+    return (
+      <ButtonGroup variant="contained" color="success" size="small">
+        <Button 
+          startIcon={<CheckCircle />}
+          onClick={() => setOpen(true)}>
+          {currentSearch.name || 'Search Loaded'}
+        </Button>
+        <Button
+          color="error"
+          onClick={handleClearSearch}>
+          <Clear />
+        </Button>
+      </ButtonGroup>
+    )
   }
 
   return (
     <>
-      <Button
-        variant={currentSearch ? 'contained' : 'outlined'}
-        startIcon={currentSearch ? <CheckCircle /> : <BookmarkOutlined />}
-        onClick={() => setOpen(true)}
-        color={currentSearch ? 'success' : 'primary'}
-        size="small">
-        {currentSearch ? currentSearch.name || 'Search Loaded' : 'Load Search'}
-      </Button>
+      <LoadButton />
 
       <Dialog
         open={open}

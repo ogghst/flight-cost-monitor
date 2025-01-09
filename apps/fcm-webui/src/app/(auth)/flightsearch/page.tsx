@@ -12,12 +12,14 @@ import {
 } from '@mui/material'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { searchFlightsAction } from '@/app/actions/flight-search'
 import { useSearchForm } from '@/components/context/SearchFormContext'
 import { LoadSearchButton } from '@/components/search/LoadSearchButton'
 import { SaveSearchButton } from '@/components/search/SaveSearchButton'
+import { useNotification } from '@/hooks/useNotification'
+import { showNotification } from '@/services/NotificationService'
 import {
   FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES,
   FlightOfferSimpleSearchRequest,
@@ -29,8 +31,9 @@ import { FlightSearchForm } from './components/FlightSearchForm'
 const DEBOUNCE_TIME = 300
 
 export default function FlightSearchPage() {
-  // Access our centralized search context
+  // Access our centralized search context and notifications
   const { currentSearch } = useSearchForm()
+  const { showSuccess } = useNotification()
   const queryClient = useQueryClient()
   const [isUserSearchActive, setIsUserSearchActive] = useState(false)
 
@@ -53,6 +56,7 @@ export default function FlightSearchPage() {
 
       // Return cached data if available
       if (cachedData) {
+        showNotification.info('Using cached search results')
         return cachedData
       }
 
@@ -66,6 +70,25 @@ export default function FlightSearchPage() {
     retry: 1,
     onError: (error: any) => {
       console.error('Search error:', error)
+      if (axios.isAxiosError(error)) {
+        showNotification.error(
+          error.response?.data?.message ||
+            'Failed to search flights. Please try again.'
+        )
+      } else if (error instanceof Error) {
+        showNotification.error(error.message)
+      } else {
+        showNotification.error(
+          'An unexpected error occurred while searching flights'
+        )
+      }
+    },
+    onSuccess: (data) => {
+      if (data.data.length === 0) {
+        showNotification.warning('No flights found matching your criteria')
+      } else {
+        showSuccess(`Found ${data.data.length} flights matching your criteria`)
+      }
     },
   })
 
@@ -90,6 +113,11 @@ export default function FlightSearchPage() {
     searchFlightMutation(criteria)
     setIsUserSearchActive(true)
   }
+
+  // Update isUserSearchActive when currentSearch changes
+  useEffect(() => {
+    setIsUserSearchActive(!!currentSearch)
+  }, [currentSearch])
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
@@ -137,7 +165,7 @@ export default function FlightSearchPage() {
           }
         />
 
-        {/* Error display */}
+        {/* Error display - keeping visual alert along with notification */}
         {error && (
           <Alert severity="error">
             {axios.isAxiosError(error)

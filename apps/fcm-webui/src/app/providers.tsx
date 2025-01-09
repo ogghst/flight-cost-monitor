@@ -1,6 +1,7 @@
 'use client'
 
 import { SearchFormProvider } from '@/components/context/SearchFormContext'
+import { NotificationProvider } from '@/components/NotificationProvider'
 import theme from '@/lib/theme'
 import CssBaseline from '@mui/material/CssBaseline'
 import { ThemeProvider } from '@mui/material/styles'
@@ -78,9 +79,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
             dateAdapter={AdapterDayjs}
             adapterLocale={adapterLocale}>
             <SearchFormProvider>
-              <CssBaseline />
-              {children}
-              <ReactQueryDevtools initialIsOpen={false} />
+              <NotificationProvider>
+                <CssBaseline />
+                {children}
+                <ReactQueryDevtools initialIsOpen={false} />
+              </NotificationProvider>
             </SearchFormProvider>
           </LocalizationProvider>
         </ThemeProvider>

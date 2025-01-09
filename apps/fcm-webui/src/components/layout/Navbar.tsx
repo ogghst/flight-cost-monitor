@@ -3,7 +3,7 @@
 import { useAuth } from '@/hooks/auth/useAuth'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import theme from '@/lib/theme'
-import { Menu as MenuIcon, AccountCircle } from '@mui/icons-material'
+import { Menu as MenuIcon } from '@mui/icons-material'
 import {
   AppBar,
   Avatar,
@@ -53,7 +53,10 @@ export default function Navbar({ onMenuClick, drawerWidth }: NavbarProps) {
     <AppBar
       position="fixed"
       sx={{
-        width: isAuthenticated && !isMobile ? `calc(100% - ${drawerWidth}px)` : '100%',
+        width:
+          isAuthenticated && !isMobile
+            ? `calc(100% - ${drawerWidth}px)`
+            : '100%',
         ml: isAuthenticated && !isMobile ? `${drawerWidth}px` : 0,
         transition: theme.transitions.create(['width', 'margin'], {
           easing: theme.transitions.easing.sharp,
@@ -94,7 +97,8 @@ export default function Navbar({ onMenuClick, drawerWidth }: NavbarProps) {
                     sx={{ width: 32, height: 32 }}
                   />
                 ) : (
-                  <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
+                  <Avatar
+                    sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
                     {userInitial}
                   </Avatar>
                 )}
@@ -116,8 +120,6 @@ export default function Navbar({ onMenuClick, drawerWidth }: NavbarProps) {
                 <MenuItem onClick={handleProfileClick}>
                   <Typography>{userName}</Typography>
                 </MenuItem>
-                <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
-                <MenuItem onClick={handleProfileMenuClose}>My account</MenuItem>
                 <MenuItem onClick={() => signOut()}>Logout</MenuItem>
               </Menu>
             </>
