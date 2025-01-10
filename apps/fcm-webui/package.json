@@ -10,7 +10,7 @@
     "lint": "next lint",
     "format": "prettier --write",
     "clean": "rimraf node_modules .turbo .next dist out coverage .tsbuildinfo",
-    "docker:build": "docker build -t fcm-webui -f Dockerfile ../..",
+    "docker:build": "docker buildx build --tag fcm-webui -f Dockerfile ../..",
     "docker:push": "docker push fcm-webui",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down"

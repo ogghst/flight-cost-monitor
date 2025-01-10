@@ -2,6 +2,7 @@ import { AppModule } from '@/app.module.js'
 import { FcmWinstonLogger } from '@fcm/shared/logging'
 import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
+import { IoAdapter } from '@nestjs/platform-socket.io'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { UnauthorizedExceptionFilter } from './filters/unauthorized-exception.filter.js'
 import { LoggingInterceptor } from './interceptors/logging.interceptor.js'
@@ -18,13 +19,14 @@ async function bootstrap() {
   })
 
   try {
-    logger.info('Starting application...')
-
     const app = await NestFactory.create(AppModule, {
       logger: logger,
-      // This ensures we capture all requests, even before middleware
       bufferLogs: true,
+      abortOnError: false,
     })
+
+    // Use WebSocket adapter explicitly
+    app.useWebSocketAdapter(new IoAdapter(app))
 
     // Register global interceptor - will log all requests
     app.useGlobalInterceptors(new LoggingInterceptor())
@@ -37,7 +39,7 @@ async function bootstrap() {
     // Configure Swagger
     const config = new DocumentBuilder()
       .setTitle('Flight Cost Monitor API')
-      .setDescription('API for monitoring and searching flight costs')
+      .setDescription('API Documentation for Flight Cost Monitor')
       .setVersion('1.0')
       .addBearerAuth(
         {
@@ -50,36 +52,50 @@ async function bootstrap() {
         },
         'access-token'
       )
+      // Define tags for better organization
       .addTag('Auth', 'Authentication endpoints')
+      .addTag('OAuth', 'OAuth authentication endpoints')
       .addTag('Flight Offers', 'Flight search and monitoring')
+      .addTag('Scheduler', 'Task scheduling endpoints')
+      .addTag('Monitoring', 'Monitoring and metrics endpoints')
       .build()
 
     // Generate Swagger document with custom options
-    try {
-      const document = SwaggerModule.createDocument(app, config, {
-        deepScanRoutes: true,
-        operationIdFactory: (controllerKey: string, methodKey: string) =>
-          methodKey,
-      })
+    const document = SwaggerModule.createDocument(app, config, {
+      deepScanRoutes: true,
+      extraModels: [], // Add your DTOs here if needed
+      ignoreGlobalPrefix: false,
+      operationIdFactory: (controllerKey: string, methodKey: string) =>
+        methodKey,
+    })
 
-      SwaggerModule.setup('api/docs', app, document, {
-        swaggerOptions: {
-          persistAuthorization: true,
-          tryItOutEnabled: true,
-          displayRequestDuration: true,
-        },
-      })
-      logger.debug('Swagger documentation generated successfully')
-    } catch (error) {
-      logger.error('Failed to generate Swagger documentation', {
-        error: formatError(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      })
-    }
+    SwaggerModule.setup('api/docs', app, document, {
+      explorer: true,
+      swaggerOptions: {
+        persistAuthorization: true,
+        tryItOutEnabled: true,
+        displayRequestDuration: true,
+        filter: true,
+        deepLinking: true,
+        defaultModelsExpandDepth: 3,
+        defaultModelExpandDepth: 3,
+        docExpansion: 'none',
+        tagsSorter: 'alpha',
+        operationsSorter: 'alpha',
+      },
+      customCssUrl: '/swagger-custom.css', // Optional: Add custom styling
+      customfavIcon: '/favicon.ico',
+      customSiteTitle: 'FCM API Documentation',
+    })
 
-    app.enableCors()
+    // Configure CORS
+    app.enableCors({
+      origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+      credentials: true,
+    })
 
     const port = process.env.PORT || 3001
+
     await app.listen(port)
 
     logger.info('Application is running', {
@@ -93,4 +109,13 @@ async function bootstrap() {
   }
 }
 
-bootstrap()
+// Add error handler for unhandled promises
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason)
+  process.exit(1)
+})
+
+bootstrap().catch((err) => {
+  console.error('Unhandled bootstrap error:', err)
+  process.exit(1)
+})

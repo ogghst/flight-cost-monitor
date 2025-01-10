@@ -59,6 +59,10 @@
     "./flight-offer-search": {
       "import": "./dist/flight-offer-search/index.js",
       "types": "./dist/flight-offer-search/types.d.ts"
+    },
+    "./scheduler/types": {
+      "import": "./dist/scheduler/types.js",
+      "types": "./dist/scheduler/types.d.ts"
     }
   },
   "typesVersions": {
@@ -80,6 +84,9 @@
       ],
       "/flight-offer-search": [
         "./dist/flight-offer-search/index.d.ts"
+      ],
+      "/scheduler/types": [
+        "./dist/scheduler/types.d.ts"
       ]
     }
   },

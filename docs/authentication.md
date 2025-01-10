@@ -5,6 +5,7 @@ This document describes the authentication system used in the Flight Cost Monito
 ## Overview
 
 FCM supports two main authentication methods:
+
 1. OAuth authentication (GitHub, Google)
 2. Credentials-based authentication
 
@@ -26,7 +27,7 @@ sequenceDiagram
     O->>U: Show Provider Login
     U->>O: Enter Credentials
     O->>W: Return OAuth Token + User Info
-    
+
     %% Backend Authentication
     W->>A: POST /auth/oauth/login
     A->>D: Find/Create User
@@ -78,49 +79,55 @@ stateDiagram-v2
 ## Token Structure
 
 ### Access Token (JWT)
+
 ```typescript
 interface TokenPayload {
-    sub: string;           // User ID
-    email: string;
-    authType: string;      // 'CREDENTIALS' | 'OAUTH'
-    roles: string[];
-    iat: number;
-    exp: number;
+  sub: string; // User ID
+  email: string;
+  authType: string; // 'CREDENTIALS' | 'OAUTH'
+  roles: string[];
+  iat: number;
+  exp: number;
 }
 ```
 
 ### Refresh Token
+
 ```typescript
 interface RefreshToken {
-    id: string;
-    token: string;
-    userId: string;
-    expiresAt: Date;
-    family: string;        // For token rotation
-    generationNumber: number;
+  id: string;
+  token: string;
+  userId: string;
+  expiresAt: Date;
+  family: string; // For token rotation
+  generationNumber: number;
 }
 ```
 
 ## API Endpoints
 
 ### OAuth Authentication
+
 - `POST /auth/oauth/login`: Exchange OAuth token for JWT
 - `POST /auth/oauth/github`: GitHub OAuth callback
 - `POST /auth/oauth/google`: Google OAuth callback
 
 ### Credentials Authentication
+
 - `POST /auth/login`: Login with username/password
 - `POST /auth/register`: Register new user
 - `POST /auth/forgot-password`: Request password reset
 - `POST /auth/reset-password`: Reset password with token
 
 ### Token Management
+
 - `POST /auth/refresh`: Refresh access token
 - `POST /auth/logout`: Logout and invalidate tokens
 
 ## Token Security
 
 ### Token Storage
+
 ```mermaid
 graph TD
     A[Access Token] -->|Stored in| B[Memory]
@@ -131,11 +138,13 @@ graph TD
 ### Security Features
 
 1. **Token Rotation**
+
    - New refresh token family on login
    - Generation number increments on refresh
    - Family invalidation on suspected breach
 
 2. **CSRF Protection**
+
    - SameSite cookie policy
    - CSRF tokens for mutations
    - Origin validation
@@ -151,7 +160,7 @@ graph TD
 
 ```typescript
 // OAuth Login
-const handleOAuthLogin = async (provider: 'github' | 'google') => {
+const handleOAuthLogin = async (provider: "github" | "google") => {
   const tokens = await authService.loginWithOAuth(provider);
   await tokenStorage.setTokens(tokens);
 };
@@ -165,8 +174,8 @@ const handleLogin = async (credentials: LoginCredentials) => {
 // API Call with Auth
 const makeAuthenticatedCall = async () => {
   const token = await tokenStorage.getAccessToken();
-  return api.call('/protected-endpoint', {
-    headers: { Authorization: `Bearer ${token}` }
+  return api.call("/protected-endpoint", {
+    headers: { Authorization: `Bearer ${token}` },
   });
 };
 ```
@@ -180,7 +189,7 @@ export class AuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext) {
     const token = this.extractToken(context);
     if (!token) return false;
-    
+
     try {
       const payload = await this.jwtService.verify(token);
       return this.validatePayload(payload);
@@ -194,9 +203,9 @@ export class AuthGuard implements CanActivate {
 @Injectable()
 export class RolesGuard implements CanActivate {
   async canActivate(context: ExecutionContext) {
-    const roles = this.reflector.get<string[]>('roles', context.getHandler());
+    const roles = this.reflector.get<string[]>("roles", context.getHandler());
     const user = context.switchToHttp().getRequest().user;
-    
+
     return this.matchRoles(roles, user.roles);
   }
 }
@@ -216,12 +225,14 @@ graph TD
 ## Security Considerations
 
 ### Token Lifecycle
+
 1. Access tokens expire in 15 minutes
 2. Refresh tokens expire in 7 days
 3. Tokens are invalidated on logout
 4. Compromised tokens can be revoked
 
 ### Best Practices
+
 1. Always use HTTPS
 2. Implement proper CORS policies
 3. Validate all user input
@@ -233,9 +244,10 @@ graph TD
 ### Next-Auth Setup (Frontend)
 
 `.env.local` configuration:
+
 ```env
-AUTH_GITHUB_ID=Ov23li0AghVx0GGNzgo7
-AUTH_GITHUB_SECRET=6a101af4f6eb6a6199b850fe23689b8049c48acb
+AUTH_GITHUB_ID=your-github-id
+AUTH_GITHUB_SECRET=your-github-secret
 NEXT_PUBLIC_OAUTH_GOOGLE_CLIENT_ID=your_google_client_id
 AUTH_SECRET=your-secret-key-min-32-chars-long
 ```
@@ -243,6 +255,7 @@ AUTH_SECRET=your-secret-key-min-32-chars-long
 ### JWT Configuration (Backend)
 
 `.env` configuration:
+
 ```env
 JWT_SECRET=your-jwt-secret-key-here
 JWT_ACCESS_EXPIRATION=15m

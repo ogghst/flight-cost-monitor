@@ -34,6 +34,7 @@ model User {
   roles             Role[]         @relation("UserRoles")
   searches          UserSearch[]
   flightOfferSearches FlightOfferSearch[]
+  tasks            TaskSchedule[]
 
   @@unique([oauthProvider, oauthProviderId])
   @@index([email])
@@ -94,9 +95,80 @@ model UserSearch {
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime?
   flightOfferSearches FlightOfferSearch[]
+  tasks     TaskSchedule[]
 
   @@index([userId])
   @@index([searchType])
+}
+
+model TaskSchedule {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  searchId      String
+  search        UserSearch @relation(fields: [searchId], references: [id])
+  state         String    // "ENABLED" or "DISABLED"
+  cronExpression String
+  timeout       Int       // milliseconds
+  maxRetries    Int      @default(3)
+  lastRunAt     DateTime?
+  nextRunAt     DateTime?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  executions    TaskExecution[]
+  stats         TaskStats[]
+
+  @@index([userId])
+  @@index([searchId])
+  @@index([state])
+}
+
+model TaskExecution {
+  id         String    @id @default(cuid())
+  taskId     String
+  task       TaskSchedule @relation(fields: [taskId], references: [id])
+  state      String    // "PENDING", "RUNNING", "COMPLETED", "FAILED", "TIMEOUT", "SKIPPED"
+  startTime  DateTime
+  endTime    DateTime?
+  duration   Int?      // milliseconds
+  attempt    Int       @default(1)
+  error      String?   // JSON string of error details
+  result     String?   // JSON string of execution result
+  
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  @@index([taskId])
+  @@index([state])
+  @@index([startTime])
+}
+
+model TaskStats {
+  id                String    @id @default(cuid())
+  taskId            String
+  task              TaskSchedule @relation(fields: [taskId], references: [id])
+  totalRuns         Int       @default(0)
+  successfulRuns    Int       @default(0)
+  failedRuns        Int       @default(0)
+  averageDuration   Float     @default(0)
+  lastExecutionState String
+  lastError         String?
+  periodStart       DateTime
+  periodEnd         DateTime
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  @@index([taskId])
+  @@index([periodStart])
+  @@index([periodEnd])
 }
 
 model AuditLog {
