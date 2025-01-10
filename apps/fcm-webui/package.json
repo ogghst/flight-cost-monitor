@@ -9,7 +9,11 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write",
-    "clean": "rimraf node_modules .turbo .next dist out coverage .tsbuildinfo"
+    "clean": "rimraf node_modules .turbo .next dist out coverage .tsbuildinfo",
+    "docker:build": "docker build -t fcm-webui -f Dockerfile ../..",
+    "docker:push": "docker push fcm-webui",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^1.6.0",
@@ -40,8 +44,6 @@
   "devDependencies": {
     "@fcm/eslint-config": "workspace:*",
     "@fcm/jest-config": "workspace:*",
-    "@fcm/shared": "workspace:*",
-    "@fcm/storage": "workspace:*",
     "@fcm/typescript-config": "workspace:*",
     "@playwright/test": "^1.49.1",
     "@types/eslint": "^8.56.12",

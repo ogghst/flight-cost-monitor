@@ -44,8 +44,13 @@ export default function Navbar({ onMenuClick, drawerWidth }: NavbarProps) {
     router.push('/profile')
   }
 
+  // Get user display info
+  const userImage = session?.user?.image
+  const userName = session?.user?.name || session?.user?.email || 'User'
+  const userInitial = userName.charAt(0).toUpperCase()
+
   return (
-    (<AppBar
+    <AppBar
       position="fixed"
       sx={{
         width:
@@ -85,15 +90,18 @@ export default function Navbar({ onMenuClick, drawerWidth }: NavbarProps) {
                 aria-haspopup="true"
                 onClick={handleProfileMenu}
                 color="inherit">
-                {session?.user?.image ? (
-                  <>
-                    <Avatar
-                      alt={session.user.email || 'User Avatar'}
-                      src={session.user.image}
-                      sx={{ width: 32, height: 32 }}
-                    />
-                  </>
-                ) : null}
+                {userImage ? (
+                  <Avatar
+                    alt={userName}
+                    src={userImage}
+                    sx={{ width: 32, height: 32 }}
+                  />
+                ) : (
+                  <Avatar
+                    sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
+                    {userInitial}
+                  </Avatar>
+                )}
               </IconButton>
               <Menu
                 id="menu-appbar"
@@ -109,8 +117,9 @@ export default function Navbar({ onMenuClick, drawerWidth }: NavbarProps) {
                 }}
                 open={Boolean(anchorEl)}
                 onClose={handleProfileMenuClose}>
-                <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
-                <MenuItem onClick={handleProfileMenuClose}>My account</MenuItem>
+                <MenuItem onClick={handleProfileClick}>
+                  <Typography>{userName}</Typography>
+                </MenuItem>
                 <MenuItem onClick={() => signOut()}>Logout</MenuItem>
               </Menu>
             </>
@@ -121,6 +130,6 @@ export default function Navbar({ onMenuClick, drawerWidth }: NavbarProps) {
           )}
         </Box>
       </Toolbar>
-    </AppBar>)
-  );
+    </AppBar>
+  )
 }

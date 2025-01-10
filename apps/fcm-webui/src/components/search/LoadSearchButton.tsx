@@ -1,11 +1,15 @@
 'use client'
 
+import { useSearchForm } from '@/components/context/SearchFormContext'
 import { useLoadSearch, useUserSearches } from '@/hooks/useSearches'
-import { SearchType } from '@fcm/storage/schema'
-import { BookmarkOutlined, Star } from '@mui/icons-material'
+import { FlightOfferSimpleSearchRequest } from '@fcm/shared/amadeus/clients/flight-offer'
+import { SearchType } from '@fcm/shared/auth'
+import { UserSearchDto } from '@fcm/shared/user-search/types'
+import { BookmarkOutlined, CheckCircle, Clear, Star } from '@mui/icons-material'
 import {
   Box,
   Button,
+  ButtonGroup,
   Dialog,
   DialogActions,
   DialogContent,
@@ -20,31 +24,30 @@ import {
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { useState } from 'react'
+import { showNotification } from '@/services/NotificationService'
 
 dayjs.extend(relativeTime)
 
 interface LoadSearchButtonProps {
   searchType: (typeof SearchType)[keyof typeof SearchType]
-  onLoadSearch: (criteria: any) => void
+  onLoadSearch: (criteria: FlightOfferSimpleSearchRequest) => void
 }
 
-function formatSearchDetails(criteria: any) {
-  const searchCriteria =
-    typeof criteria === 'string' ? JSON.parse(criteria) : criteria
+function formatSearchDetails(search: UserSearchDto) {
+  // Parse the stored search parameters from string to object
+  const parameters = search.parameters as FlightOfferSimpleSearchRequest
 
-  const details = [
-    `${searchCriteria.originLocationCode} → ${searchCriteria.destinationLocationCode}`,
-    `${dayjs(searchCriteria.departureDate).format('MMM D')} - ${dayjs(searchCriteria.returnDate).format('MMM D, YYYY')}`,
-    `Passengers: ${searchCriteria.adults} Adult${searchCriteria.adults > 1 ? 's' : ''}` +
-      (searchCriteria.children
-        ? `, ${searchCriteria.children} Child${searchCriteria.children > 1 ? 'ren' : ''}`
+  return [
+    `${parameters.originLocationCode} → ${parameters.destinationLocationCode}`,
+    `${dayjs(parameters.departureDate).format('MMM D')} - ${dayjs(parameters.returnDate).format('MMM D, YYYY')}`,
+    `Passengers: ${parameters.adults} Adult${parameters.adults > 1 ? 's' : ''}` +
+      (parameters.children
+        ? `, ${parameters.children} Child${parameters.children > 1 ? 'ren' : ''}`
         : '') +
-      (searchCriteria.infants
-        ? `, ${searchCriteria.infants} Infant${searchCriteria.infants > 1 ? 's' : ''}`
+      (parameters.infants
+        ? `, ${parameters.infants} Infant${parameters.infants > 1 ? 's' : ''}`
         : ''),
   ].join(' • ')
-
-  return details
 }
 
 function formatTimeInfo(createdAt: Date, lastUsed: Date) {
@@ -81,24 +84,62 @@ export function LoadSearchButton({
   const [open, setOpen] = useState(false)
   const { data: searches, isLoading } = useUserSearches(searchType)
   const { mutate: markUsed } = useLoadSearch()
+  const { currentSearch, setCurrentSearch } = useSearchForm()
 
-  const handleLoadSearch = (searchId: string, criteria: any) => {
-    const parsedCriteria =
-      typeof criteria === 'string' ? JSON.parse(criteria) : criteria
-    onLoadSearch(parsedCriteria)
-    markUsed(searchId)
+  const handleLoadSearch = (search: UserSearchDto) => {
+    const parsedParameters = search.parameters as FlightOfferSimpleSearchRequest
+
+    // Update the current search in context
+    setCurrentSearch(search)
+
+    // Mark the search as used
+    markUsed(search.id)
+
+    // Call parent's onLoadSearch with the parsed parameters
+    onLoadSearch(parsedParameters)
+
     setOpen(false)
+    showNotification.success(`Loaded search: ${search.name || 'Untitled Search'}`)
+  }
+
+  const handleClearSearch = () => {
+    setCurrentSearch(null)
+    showNotification.info('Search cleared')
+  }
+
+  const LoadButton = () => {
+    if (!currentSearch) {
+      return (
+        <Button
+          variant="outlined"
+          startIcon={<BookmarkOutlined />}
+          onClick={() => setOpen(true)}
+          color="primary"
+          size="small">
+          Load Search
+        </Button>
+      )
+    }
+
+    return (
+      <ButtonGroup variant="contained" color="success" size="small">
+        <Button 
+          startIcon={<CheckCircle />}
+          onClick={() => setOpen(true)}>
+          {currentSearch.name || 'Search Loaded'}
+        </Button>
+        <Button
+          color="error"
+          onClick={handleClearSearch}>
+          <Clear />
+        </Button>
+      </ButtonGroup>
+    )
   }
 
   return (
     <>
-      <Button
-        variant="outlined"
-        startIcon={<BookmarkOutlined />}
-        onClick={() => setOpen(true)}
-        size="small">
-        Load Search
-      </Button>
+      <LoadButton />
 
       <Dialog
         open={open}
@@ -118,7 +159,7 @@ export function LoadSearchButton({
               {searches.map((search) => {
                 const timeInfo = formatTimeInfo(
                   search.createdAt,
-                  search.lastUsed
+                  search.lastUsed ?? search.createdAt
                 )
                 return (
                   <ListItem
@@ -132,9 +173,8 @@ export function LoadSearchButton({
                       ) : null
                     }>
                     <ListItemButton
-                      onClick={() =>
-                        handleLoadSearch(search.id, search.criteria)
-                      }
+                      onClick={() => handleLoadSearch(search)}
+                      selected={currentSearch?.id === search.id}
                       sx={{
                         py: 2,
                         '&:hover': {
@@ -144,7 +184,7 @@ export function LoadSearchButton({
                       <ListItemText
                         primary={
                           <Typography variant="subtitle1" component="div">
-                            {search.title || 'Untitled Search'}
+                            {search.name || 'Untitled Search'}
                           </Typography>
                         }
                         secondary={
@@ -153,7 +193,7 @@ export function LoadSearchButton({
                               variant="body2"
                               color="text.secondary"
                               sx={{ mb: 1 }}>
-                              {formatSearchDetails(search.criteria)}
+                              {formatSearchDetails(search)}
                             </Typography>
                             <Typography
                               variant="caption"

@@ -21,19 +21,46 @@
             "outFiles": [
                 "${workspaceFolder}/.next/server/**/*.js",
                 "${workspaceFolder}/.next/types/**/*.js"
-            ]
+            ],
+            "serverReadyAction": {
+                "pattern": "started server on .+, url: (https?://.+)",
+                "uriFormat": "%s",
+                "action": "debugWithChrome"
+            }
         },
         {
             "name": "Debug Client (Chrome)",
             "type": "chrome",
             "request": "launch",
-            "url": "http://localhost:3001",
+            "url": "http://localhost:3000",
             "webRoot": "${workspaceFolder}",
             "sourceMaps": true,
             "sourceMapPathOverrides": {
                 "webpack://_N_E/./*": "${webRoot}/*",
-                "webpack://@fcm/webui/./*": "${webRoot}/*"
-            }
+                "webpack://@fcm/webui/./*": "${webRoot}/*",
+                "webpack://node_modules/*": "${webRoot}/node_modules/*"
+            },
+            "trace": true
+        },
+        {
+            "name": "Debug Server Actions",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "pnpm",
+            "runtimeArgs": ["dev"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"],
+            "env": {
+                "NODE_OPTIONS": "--inspect"
+            },
+            "outFiles": [
+                "${workspaceFolder}/.next/server/**/*.js"
+            ],
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/**",
+                "!**/node_modules/**"
+            ]
         }
     ],
     "compounds": [

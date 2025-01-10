@@ -2,7 +2,7 @@
 
 import { getCurrentUser } from '@/app/actions/user'
 import { withErrorBoundary } from '@/components/error-boundary'
-import { User } from '@fcm/storage/schema'
+import { AuthUser, OAuthProvider } from '@fcm/shared/auth'
 import { GitHub } from '@mui/icons-material'
 import {
   Avatar,
@@ -20,7 +20,7 @@ import Grid from '@mui/material/Grid2'
 import { useQuery } from '@tanstack/react-query'
 
 function ProfilePage() {
-  const { data: userData, isLoading } = useQuery<User>({
+  const { data: userData, isLoading } = useQuery<AuthUser>({
     queryKey: ['user-profile'],
     queryFn: getCurrentUser,
     retry: 2,
@@ -49,9 +49,7 @@ function ProfilePage() {
     throw new Error('Failed to load user profile')
   }
 
-  const githubProfile = userData.githubProfile
-    ? JSON.parse(userData.githubProfile)
-    : null
+  const oauthProfile = userData.profile ? JSON.parse(userData.profile) : null
 
   return (
     <Box sx={{ p: 3 }}>
@@ -75,16 +73,17 @@ function ProfilePage() {
               <Typography color="text.secondary" gutterBottom>
                 {userData.email}
               </Typography>
-              {githubProfile?.login && (
-                <Tooltip title="GitHub Profile">
-                  <IconButton
-                    href={`https://github.com/${githubProfile.login}`}
-                    target="_blank"
-                    rel="noopener noreferrer">
-                    <GitHub />
-                  </IconButton>
-                </Tooltip>
-              )}
+              {userData.oauthProvider === OAuthProvider.GITHUB &&
+                oauthProfile?.login && (
+                  <Tooltip title="GitHub Profile">
+                    <IconButton
+                      href={`https://github.com/${oauthProfile.login}`}
+                      target="_blank"
+                      rel="noopener noreferrer">
+                      <GitHub />
+                    </IconButton>
+                  </Tooltip>
+                )}
             </CardContent>
           </Card>
         </Grid>
@@ -113,84 +112,91 @@ function ProfilePage() {
                 </Grid>
               </Grid>
 
-              {githubProfile && (
-                <>
-                  <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-                    GitHub Profile
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
+              {userData.oauthProvider === OAuthProvider.GITHUB &&
+                oauthProfile && (
+                  <>
+                    <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+                      GitHub Profile
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
 
-                  <Grid container spacing={3}>
-                    {githubProfile.bio && (
+                    <Grid container spacing={3}>
+                      {oauthProfile.bio && (
+                        <Grid size={{ xs: 12 }}>
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary">
+                            Bio
+                          </Typography>
+                          <Typography variant="body1">
+                            {oauthProfile.bio}
+                          </Typography>
+                        </Grid>
+                      )}
+
+                      {oauthProfile.company && (
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary">
+                            Company
+                          </Typography>
+                          <Typography variant="body1">
+                            {oauthProfile.company}
+                          </Typography>
+                        </Grid>
+                      )}
+
+                      {oauthProfile.location && (
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary">
+                            Location
+                          </Typography>
+                          <Typography variant="body1">
+                            {oauthProfile.location}
+                          </Typography>
+                        </Grid>
+                      )}
+
                       <Grid size={{ xs: 12 }}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Bio
-                        </Typography>
-                        <Typography variant="body1">
-                          {githubProfile.bio}
-                        </Typography>
-                      </Grid>
-                    )}
-
-                    {githubProfile.company && (
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Company
-                        </Typography>
-                        <Typography variant="body1">
-                          {githubProfile.company}
-                        </Typography>
-                      </Grid>
-                    )}
-
-                    {githubProfile.location && (
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Location
-                        </Typography>
-                        <Typography variant="body1">
-                          {githubProfile.location}
-                        </Typography>
-                      </Grid>
-                    )}
-
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', gap: 4, mt: 1 }}>
-                        <Box>
-                          <Typography
-                            variant="subtitle2"
-                            color="text.secondary">
-                            Repositories
-                          </Typography>
-                          <Typography variant="body1">
-                            {githubProfile.public_repos}
-                          </Typography>
+                        <Box sx={{ display: 'flex', gap: 4, mt: 1 }}>
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              color="text.secondary">
+                              Repositories
+                            </Typography>
+                            <Typography variant="body1">
+                              {oauthProfile.public_repos}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              color="text.secondary">
+                              Followers
+                            </Typography>
+                            <Typography variant="body1">
+                              {oauthProfile.followers}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography
+                              variant="subtitle2"
+                              color="text.secondary">
+                              Following
+                            </Typography>
+                            <Typography variant="body1">
+                              {oauthProfile.following}
+                            </Typography>
+                          </Box>
                         </Box>
-                        <Box>
-                          <Typography
-                            variant="subtitle2"
-                            color="text.secondary">
-                            Followers
-                          </Typography>
-                          <Typography variant="body1">
-                            {githubProfile.followers}
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <Typography
-                            variant="subtitle2"
-                            color="text.secondary">
-                            Following
-                          </Typography>
-                          <Typography variant="body1">
-                            {githubProfile.following}
-                          </Typography>
-                        </Box>
-                      </Box>
+                      </Grid>
                     </Grid>
-                  </Grid>
-                </>
-              )}
+                  </>
+                )}
             </CardContent>
           </Card>
         </Grid>

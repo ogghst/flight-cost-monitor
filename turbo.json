@@ -11,7 +11,9 @@
     "AMADEUS_AUTH_URL",
     "AMADEUS_TIMEOUT",
     "AUTH_GITHUB_ID",
-    "AUTH_GITHUB_SECRET"
+    "AUTH_GITHUB_SECRET",
+    "API_URL",
+    "API_TIMEOUT"
   ],
   "tasks": {
     "build": {
@@ -44,6 +46,20 @@
         "coverage",
         "*.tsbuildinfo"
       ]
+    },
+    "docker:build": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "docker:push": {
+      "cache": false,
+      "dependsOn": ["docker:build"]
+    },
+    "docker:up": {
+      "cache": false
+    },
+    "docker:down": {
+      "cache": false
     }
   }
 }

@@ -1,18 +1,20 @@
 import { Prisma } from '@prisma/client'
+import type { ITXClientDenyList } from '@prisma/client/runtime/library'
 import type { CreateRole, UpdateRole } from '../schema/role.js'
 import { DatabaseError } from '../schema/types.js'
-import { fcmPrismaClient } from './prisma.js'
+import { fcmPrismaClient, type ExtendedPrismaClient, type ExtendedTransactionClient } from './prisma.js'
 
 export class RoleRepository {
-  private prisma = fcmPrismaClient
+  private prisma: ExtendedPrismaClient = fcmPrismaClient
 
-  async findById(id: string, tx?: Prisma.TransactionClient) {
+  async findById(id: string, tx?: ExtendedTransactionClient) {
     const client = tx || this.prisma
     try {
-      return await client.role.findFirst({
-        where: {
-          id,
-          deletedAt: null,
+      return await client.role.findUnique({
+        where: { id },
+        include: {
+          permissions: true,
+          users: true,
         },
       })
     } catch (error) {
@@ -20,13 +22,14 @@ export class RoleRepository {
     }
   }
 
-  async findByName(name: string, tx?: Prisma.TransactionClient) {
+  async findByName(name: string, tx?: ExtendedTransactionClient) {
     const client = tx || this.prisma
     try {
-      return await client.role.findFirst({
-        where: {
-          name,
-          deletedAt: null,
+      return await client.role.findUnique({
+        where: { name },
+        include: {
+          permissions: true,
+          users: true,
         },
       })
     } catch (error) {
@@ -38,23 +41,25 @@ export class RoleRepository {
     const client = tx || this.prisma
     try {
       return await client.role.findMany({
-        where: {
-          deletedAt: null,
-        },
         orderBy: { name: 'asc' },
+        include: {
+          permissions: true,
+          users: true,
+        },
       })
     } catch (error) {
       throw new DatabaseError('Failed to fetch roles', error)
     }
   }
 
-  async create(data: CreateRole, tx?: Prisma.TransactionClient) {
+  async create(data: CreateRole, tx?: ExtendedTransactionClient) {
     const client = tx || this.prisma
     try {
       return await client.role.create({
-        data: {
-          ...data,
-          deletedAt: null,
+        data,
+        include: {
+          permissions: true,
+          users: true,
         },
       })
     } catch (error) {
@@ -71,15 +76,16 @@ export class RoleRepository {
     }
   }
 
-  async update(id: string, data: UpdateRole, tx?: Prisma.TransactionClient) {
+  async update(id: string, data: UpdateRole, tx?: ExtendedTransactionClient) {
     const client = tx || this.prisma
     try {
       return await client.role.update({
-        where: {
-          id,
-          deletedAt: null,
-        },
+        where: { id },
         data,
+        include: {
+          permissions: true,
+          users: true,
+        },
       })
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -98,29 +104,7 @@ export class RoleRepository {
     }
   }
 
-  async softDelete(id: string, tx?: Prisma.TransactionClient) {
-    const client = tx || this.prisma
-    try {
-      return await client.role.update({
-        where: {
-          id,
-          deletedAt: null,
-        },
-        data: {
-          deletedAt: new Date(),
-        },
-      })
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new DatabaseError('Role not found', error, 'NOT_FOUND')
-        }
-      }
-      throw new DatabaseError('Failed to delete role', error)
-    }
-  }
-
-  async hardDelete(id: string, tx?: Prisma.TransactionClient) {
+  async delete(id: string, tx?: Prisma.TransactionClient) {
     const client = tx || this.prisma
     try {
       await client.role.delete({
@@ -132,17 +116,93 @@ export class RoleRepository {
           throw new DatabaseError('Role not found', error, 'NOT_FOUND')
         }
       }
-      throw new DatabaseError('Failed to permanently delete role', error)
+      throw new DatabaseError('Failed to delete role', error)
     }
   }
 
-  async restore(id: string, tx?: Prisma.TransactionClient) {
+  async updatePermissions(
+    id: string,
+    permissionIds: string[],
+    tx?: ExtendedTransactionClient
+  ) {
     const client = tx || this.prisma
     try {
       return await client.role.update({
         where: { id },
         data: {
-          deletedAt: null,
+          permissions: {
+            set: permissionIds.map((permId) => ({ id: permId })),
+          },
+        },
+        include: {
+          permissions: true,
+          users: true,
+        },
+      })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new DatabaseError(
+            'Role or permissions not found',
+            error,
+            'NOT_FOUND'
+          )
+        }
+      }
+      throw new DatabaseError('Failed to update role permissions', error)
+    }
+  }
+
+  async addPermissions(
+    id: string,
+    permissionIds: string[],
+    tx?: ExtendedTransactionClient
+  ) {
+    const client = tx || this.prisma
+    try {
+      return await client.role.update({
+        where: { id },
+        data: {
+          permissions: {
+            connect: permissionIds.map((permId) => ({ id: permId })),
+          },
+        },
+        include: {
+          permissions: true,
+          users: true,
+        },
+      })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new DatabaseError(
+            'Role or permissions not found',
+            error,
+            'NOT_FOUND'
+          )
+        }
+      }
+      throw new DatabaseError('Failed to add role permissions', error)
+    }
+  }
+
+  async removePermissions(
+    id: string,
+    permissionIds: string[],
+    tx?: ExtendedTransactionClient
+  ) {
+    const client = tx || this.prisma
+    try {
+      return await client.role.update({
+        where: { id },
+        data: {
+          permissions: {
+            disconnect: permissionIds.map((permId) => ({ id: permId })),
+          },
+        },
+        include: {
+          permissions: true,
+          users: true,
         },
       })
     } catch (error) {
@@ -151,47 +211,78 @@ export class RoleRepository {
           throw new DatabaseError('Role not found', error, 'NOT_FOUND')
         }
       }
-      throw new DatabaseError('Failed to restore role', error)
+      throw new DatabaseError('Failed to remove role permissions', error)
     }
   }
 
-  async findWithDeleted(tx?: Prisma.TransactionClient) {
+  async addUsers(
+    id: string,
+    userIds: string[],
+    tx?: ExtendedTransactionClient
+  ) {
     const client = tx || this.prisma
     try {
-      return await client.role.findMany({
-        orderBy: { name: 'asc' },
+      return await client.role.update({
+        where: { id },
+        data: {
+          users: {
+            connect: userIds.map((userId) => ({ id: userId })),
+          },
+        },
+        include: {
+          permissions: true,
+          users: true,
+        },
       })
     } catch (error) {
-      throw new DatabaseError('Failed to fetch roles including deleted', error)
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new DatabaseError('Role or users not found', error, 'NOT_FOUND')
+        }
+      }
+      throw new DatabaseError('Failed to add users to role', error)
+    }
+  }
+
+  async removeUsers(
+    id: string,
+    userIds: string[],
+    tx?: ExtendedTransactionClient
+  ) {
+    const client = tx || this.prisma
+    try {
+      return await client.role.update({
+        where: { id },
+        data: {
+          users: {
+            disconnect: userIds.map((userId) => ({ id: userId })),
+          },
+        },
+        include: {
+          permissions: true,
+          users: true,
+        },
+      })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new DatabaseError('Role not found', error, 'NOT_FOUND')
+        }
+      }
+      throw new DatabaseError('Failed to remove users from role', error)
     }
   }
 
   async transaction<T>(
-    callback: (tx: Prisma.TransactionClient) => Promise<T>
+    callback: (
+      tx: Omit<ExtendedTransactionClient, ITXClientDenyList>
+    ) => Promise<T>
   ): Promise<T> {
     try {
-      return await this.prisma.$transaction(callback)
+      return (await this.prisma.$transaction(callback)) as T
     } catch (error) {
       throw new DatabaseError('Transaction failed', error)
     }
-  }
-
-  async assignUsersToRole(roleId: string, userIds: string[]) {
-    return this.transaction(async (tx) => {
-      const role = await this.findById(roleId, tx)
-      if (!role) {
-        throw new DatabaseError('Role not found', null, 'NOT_FOUND')
-      }
-
-      return await tx.role.update({
-        where: { id: roleId },
-        data: {
-          users: {
-            connect: userIds.map((id) => ({ id })),
-          },
-        },
-      })
-    })
   }
 }
 

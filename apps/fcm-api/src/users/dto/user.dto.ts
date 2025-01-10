@@ -1,16 +1,43 @@
-import { User } from '@fcm/storage/schema'
+import { AuthType } from '@fcm/shared'
+import { User } from '@fcm/storage'
 import { ApiProperty } from '@nestjs/swagger'
+import { IsEnum, IsNotEmpty } from 'class-validator'
 
 // This DTO represents how user data will be returned in API responses
 export class UserDto implements User {
+  @ApiProperty({
+    enum: AuthType,
+    description: 'Authentication type for the user',
+  })
+  @IsEnum(AuthType)
+  @IsNotEmpty()
+  authType: AuthType
+
+  @ApiProperty({ description: 'Array of refresh tokens', type: Array })
+  refreshTokens: {
+    id: string
+    createdAt: Date
+    updatedAt: Date
+    deletedAt: Date
+    token: string
+    userId: string
+    expiresAt: Date
+    revoked: boolean
+    family: string
+    generationNumber: number
+    replacedByToken?: string
+  }[]
   @ApiProperty({ description: 'Unique identifier of the user' })
   id: string
 
   @ApiProperty({ description: 'User email address' })
   email: string
 
+  @ApiProperty({ description: 'User username', required: false })
+  username?: string
+
   @ApiProperty({ description: 'User password', required: false })
-  password: string | null
+  password?: string | null
 
   @ApiProperty({ description: 'User first name', required: false })
   firstName?: string | null
@@ -47,4 +74,9 @@ export class UserDto implements User {
     required: false,
   })
   deletedAt: Date | null
+}
+
+export class UserWithRelationsDto extends UserDto {
+  @ApiProperty({ description: 'Array of user roles', type: Array })
+  roles: string[]
 }

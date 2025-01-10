@@ -92,7 +92,7 @@ export interface SearchCriteria {
   flightFilters?: FlightFilters
 }
 
-export interface FlightOffersAdvancedSearchRequest {
+export interface FlightOfferAdvancedSearchRequest {
   currencyCode?: string
   originDestinations: OriginDestination[] // max 6
   travelers: TravelerInfo[] // max 9 adults/children, max 1 infant per adult
@@ -139,7 +139,7 @@ export interface FlightOffersAdvancedResponse {
   }>
 }
 
-export const FLIGHT_OFFERS_DEFAULT_ADVANCED_VALUES: FlightOffersAdvancedSearchRequest =
+export const FLIGHT_OFFERS_DEFAULT_ADVANCED_VALUES: FlightOfferAdvancedSearchRequest =
   {
     currencyCode: 'EUR',
     originDestinations: [

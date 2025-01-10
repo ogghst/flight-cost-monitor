@@ -1,5 +1,6 @@
 'use server'
-import axiosInstance from '@/lib/api/axiosConfig'
+
+import { makeServerRequest } from '@/lib/api/axiosConfig'
 import { amadeusConfig } from '@/lib/config/amadeus'
 import type {
   FlightOfferSimpleSearchRequest,
@@ -7,8 +8,8 @@ import type {
 } from '@fcm/shared/amadeus/clients/flight-offer'
 import { FlightOfferClient } from '@fcm/shared/amadeus/clients/flight-offer'
 import type {
+  FlightOfferAdvancedSearchRequest,
   FlightOffersAdvancedResponse,
-  FlightOffersAdvancedSearchRequest,
 } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
 import { FlightOfferAdvancedClient } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
 
@@ -19,27 +20,39 @@ const flightClients = {
 }
 
 export async function searchFlightsAction(
-  params: FlightOfferSimpleSearchRequest
+  params: FlightOfferSimpleSearchRequest,
+  savedSearchId?: string
 ): Promise<FlightOfferSimpleSearchResponse> {
   try {
-    // Call the API endpoint instead of directly using the client
-    const response = await axiosInstance.post('/flight-offers/simple', params)
-    return response.data
+    return await makeServerRequest<FlightOfferSimpleSearchResponse>(
+      'POST',
+      '/flight-offers/simple',
+      JSON.stringify(params),
+      { savedSearchId }
+    )
   } catch (error) {
     console.error('Simple search error:', error)
+    if (error instanceof Error) {
+      throw new Error(`Failed to search flights: ${error.message}`)
+    }
     throw new Error('Failed to search flights')
   }
 }
 
 export async function searchFlightsAdvancedAction(
-  params: FlightOffersAdvancedSearchRequest
+  params: FlightOfferAdvancedSearchRequest
 ): Promise<FlightOffersAdvancedResponse> {
   try {
-    // Call the API endpoint instead of directly using the client
-    const response = await axiosInstance.post('/flight-offers/advanced', params)
-    return response.data
+    return await makeServerRequest<FlightOffersAdvancedResponse>(
+      'POST',
+      '/flight-offers/advanced',
+      JSON.stringify(params)
+    )
   } catch (error) {
     console.error('Advanced search error:', error)
+    if (error instanceof Error) {
+      throw new Error(`Failed to search flights: ${error.message}`)
+    }
     throw new Error('Failed to search flights')
   }
 }
@@ -57,7 +70,7 @@ export async function searchFlightsActionLocal(
 }
 
 export async function searchFlightsAdvancedActionLocal(
-  params: FlightOffersAdvancedSearchRequest
+  params: FlightOfferAdvancedSearchRequest
 ): Promise<FlightOffersAdvancedResponse> {
   try {
     return await flightClients.advanced.searchFlightOffersAdvanced(params)

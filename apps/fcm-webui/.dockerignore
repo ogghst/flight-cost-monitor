@@ -1,0 +1,24 @@
+# Dependencies
+**/node_modules
+**/.pnpm-store
+
+# Next.js build output
+**/.next
+**/out
+**/dist
+
+# Testing
+**/coverage
+
+# Debug & IDE
+**/.vscode
+**/.idea
+**/*.log
+
+# Misc
+**/.DS_Store
+**/.git
+**/.gitignore
+**/README.md
+**/LICENSE
+**/.turbo

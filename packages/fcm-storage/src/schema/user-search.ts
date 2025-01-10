@@ -1,28 +1,43 @@
+import { SearchType } from '@fcm/shared/auth'
 import { z } from 'zod'
 import { baseEntitySchema } from './base-entity.js'
 
-// Base schema for user searches
+// Base Schema that maps to UserSearchDto
 export const userSearchSchema = baseEntitySchema.extend({
-  userId: z.string(),
-  searchType: z.string(),
-  criteria: z.string(), // JSON string
-  title: z.string().optional().nullable(),
-  favorite: z.boolean(),
-  lastUsed: z.date(),
+  userEmail: z.string().email(),
+  searchType: z.enum(Object.values(SearchType) as [string, ...string[]]),
+  parameters: z.string(), // JSON string for SQLite
+  name: z.string().optional().nullable(),
+  favorite: z.boolean().default(false),
+  lastUsed: z.date().default(() => new Date()),
 })
 
-// Schema for creating a new search
-export const createUserSearchSchema = userSearchSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  deletedAt: true,
+// Create Schema that maps to CreateUserSearchDto
+export const createUserSearchSchema = z.object({
+  userEmail: z.string().email(),
+  searchType: z.enum(Object.values(SearchType) as [string, ...string[]]),
+  parameters: z.string(), // JSON string
+  name: z.string().optional(),
+  favorite: z.boolean().default(false),
 })
 
-// Schema for updating an existing search
-export const updateUserSearchSchema = createUserSearchSchema.partial()
+// Update Schema that maps to UpdateUserSearchDto
+export const updateUserSearchSchema = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  parameters: z.string(),
+  favorite: z.boolean().optional(),
+})
 
-// TypeScript types
-export type UserSearch = z.infer<typeof userSearchSchema>
-export type CreateUserSearch = z.infer<typeof createUserSearchSchema>
-export type UpdateUserSearch = z.infer<typeof updateUserSearchSchema>
+// Helper functions for parameters
+export function serializeParameters(params: unknown): string {
+  return JSON.stringify(params)
+}
+
+export function parseParameters<T>(jsonString: string): T {
+  try {
+    return JSON.parse(jsonString) as T
+  } catch (error) {
+    throw new Error('Failed to parse search parameters')
+  }
+}

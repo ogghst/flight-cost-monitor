@@ -1,25 +1,55 @@
 'use server'
 
-import axios from 'axios'
+import { auth } from '@/lib/auth'
+import axios, { AxiosRequestConfig } from 'axios'
+import { headers } from 'next/headers'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+const API_URL = process.env.API_URL || 'http://localhost:3001'
+const API_TIMEOUT = Number(process.env.API_TIMEOUT) || 60000
 
-export const axiosInstance = axios.create({
+export async function createServerAxiosInstance() {
+  const session = await auth()
+  const headersList = headers()
+
+  return axios.create({
     baseURL: API_URL,
     headers: {
-        'Content-Type': 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: session?.accessToken
+        ? `Bearer ${session.accessToken}`
+        : '',
+      Cookie: (await headersList).get('cookie') || '',
     },
-    timeout: 10000,
-})
+    withCredentials: true,
+    timeout: API_TIMEOUT,
+  })
+}
 
-axiosInstance.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            // Handle unauthorized
-        }
-        return Promise.reject(error)
+export async function makeServerRequest<T>(
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+  url: string,
+  data?: any,
+  params?: Record<string, any>
+): Promise<T> {
+  try {
+    const axiosInstance = await createServerAxiosInstance()
+    const config: AxiosRequestConfig = {
+      method,
+      url,
+      ...(data && { data }),
+      ...(params && { params }),
     }
-)
 
-export default axiosInstance
+    const response = await axiosInstance.request<T>(config)
+    return response.data
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ||
+          error.message ||
+          'An error occurred during the request'
+      )
+    }
+    throw error
+  }
+}

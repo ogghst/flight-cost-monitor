@@ -5,7 +5,8 @@ import {
   markSearchUsed,
   saveSearch,
 } from '@/app/actions/search'
-import { SearchType } from '@fcm/storage/schema'
+import { showNotification } from '@/services/NotificationService'
+import { SearchType } from '@fcm/shared/auth'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 export function useUserSearches(
@@ -13,7 +14,18 @@ export function useUserSearches(
 ) {
   return useQuery({
     queryKey: ['user-searches', searchType],
-    queryFn: () => getUserSearches(searchType),
+    queryFn: async () => {
+      try {
+        const searches = await getUserSearches({ searchType })
+        if (searches.length === 0) {
+          showNotification.info('No saved searches found')
+        }
+        return searches
+      } catch (error) {
+        showNotification.error('Failed to load saved searches')
+        throw error
+      }
+    },
   })
 }
 
@@ -22,14 +34,28 @@ export function useSaveSearch() {
 
   return useMutation({
     mutationFn: saveSearch,
-    onSuccess: () => {
+    onSuccess: (savedSearch) => {
       queryClient.invalidateQueries({ queryKey: ['user-searches'] })
+      showNotification.success(`Search "${savedSearch.name}" saved successfully`)
+    },
+    onError: (error: Error) => {
+      showNotification.error(
+        `Failed to save search: ${error.message || 'Unknown error occurred'}`
+      )
     },
   })
 }
 
 export function useLoadSearch() {
   return useMutation({
-    mutationFn: (searchId: string) => markSearchUsed(searchId),
+    mutationFn: markSearchUsed,
+    onSuccess: () => {
+      showNotification.success('Search loaded successfully')
+    },
+    onError: (error: Error) => {
+      showNotification.error(
+        `Failed to load search: ${error.message || 'Unknown error occurred'}`
+      )
+    },
   })
 }

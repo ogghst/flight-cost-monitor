@@ -1,16 +1,20 @@
-// Update the imports in main.ts
 import { AppModule } from '@/app.module.js'
+import { FcmWinstonLogger } from '@fcm/shared/logging'
 import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
-import { FcmWinstonLogger } from './logging/fcm-winston-logger.js'
+import { UnauthorizedExceptionFilter } from './filters/unauthorized-exception.filter.js'
+import { LoggingInterceptor } from './interceptors/logging.interceptor.js'
 import { formatError } from './utils/error.utils.js'
 
 async function bootstrap() {
   // Create logger instance for bootstrapping
-  const logger = new FcmWinstonLogger({
-    context: 'Bootstrap',
-    minLevel: process.env.NODE_ENV === 'production' ? 'info' : 'silly',
+  const logger = FcmWinstonLogger.getInstance({
+    context: 'fcm-api',
+    logDirectory: '/logs',
+    maxFiles: '2',
+    maxSize: '100mb',
+    minLevel: 'debug',
   })
 
   try {
@@ -18,23 +22,53 @@ async function bootstrap() {
 
     const app = await NestFactory.create(AppModule, {
       logger: logger,
+      // This ensures we capture all requests, even before middleware
+      bufferLogs: true,
     })
+
+    // Register global interceptor - will log all requests
+    app.useGlobalInterceptors(new LoggingInterceptor())
+
+    // Register unauthorized exception filter
+    app.useGlobalFilters(new UnauthorizedExceptionFilter())
 
     app.useGlobalPipes(new ValidationPipe({ transform: true }))
 
-    // Simplified Swagger setup for development
+    // Configure Swagger
     const config = new DocumentBuilder()
       .setTitle('Flight Cost Monitor API')
       .setDescription('API for monitoring and searching flight costs')
       .setVersion('1.0')
-      .addTag('Flight Offers')
-      //.addBearerAuth()
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          name: 'JWT',
+          description: 'Enter JWT token',
+          in: 'header',
+        },
+        'access-token'
+      )
+      .addTag('Auth', 'Authentication endpoints')
+      .addTag('Flight Offers', 'Flight search and monitoring')
       .build()
 
-    // Add more detailed error logging for Swagger document creation
+    // Generate Swagger document with custom options
     try {
-      const document = SwaggerModule.createDocument(app, config)
-      SwaggerModule.setup('api/docs', app, document)
+      const document = SwaggerModule.createDocument(app, config, {
+        deepScanRoutes: true,
+        operationIdFactory: (controllerKey: string, methodKey: string) =>
+          methodKey,
+      })
+
+      SwaggerModule.setup('api/docs', app, document, {
+        swaggerOptions: {
+          persistAuthorization: true,
+          tryItOutEnabled: true,
+          displayRequestDuration: true,
+        },
+      })
       logger.debug('Swagger documentation generated successfully')
     } catch (error) {
       logger.error('Failed to generate Swagger documentation', {

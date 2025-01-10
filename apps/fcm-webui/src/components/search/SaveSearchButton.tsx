@@ -1,8 +1,10 @@
 'use client'
 
+import { useSearchForm } from '@/components/context/SearchFormContext'
 import { useSaveSearch } from '@/hooks/useSearches'
-import { SearchType } from '@fcm/storage/schema'
-import { BookmarkAdd } from '@mui/icons-material'
+import { SearchType } from '@fcm/shared/auth'
+import { UserSearchDto } from '@fcm/shared/user-search/types'
+import { BookmarkAdd, Warning } from '@mui/icons-material'
 import {
   Button,
   Dialog,
@@ -10,30 +12,52 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
+  Tooltip,
+  Typography,
 } from '@mui/material'
+import { useSession } from 'next-auth/react'
 import { useState } from 'react'
 
 interface SaveSearchButtonProps {
-  searchCriteria: string
   searchType: (typeof SearchType)[keyof typeof SearchType]
-  isSimpleSearch?: boolean
+}
+
+function compareSearchParameters(
+  current: UserSearchDto,
+  loaded: UserSearchDto
+): boolean {
+  if (!current || !loaded) return true
+  return current.parameters === loaded.parameters
 }
 
 export function SaveSearchButton({
-  searchCriteria,
   searchType,
-  isSimpleSearch,
 }: SaveSearchButtonProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const { mutate: saveSearch, isPending } = useSaveSearch()
+  const { data: session } = useSession()
+  const { currentSearch } = useSearchForm()
+
+  const hasChanges = currentSearch?.id && !compareSearchParameters(currentSearch, {
+    ...currentSearch,
+    parameters: currentSearch.parameters
+  })
+
+  const buttonColor = hasChanges ? 'error' : 'primary'
+  const tooltipTitle = hasChanges
+    ? `Current search parameters differ from original search "${currentSearch?.name || 'Untitled'}"`
+    : 'Save current search'
 
   const handleSave = () => {
+    if (!currentSearch) return
+
     saveSearch(
       {
-        searchType,
-        criteria: searchCriteria,
-        title: title.trim() || undefined,
+        ...currentSearch,
+        name: title.trim() || undefined,
+        userEmail: session?.user.email || '',
+        favorite: false,
       },
       {
         onSuccess: () => {
@@ -44,15 +68,21 @@ export function SaveSearchButton({
     )
   }
 
+  // Don't show the button if there's no search to save
+  if (!currentSearch) return null
+
   return (
     <>
-      <Button
-        variant="outlined"
-        startIcon={<BookmarkAdd />}
-        onClick={() => setOpen(true)}
-        size="small">
-        Save Search
-      </Button>
+      <Tooltip title={tooltipTitle} arrow>
+        <Button
+          variant={hasChanges ? 'contained' : 'outlined'}
+          startIcon={hasChanges ? <Warning /> : <BookmarkAdd />}
+          onClick={() => setOpen(true)}
+          size="small"
+          color={buttonColor}>
+          {hasChanges ? 'Parameters Changed' : 'Save Search'}
+        </Button>
+      </Tooltip>
 
       <Dialog
         open={open}
@@ -69,13 +99,27 @@ export function SaveSearchButton({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             variant="outlined"
-            placeholder={`My ${isSimpleSearch ? 'Simple' : 'Advanced'} Search`}
+            placeholder={`My ${SearchType[searchType].toLowerCase()} Search`}
           />
+          {hasChanges && (
+            <Typography
+              color="error"
+              variant="body2"
+              sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Warning fontSize="small" />
+              Note: Current parameters differ from original search &quot;
+              {currentSearch?.name || 'Untitled'}&quot;
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={handleSave} disabled={isPending} variant="contained">
-            Save
+          <Button
+            onClick={handleSave}
+            disabled={isPending}
+            variant="contained"
+            color={hasChanges ? 'error' : 'primary'}>
+            {hasChanges ? 'Save Modified Search' : 'Save Search'}
           </Button>
         </DialogActions>
       </Dialog>
