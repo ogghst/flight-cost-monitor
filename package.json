@@ -18,7 +18,11 @@
     "update-deps": "pnpm update -r --latest",
     "update-deps:safe": "pnpm update -r",
     "check-updates": "pnpm exec npm-check-updates",
-    "preinstall": "npx only-allow pnpm"
+    "preinstall": "npx only-allow pnpm",
+    "docker:build": "turbo run docker:build",
+    "docker:push": "turbo run docker:push",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
   },
   "devDependencies": {
     "@fcm/eslint-config": "workspace:*",

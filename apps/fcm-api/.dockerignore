@@ -1,0 +1,28 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Source
+src
+test
+
+# Development
+.env*
+.prettierignore
+.swcrc
+prettier.config.js
+tsconfig*.json
+nest-cli.json
+README.md
+
+# Debug & IDE
+.vscode
+.idea
+*.log
+logs
+
+# Build
+dist
+.turbo
+coverage
+*.tsbuildinfo

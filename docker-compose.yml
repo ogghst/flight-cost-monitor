@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  fcm-webui:
+    build:
+      context: .
+      dockerfile: apps/fcm-webui/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Auth configuration
+      - AUTH_GITHUB_ID=Ov23li0AghVx0GGNzgo7
+      - AUTH_GITHUB_SECRET=6a101af4f6eb6a6199b850fe23689b8049c48acb
+      - NEXT_PUBLIC_OAUTH_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_OAUTH_GOOGLE_CLIENT_ID:-your_google_client_id}
+      - AUTH_SECRET=${AUTH_SECRET:-your-secret-key-min-32-chars-long}
+      # API configuration
+      - API_URL=${API_URL:-http://fcm-api:3001}
+      - API_TIMEOUT=${API_TIMEOUT:-60000}
+    depends_on:
+      - fcm-api
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  fcm-api:
+    build:
+      context: .
+      dockerfile: apps/fcm-api/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      # Database configuration
+      - DATABASE_URL=${DATABASE_URL:-file:/app/apps/fcm-api/prisma/dev.db}
+      # JWT configuration
+      - JWT_SECRET=${JWT_SECRET:-your-jwt-secret-key-here}
+      - JWT_ACCESS_EXPIRATION=${JWT_ACCESS_EXPIRATION:-15m}
+      - JWT_REFRESH_EXPIRATION=${JWT_REFRESH_EXPIRATION:-7d}
+      # CORS configuration
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
+      # Logging configuration
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_DIR=/app/apps/fcm-api/logs
+      # Amadeus API Configuration
+      - AMADEUS_FLIGHT_OFFER_API_URL=${AMADEUS_FLIGHT_OFFER_API_URL:-https://test.api.amadeus.com/v2/shopping/flight-offers}
+      - AMADEUS_AUTH_URL=${AMADEUS_AUTH_URL:-https://test.api.amadeus.com/v1/security/oauth2/token}
+      - AMADEUS_TIMEOUT=${AMADEUS_TIMEOUT:-60000}
+      - AMADEUS_CLIENT_ID=${AMADEUS_CLIENT_ID}
+      - AMADEUS_CLIENT_SECRET=${AMADEUS_CLIENT_SECRET}
+    volumes:
+      - api-logs:/app/apps/fcm-api/logs
+      - api-data:/app/apps/fcm-api/prisma
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  api-logs:
+  api-data:

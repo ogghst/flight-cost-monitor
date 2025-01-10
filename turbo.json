@@ -46,6 +46,20 @@
         "coverage",
         "*.tsbuildinfo"
       ]
+    },
+    "docker:build": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "docker:push": {
+      "cache": false,
+      "dependsOn": ["docker:build"]
+    },
+    "docker:up": {
+      "cache": false
+    },
+    "docker:down": {
+      "cache": false
     }
   }
 }

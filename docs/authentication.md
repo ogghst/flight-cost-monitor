@@ -1,7 +1,10 @@
-# Flight Cost Monitor Authentication Documentation
+# Authentication Documentation
+
+This document describes the authentication system used in the Flight Cost Monitor application.
 
 ## Overview
-Flight Cost Monitor (FCM) supports two main authentication methods:
+
+FCM supports two main authentication methods:
 1. OAuth authentication (GitHub, Google)
 2. Credentials-based authentication
 
@@ -72,12 +75,10 @@ stateDiagram-v2
     end note
 ```
 
-## Authentication Components
+## Token Structure
 
-### 1. Token Structure
-
-#### Access Token (JWT)
-\`\`\`typescript
+### Access Token (JWT)
+```typescript
 interface TokenPayload {
     sub: string;           // User ID
     email: string;
@@ -86,10 +87,10 @@ interface TokenPayload {
     iat: number;
     exp: number;
 }
-\`\`\`
+```
 
-#### Refresh Token
-\`\`\`typescript
+### Refresh Token
+```typescript
 interface RefreshToken {
     id: string;
     token: string;
@@ -98,28 +99,28 @@ interface RefreshToken {
     family: string;        // For token rotation
     generationNumber: number;
 }
-\`\`\`
+```
 
-### 2. API Endpoints
+## API Endpoints
 
-#### OAuth Authentication
-- \`POST /auth/oauth/login\`: Exchange OAuth token for JWT
-- \`POST /auth/oauth/github\`: GitHub OAuth callback
-- \`POST /auth/oauth/google\`: Google OAuth callback
+### OAuth Authentication
+- `POST /auth/oauth/login`: Exchange OAuth token for JWT
+- `POST /auth/oauth/github`: GitHub OAuth callback
+- `POST /auth/oauth/google`: Google OAuth callback
 
-#### Credentials Authentication
-- \`POST /auth/login\`: Login with username/password
-- \`POST /auth/register\`: Register new user
-- \`POST /auth/forgot-password\`: Request password reset
-- \`POST /auth/reset-password\`: Reset password with token
+### Credentials Authentication
+- `POST /auth/login`: Login with username/password
+- `POST /auth/register`: Register new user
+- `POST /auth/forgot-password`: Request password reset
+- `POST /auth/reset-password`: Reset password with token
 
-#### Token Management
-- \`POST /auth/refresh\`: Refresh access token
-- \`POST /auth/logout\`: Logout and invalidate tokens
+### Token Management
+- `POST /auth/refresh`: Refresh access token
+- `POST /auth/logout`: Logout and invalidate tokens
 
-### 3. Security Measures
+## Token Security
 
-#### Token Storage
+### Token Storage
 ```mermaid
 graph TD
     A[Access Token] -->|Stored in| B[Memory]
@@ -127,26 +128,28 @@ graph TD
     E[OAuth Token] -->|Temporary| F[Memory during OAuth Flow]
 ```
 
-#### Security Features
-1. Token Rotation
+### Security Features
+
+1. **Token Rotation**
    - New refresh token family on login
    - Generation number increments on refresh
    - Family invalidation on suspected breach
 
-2. CSRF Protection
+2. **CSRF Protection**
    - SameSite cookie policy
    - CSRF tokens for mutations
    - Origin validation
 
-3. Rate Limiting
+3. **Rate Limiting**
    - Login attempts limited
    - Token refresh rate limited
    - IP-based throttling
 
-## Implementation Example
+## Implementation Examples
 
-### Frontend Usage
-\`\`\`typescript
+### Frontend Authentication
+
+```typescript
 // OAuth Login
 const handleOAuthLogin = async (provider: 'github' | 'google') => {
   const tokens = await authService.loginWithOAuth(provider);
@@ -163,13 +166,14 @@ const handleLogin = async (credentials: LoginCredentials) => {
 const makeAuthenticatedCall = async () => {
   const token = await tokenStorage.getAccessToken();
   return api.call('/protected-endpoint', {
-    headers: { Authorization: \`Bearer \${token}\` }
+    headers: { Authorization: `Bearer ${token}` }
   });
 };
-\`\`\`
+```
 
-### Backend Validation
-\`\`\`typescript
+### Backend Guards
+
+```typescript
 // Token Validation
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -196,7 +200,18 @@ export class RolesGuard implements CanActivate {
     return this.matchRoles(roles, user.roles);
   }
 }
-\`\`\`
+```
+
+## Error Handling
+
+```mermaid
+graph TD
+    A[Authentication Error] -->|Invalid Credentials| B[401 Unauthorized]
+    A -->|Invalid Token| C[401 Unauthorized]
+    A -->|Expired Token| D[401 Unauthorized + Refresh Required]
+    A -->|Invalid Refresh| E[401 Unauthorized + Login Required]
+    A -->|Missing Permissions| F[403 Forbidden]
+```
 
 ## Security Considerations
 
@@ -213,13 +228,23 @@ export class RolesGuard implements CanActivate {
 4. Monitor failed login attempts
 5. Log security-relevant events
 
-## Error Handling
+## Configuration
 
-```mermaid
-graph TD
-    A[Authentication Error] -->|Invalid Credentials| B[401 Unauthorized]
-    A -->|Invalid Token| C[401 Unauthorized]
-    A -->|Expired Token| D[401 Unauthorized + Refresh Required]
-    A -->|Invalid Refresh| E[401 Unauthorized + Login Required]
-    A -->|Missing Permissions| F[403 Forbidden]
+### Next-Auth Setup (Frontend)
+
+`.env.local` configuration:
+```env
+AUTH_GITHUB_ID=Ov23li0AghVx0GGNzgo7
+AUTH_GITHUB_SECRET=6a101af4f6eb6a6199b850fe23689b8049c48acb
+NEXT_PUBLIC_OAUTH_GOOGLE_CLIENT_ID=your_google_client_id
+AUTH_SECRET=your-secret-key-min-32-chars-long
+```
+
+### JWT Configuration (Backend)
+
+`.env` configuration:
+```env
+JWT_SECRET=your-jwt-secret-key-here
+JWT_ACCESS_EXPIRATION=15m
+JWT_REFRESH_EXPIRATION=7d
 ```
