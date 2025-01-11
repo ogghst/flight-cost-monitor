@@ -60,11 +60,11 @@
       "import": "./dist/flight-offer-search/index.js",
       "types": "./dist/flight-offer-search/types.d.ts"
     },
-    "./scheduler/types": {
+    "./scheduler": {
       "import": "./dist/scheduler/types.js",
       "types": "./dist/scheduler/types.d.ts"
     },
-    "./monitoring/types": {
+    "./monitoring": {
       "import": "./dist/monitoring/types.js",
       "types": "./dist/monitoring/types.d.ts"
     }
@@ -89,7 +89,7 @@
       "/flight-offer-search": [
         "./dist/flight-offer-search/index.d.ts"
       ],
-      "/scheduler/types": [
+      "/scheduler": [
         "./dist/scheduler/types.d.ts"
       ],
       "/monitoring": [

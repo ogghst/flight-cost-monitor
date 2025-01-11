@@ -1,7 +1,10 @@
+import { CurrentUser } from '@/auth/decorators/user.decorator.js'
+import { type AuthUser } from '@fcm/shared'
 import type {
   CreateTaskScheduleDto,
   TaskSchedule,
-} from '@fcm/shared/scheduler/types'
+  TaskScheduleDto,
+} from '@fcm/shared/scheduler'
 import {
   Body,
   Controller,
@@ -14,6 +17,7 @@ import {
   Post,
   Query,
   UseGuards,
+  ValidationPipe,
 } from '@nestjs/common'
 import {
   ApiBearerAuth,
@@ -57,8 +61,13 @@ export class SchedulerController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Unauthorized',
   })
-  async createTask(@Body() data: CreateTaskScheduleDto) {
-    return this.schedulerService.createTask(data)
+  async createTask(
+    @Body(new ValidationPipe({ transform: true }))
+    params: CreateTaskScheduleDto,
+    @CurrentUser('id') user: AuthUser
+  ): Promise<TaskScheduleDto> {
+    params.userEmail = user.email
+    return this.schedulerService.createTask(params)
   }
 
   @Get()

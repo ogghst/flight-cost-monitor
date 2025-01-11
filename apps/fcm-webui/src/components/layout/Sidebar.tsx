@@ -1,13 +1,7 @@
 'use client'
 
 import { useIsMobile } from '@/hooks/useIsMobile'
-import {
-  DateRange,
-  FlightTakeoff,
-  Home,
-  Search,
-  Settings,
-} from '@mui/icons-material'
+import { DateRange, Home, MonitorHeart, Search } from '@mui/icons-material'
 import {
   Drawer,
   List,
@@ -34,9 +28,8 @@ const menuItems = [
     icon: <Search />,
     path: '/flightsearchadvanced',
   },
-  { text: 'My Flights', icon: <FlightTakeoff />, path: '/flights' },
-  { text: 'Schedule', icon: <DateRange />, path: '/schedule' },
-  { text: 'Settings', icon: <Settings />, path: '/settings' },
+  { text: 'Scheduler', icon: <DateRange />, path: '/scheduler' },
+  { text: 'Monitor', icon: <MonitorHeart />, path: '/monitoring' },
 ]
 
 export default function Sidebar({ open, onClose, drawerWidth }: SidebarProps) {

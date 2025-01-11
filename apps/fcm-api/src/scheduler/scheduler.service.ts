@@ -1,17 +1,28 @@
+import { FlightOffersService } from '@/flight-offers/flight-offers.service.js'
+import { UserSearchesService } from '@/user-searches/user-searches.service.js'
+import { FcmWinstonLogger, SearchType } from '@fcm/shared'
+import {
+  FlightOfferSimpleSearchRequest,
+  FlightOfferSimpleSearchResponse,
+} from '@fcm/shared/amadeus/clients/flight-offer'
+import {
+  FlightOfferAdvancedSearchRequest,
+  FlightOffersAdvancedResponse,
+} from '@fcm/shared/amadeus/clients/flight-offer-advanced'
 import {
   CreateTaskScheduleDto,
   ExecutionState,
   TaskExecutionDto,
   TaskScheduleDto,
   TaskState,
-} from '@fcm/shared/scheduler/types'
+} from '@fcm/shared/scheduler'
 import {
   taskExecutionRepository,
   taskScheduleRepository,
   taskStatsRepository,
 } from '@fcm/storage/repositories'
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
-import { AsyncTask, SimpleIntervalJob, ToadScheduler } from 'toad-scheduler'
+import { AsyncTask, CronJob, Job, ToadScheduler } from 'toad-scheduler'
 import { AlertsService } from '../alerts/alerts.service.js'
 import { MonitoringService } from '../monitoring/monitoring.service.js'
 import { WebsocketGateway } from '../websocket/websocket.gateway.js'
@@ -19,25 +30,35 @@ import { WebsocketGateway } from '../websocket/websocket.gateway.js'
 @Injectable()
 export class SchedulerService implements OnModuleInit, OnModuleDestroy {
   private scheduler: ToadScheduler
-  private activeJobs: Map<string, SimpleIntervalJob> = new Map()
+  private activeJobs: Map<string, Job> = new Map()
+  private logger = FcmWinstonLogger.getInstance()
 
   constructor(
     private readonly websocketGateway: WebsocketGateway,
     private readonly monitoringService: MonitoringService,
-    private readonly alertsService: AlertsService
+    private readonly alertsService: AlertsService,
+    private readonly searchService: UserSearchesService, // We need to inject the search service
+    private readonly flightOffersService: FlightOffersService
   ) {
     this.scheduler = new ToadScheduler()
   }
 
   async onModuleInit() {
+    this.logger.debug('Initializing Scheduler..')
+    this.scheduler.stop() // Ensure clean state
+    this.scheduler = new ToadScheduler()
     await this.initializeScheduledTasks()
   }
 
   onModuleDestroy() {
+    // Clean stop on module destroy
+    this.logger.debug('Closing and stopping Scheduler..')
+    this.activeJobs.clear()
     this.scheduler.stop()
   }
 
   private async initializeScheduledTasks() {
+    this.logger.debug('Initializing Scheduler..')
     const tasks = await taskScheduleRepository.findActive()
 
     for (const task of tasks) {
@@ -46,20 +67,29 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async scheduleTask(config: TaskScheduleDto) {
+    this.logger.debug(
+      'Scheduling task: ' + config.name + ' (' + config.id + ') '
+    )
     const task = new AsyncTask(
       config.name,
       async () => {
         const execution = await this.startExecution(config)
         try {
-          const result = await this.executeWithTimeout(
-            config.searchId,
-            config.timeout
-          )
+          const result = await this.executeWithTimeout(config)
+
           await this.completeExecution(execution.id, result)
+
           this.websocketGateway.broadcastTaskUpdate({
             taskId: config.id,
             state: ExecutionState.COMPLETED,
             result,
+          })
+
+          await this.alertsService.sendAlert({
+            executionId: execution.id,
+            message: 'Execution completed',
+            type: 'INFO',
+            taskId: config.id,
           })
         } catch (error) {
           let errMsg = new Error()
@@ -75,47 +105,99 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
             state: ExecutionState.FAILED,
             error: errMsg.message,
           })
+          await this.alertsService.sendAlert({
+            executionId: execution.id,
+            message: 'Execution failed',
+            type: 'INFO',
+            taskId: config.id,
+            error: errMsg.message,
+          })
         }
       },
       (error) => this.handleTaskError(config.id, error)
     )
 
+    /*
     const job = new SimpleIntervalJob(
-      { minutes: 15, runImmediately: false },
+      { minutes: 1, runImmediately: false },
       task,
       { preventOverrun: true }
     )
 
     this.scheduler.addSimpleIntervalJob(job)
+    */
+
+    const job = new CronJob(
+      {
+        cronExpression: config.cronExpression,
+      },
+      task,
+      {
+        preventOverrun: true,
+      }
+    )
+    this.scheduler.addCronJob(job)
+
     this.activeJobs.set(config.id, job)
 
     await taskScheduleRepository.update({
       id: config.id,
-      nextRunAt: this.calculateNextRun(15),
+      nextRunAt: this.calculateNextRun(1),
     })
   }
 
-  private async executeWithTimeout(
-    searchId: string,
-    timeout: number
-  ): Promise<any> {
+  private async executeWithTimeout(config: TaskScheduleDto): Promise<any> {
+    this.logger.debug(
+      'Executing with timeout searchId: ' +
+        config.searchId +
+        ' (' +
+        config.timeout +
+        ') '
+    )
     return Promise.race([
-      this.executeSearch(searchId),
+      this.executeSearch(config),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Execution timeout')), timeout)
+        setTimeout(() => reject(new Error('Execution timeout')), config.timeout)
       ),
     ])
   }
 
-  private async executeSearch(searchId: string): Promise<any> {
-    // Call your search execution logic here
-    // This is a placeholder for the actual search execution
-    return { searchId, executed: new Date() }
+  private async executeSearch(
+    config: TaskScheduleDto
+  ): Promise<FlightOfferSimpleSearchResponse | FlightOffersAdvancedResponse> {
+    // First get the search configuration
+    const savedSearch = await this.searchService.findById(config.searchId)
+    if (!savedSearch) {
+      throw new Error(`Search not found: ${config.searchId}`)
+    }
+
+    // Execute the search based on type
+    if (savedSearch.searchType === SearchType.SIMPLE) {
+      this.logger.debug('Executing simple search: ' + savedSearch.name)
+      return this.flightOffersService.searchFlightOffers(
+        JSON.parse(savedSearch.parameters) as FlightOfferSimpleSearchRequest,
+        config.userEmail,
+        config.searchId
+      )
+    } else if (savedSearch.searchType === SearchType.ADVANCED) {
+      this.logger.debug('Executing advanced search: ' + savedSearch.name)
+      return this.flightOffersService.searchFlightOffersAdvanced(
+        JSON.parse(savedSearch.parameters) as FlightOfferAdvancedSearchRequest,
+        config.userEmail,
+        config.searchId
+      )
+    }
+
+    throw new Error(`Invalid search type for search ${config.searchId}`)
   }
 
   private async startExecution(
     config: TaskScheduleDto
   ): Promise<TaskExecutionDto> {
+    this.logger.debug(
+      `Start Execution of task: ${config.name} (id: ${config.id})"`
+    )
+
     const execution = await taskExecutionRepository.create({
       taskId: config.id,
       state: ExecutionState.RUNNING,
@@ -133,6 +215,8 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async completeExecution(executionId: string, result: any) {
+    this.logger.debug('Complete execution: ' + executionId)
+
     const endTime = new Date()
     const execution = await taskExecutionRepository.findById(executionId)
 
@@ -215,10 +299,7 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     const config = await taskScheduleRepository.findById(execution.taskId)
 
     try {
-      const result = await this.executeWithTimeout(
-        config.searchId,
-        config.timeout
-      )
+      const result = await this.executeWithTimeout(config)
       await this.completeExecution(executionId, result)
     } catch (error) {
       if (error instanceof Error) {

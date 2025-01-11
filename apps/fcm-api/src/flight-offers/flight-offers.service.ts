@@ -105,9 +105,7 @@ export class FlightOffersService {
         userEmail,
       })
 
-      const response = await this.flightClient.searchFlightOffers({
-        ...params,
-      })
+      const response = await this.flightClient.searchFlightOffers(params)
 
       this.logger.info('Flight offers search completed', {
         count: response.data.length,

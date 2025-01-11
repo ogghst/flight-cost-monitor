@@ -1,4 +1,4 @@
-import { ExecutionState } from '@fcm/shared/scheduler/types'
+import { ExecutionState } from '@fcm/shared/scheduler'
 import {
   taskExecutionRepository,
   taskStatsRepository,
