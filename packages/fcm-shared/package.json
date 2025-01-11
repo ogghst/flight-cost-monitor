@@ -63,6 +63,10 @@
     "./scheduler/types": {
       "import": "./dist/scheduler/types.js",
       "types": "./dist/scheduler/types.d.ts"
+    },
+    "./monitoring/types": {
+      "import": "./dist/monitoring/types.js",
+      "types": "./dist/monitoring/types.d.ts"
     }
   },
   "typesVersions": {
@@ -87,6 +91,9 @@
       ],
       "/scheduler/types": [
         "./dist/scheduler/types.d.ts"
+      ],
+      "/monitoring": [
+        "./dist/monitoring/types.d.ts"
       ]
     }
   },
