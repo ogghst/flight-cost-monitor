@@ -24,6 +24,10 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./types": {
+      "import": "./dist/types/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
     "./amadeus/clients": {
       "import": "./dist/amadeus/clients/index.js",
       "types": "./dist/amadeus/clients/index.d.ts"
@@ -94,6 +98,9 @@
       ],
       "/monitoring": [
         "./dist/monitoring/types.d.ts"
+      ],
+      "/types": [
+        "./dist/types/types.d.ts"
       ]
     }
   },

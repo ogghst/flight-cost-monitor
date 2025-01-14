@@ -1,5 +1,5 @@
+import { baseEntitySchema } from '@fcm/shared/types'
 import { z } from 'zod'
-import { baseEntitySchema } from './base-entity.js'
 
 // Permission schema matches Prisma schema
 export const permissionSchema = baseEntitySchema.extend({
@@ -12,7 +12,7 @@ export const createPermissionSchema = permissionSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  deletedAt: true
+  deletedAt: true,
 })
 
 // Schema for updating an existing permission
@@ -28,7 +28,7 @@ export const PERMISSION_TYPES = [
   'user:read',
   'user:write',
   'flight:read',
-  'flight:write'
+  'flight:write',
 ] as const
 
-export type PermissionType = typeof PERMISSION_TYPES[number]
+export type PermissionType = (typeof PERMISSION_TYPES)[number]

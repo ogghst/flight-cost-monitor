@@ -1,7 +1,7 @@
 'use client'
 
 import { SchedulerSocket } from '@/lib/websocket/scheduler'
-import type { TaskSchedule } from '@fcm/shared/scheduler'
+import { TaskScheduleDto } from '@fcm/shared/scheduler'
 import DeleteIcon from '@mui/icons-material/Delete'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
@@ -30,7 +30,7 @@ import { TaskMetricsCard } from '../monitoring/components/TaskMetricsCard'
 import { CreateTaskDialog } from './components/CreateTaskDialog'
 
 export default function SchedulerPage() {
-  const [tasks, setTasks] = useState<TaskSchedule[]>([])
+  const [tasks, setTasks] = useState<TaskScheduleDto[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
 

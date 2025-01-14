@@ -15,6 +15,7 @@ import {
   TaskExecutionDto,
   TaskScheduleDto,
   TaskState,
+  TaskType,
 } from '@fcm/shared/scheduler'
 import {
   taskExecutionRepository,
@@ -148,8 +149,8 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
 
   private async executeWithTimeout(config: TaskScheduleDto): Promise<any> {
     this.logger.debug(
-      'Executing with timeout searchId: ' +
-        config.searchId +
+      'Executing with timeout payload: ' +
+        config.payload +
         ' (' +
         config.timeout +
         ') '
@@ -165,10 +166,16 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
   private async executeSearch(
     config: TaskScheduleDto
   ): Promise<FlightOfferSimpleSearchResponse | FlightOffersAdvancedResponse> {
+    if (
+      config.taskType != TaskType.SIMPLE_SEARCH &&
+      config.taskType != TaskType.ADVANCED_SEARCH
+    )
+      throw new Error('Task type not compliant with search')
+
     // First get the search configuration
-    const savedSearch = await this.searchService.findById(config.searchId)
+    const savedSearch = await this.searchService.findById(config.payload)
     if (!savedSearch) {
-      throw new Error(`Search not found: ${config.searchId}`)
+      throw new Error(`Search not found: ${config.payload}`)
     }
 
     // Execute the search based on type
@@ -177,18 +184,18 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
       return this.flightOffersService.searchFlightOffers(
         JSON.parse(savedSearch.parameters) as FlightOfferSimpleSearchRequest,
         config.userEmail,
-        config.searchId
+        config.payload
       )
     } else if (savedSearch.searchType === SearchType.ADVANCED) {
       this.logger.debug('Executing advanced search: ' + savedSearch.name)
       return this.flightOffersService.searchFlightOffersAdvanced(
         JSON.parse(savedSearch.parameters) as FlightOfferAdvancedSearchRequest,
         config.userEmail,
-        config.searchId
+        config.payload
       )
     }
 
-    throw new Error(`Invalid search type for search ${config.searchId}`)
+    throw new Error(`Invalid search type for search ${config.payload}`)
   }
 
   private async startExecution(
@@ -341,7 +348,7 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     return task
   }
 
-  async pauseTask(taskId: string) {
+  async pauseTask(taskId: string): Promise<TaskScheduleDto> {
     const job = this.activeJobs.get(taskId)
     if (job) {
       job.stop()
@@ -350,10 +357,10 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
         id: taskId,
         state: TaskState.DISABLED,
       })
-    }
+    } else return null
   }
 
-  async resumeTask(taskId: string) {
+  async resumeTask(taskId: string): Promise<TaskScheduleDto> {
     const config = await taskScheduleRepository.findById(taskId)
     if (config && !this.activeJobs.has(taskId)) {
       await this.scheduleTask(config)
@@ -361,10 +368,13 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
         id: taskId,
         state: TaskState.ENABLED,
       })
-    }
+    } else return null
   }
 
-  async updateTask(taskId: string, data: Partial<TaskScheduleDto>) {
+  async updateTask(
+    taskId: string,
+    data: Partial<TaskScheduleDto>
+  ): Promise<void | TaskScheduleDto> {
     const task = await taskScheduleRepository.findById(taskId)
 
     // If task was enabled and now disabled, stop it
@@ -386,9 +396,9 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     return updatedTask
   }
 
-  async deleteTask(taskId: string) {
+  async deleteTask(taskId: string): Promise<TaskScheduleDto> {
     await this.pauseTask(taskId)
-    await taskScheduleRepository.softDelete(taskId)
+    return await taskScheduleRepository.softDelete(taskId)
   }
 
   async getTaskStatus(taskId: string) {
@@ -404,11 +414,14 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async getAllTasks() {
+  async getAllTasks(): Promise<TaskScheduleDto[]> {
     return taskScheduleRepository.findAll()
   }
 
-  async getTaskExecutions(taskId: string, limit: number = 10) {
+  async getTaskExecutions(
+    taskId: string,
+    limit: number = 10
+  ): Promise<TaskExecutionDto[]> {
     return taskExecutionRepository.findByTask(taskId, limit)
   }
 }

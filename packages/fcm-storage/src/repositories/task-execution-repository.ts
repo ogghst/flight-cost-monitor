@@ -3,7 +3,7 @@ import type {
   ExecutionState,
   TaskExecutionDto,
   UpdateTaskExecutionDto,
-} from '@fcm/shared/scheduler/types'
+} from '@fcm/shared/scheduler'
 import type { TaskExecution as TaskExecutioPrisma } from '@prisma/client'
 import { Prisma } from '@prisma/client'
 import type { ITXClientDenyList } from '@prisma/client/runtime/library'

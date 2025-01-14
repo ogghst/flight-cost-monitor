@@ -1,4 +1,5 @@
 import { AppModule } from '@/app.module.js'
+import { patchNestjsSwagger } from '@anatine/zod-nestjs'
 import { FcmWinstonLogger } from '@fcm/shared/logging'
 import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
@@ -24,6 +25,9 @@ async function bootstrap() {
       bufferLogs: true,
       abortOnError: false,
     })
+
+    // Patch Swagger to work with Zod schemas
+    patchNestjsSwagger()
 
     // Use WebSocket adapter explicitly
     app.useWebSocketAdapter(new IoAdapter(app))

@@ -159,6 +159,18 @@ export class FlightOffersService {
     }
   }
 
+  async getSearchByUserSearchId(id: string): Promise<FlightOfferSearchDto[]> {
+    try {
+      return await flightOfferSearchRepository.findByUserSearchId(id)
+    } catch (error) {
+      this.logger.error(
+        'Failed to retrieve search by User Search ID',
+        formatError(error)
+      )
+      throw new InternalServerErrorException('Failed to retrieve search')
+    }
+  }
+
   async searchFlightOffersAdvanced(
     params: FlightOffersAdvancedSearchRequest,
     userEmail: string,

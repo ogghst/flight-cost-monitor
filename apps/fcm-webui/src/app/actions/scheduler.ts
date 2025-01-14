@@ -1,113 +1,169 @@
 'use server'
 
-import { makeServerRequest } from '@/lib/api/axiosConfig'
-import type { 
-  CreateTaskSchedule,
-  TaskSchedule,
-  UpdateTaskSchedule,
-  TaskExecutionDto 
-} from '@fcm/shared/scheduler/types'
+import { auth } from '@/lib/auth'
+import {
+  CreateTaskScheduleDto,
+  TaskExecutionDto,
+  TaskScheduleDto,
+  UpdateTaskScheduleDto,
+} from '@fcm/shared/scheduler'
+import { headers } from 'next/headers'
+
+const API_URL = process.env.API_URL || 'http://localhost:3001'
+
+async function getAuthHeaders() {
+  const session = await auth()
+  const headersList = headers()
+
+  return {
+    'Content-Type': 'application/json',
+    Authorization: session?.accessToken ? `Bearer ${session.accessToken}` : '',
+    Cookie: (await headersList).get('cookie') || '',
+  }
+}
 
 export async function createScheduledTaskAction(
-  data: CreateTaskSchedule
-): Promise<TaskSchedule> {
+  data: CreateTaskScheduleDto
+): Promise<TaskScheduleDto> {
   try {
-    return await makeServerRequest<TaskSchedule>(
-      'POST',
-      '/tasks',
-      JSON.stringify(data)
-    )
+    const response = await fetch(`${API_URL}/tasks`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(data),
+      credentials: 'include',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Failed to create scheduled task')
+    }
+
+    return response.json()
   } catch (error) {
     console.error('Create scheduled task error:', error)
-    if (error instanceof Error) {
-      throw new Error(`Failed to create scheduled task: ${error.message}`)
-    }
-    throw new Error('Failed to create scheduled task')
+    throw error instanceof Error
+      ? error
+      : new Error('Failed to create scheduled task')
   }
 }
 
-export async function getScheduledTasksAction(): Promise<TaskSchedule[]> {
+export async function getScheduledTasksAction(): Promise<TaskScheduleDto[]> {
   try {
-    return await makeServerRequest<TaskSchedule[]>('GET', '/tasks')
-  } catch (error) {
-    console.error('Get tasks error:', error)
-    if (error instanceof Error) {
-      throw new Error(`Failed to get tasks: ${error.message}`)
+    const response = await fetch(`${API_URL}/tasks`, {
+      headers: await getAuthHeaders(),
+      credentials: 'include',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Failed to get tasks')
     }
-    throw new Error('Failed to get tasks')
+
+    return response.json()
+  } catch (error) {
+    throw error instanceof Error ? error : new Error('Failed to get tasks')
   }
 }
 
-export async function getScheduledTaskAction(id: string): Promise<TaskSchedule> {
+export async function getScheduledTaskAction(
+  id: string
+): Promise<TaskScheduleDto> {
   try {
-    return await makeServerRequest<TaskSchedule>('GET', `/tasks/${id}`)
-  } catch (error) {
-    console.error('Get task error:', error)
-    if (error instanceof Error) {
-      throw new Error(`Failed to get task: ${error.message}`)
+    const response = await fetch(`${API_URL}/tasks/${id}`, {
+      headers: await getAuthHeaders(),
+      credentials: 'include',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Failed to get task')
     }
-    throw new Error('Failed to get task')
+
+    return response.json()
+  } catch (error) {
+    throw error instanceof Error ? error : new Error('Failed to get task')
   }
 }
 
 export async function updateScheduledTaskAction(
   id: string,
-  data: UpdateTaskSchedule
-): Promise<TaskSchedule> {
+  data: UpdateTaskScheduleDto
+): Promise<TaskScheduleDto> {
   try {
-    return await makeServerRequest<TaskSchedule>(
-      'PATCH',
-      `/tasks/${id}`,
-      JSON.stringify(data)
-    )
-  } catch (error) {
-    console.error('Update task error:', error)
-    if (error instanceof Error) {
-      throw new Error(`Failed to update task: ${error.message}`)
+    const response = await fetch(`${API_URL}/tasks/${id}`, {
+      method: 'PATCH',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(data),
+      credentials: 'include',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Failed to update task')
     }
-    throw new Error('Failed to update task')
+
+    return response.json()
+  } catch (error) {
+    throw error instanceof Error ? error : new Error('Failed to update task')
   }
 }
 
 export async function deleteScheduledTaskAction(id: string): Promise<void> {
   try {
-    await makeServerRequest('DELETE', `/tasks/${id}`)
-  } catch (error) {
-    console.error('Delete task error:', error)
-    if (error instanceof Error) {
-      throw new Error(`Failed to delete task: ${error.message}`)
+    const response = await fetch(`${API_URL}/tasks/${id}`, {
+      method: 'DELETE',
+      headers: await getAuthHeaders(),
+      credentials: 'include',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Failed to delete task')
     }
-    throw new Error('Failed to delete task')
+  } catch (error) {
+    throw error instanceof Error ? error : new Error('Failed to delete task')
   }
 }
 
-export async function pauseScheduledTaskAction(id: string): Promise<{status: string}> {
+export async function pauseScheduledTaskAction(
+  id: string
+): Promise<TaskScheduleDto> {
   try {
-    return await makeServerRequest<{status: string}>(
-      'POST',
-      `/tasks/${id}/pause`
-    )
-  } catch (error) {
-    console.error('Pause task error:', error)
-    if (error instanceof Error) {
-      throw new Error(`Failed to pause task: ${error.message}`)
+    const response = await fetch(`${API_URL}/tasks/${id}/pause`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      credentials: 'include',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Failed to pause task')
     }
-    throw new Error('Failed to pause task')
+
+    return response.json()
+  } catch (error) {
+    throw error instanceof Error ? error : new Error('Failed to pause task')
   }
 }
 
-export async function resumeScheduledTaskAction(id: string): Promise<{status: string}> {
+export async function resumeScheduledTaskAction(
+  id: string
+): Promise<TaskScheduleDto> {
   try {
-    return await makeServerRequest<{status: string}>(
-      'POST',
-      `/tasks/${id}/resume`
-    )
-  } catch (error) {
-    console.error('Resume task error:', error)
-    if (error instanceof Error) {
-      throw new Error(`Failed to resume task: ${error.message}`)
+    const response = await fetch(`${API_URL}/tasks/${id}/resume`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      credentials: 'include',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Failed to resume task')
     }
-    throw new Error('Failed to resume task')
+
+    return response.json()
+  } catch (error) {
+    throw error instanceof Error ? error : new Error('Failed to resume task')
   }
 }
 
@@ -117,16 +173,24 @@ export async function getTaskExecutionsAction(
 ): Promise<TaskExecutionDto[]> {
   try {
     const queryParams = limit ? `?limit=${limit}` : ''
-    return await makeServerRequest<TaskExecutionDto[]>(
-      'GET',
-      `/tasks/${id}/executions${queryParams}`
+    const response = await fetch(
+      `${API_URL}/tasks/${id}/executions${queryParams}`,
+      {
+        headers: await getAuthHeaders(),
+        credentials: 'include',
+      }
     )
-  } catch (error) {
-    console.error('Get task executions error:', error)
-    if (error instanceof Error) {
-      throw new Error(`Failed to get task executions: ${error.message}`)
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Failed to get task executions')
     }
-    throw new Error('Failed to get task executions')
+
+    return response.json()
+  } catch (error) {
+    throw error instanceof Error
+      ? error
+      : new Error('Failed to get task executions')
   }
 }
 
@@ -134,15 +198,20 @@ export async function getLastTaskExecutionAction(
   id: string
 ): Promise<TaskExecutionDto | null> {
   try {
-    return await makeServerRequest<TaskExecutionDto>(
-      'GET',
-      `/tasks/${id}/last-execution`
-    )
-  } catch (error) {
-    console.error('Get last execution error:', error)
-    if (error instanceof Error) {
-      throw new Error(`Failed to get last execution: ${error.message}`)
+    const response = await fetch(`${API_URL}/tasks/${id}/last-execution`, {
+      headers: await getAuthHeaders(),
+      credentials: 'include',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Failed to get last execution')
     }
-    throw new Error('Failed to get last execution')
+
+    return response.json()
+  } catch (error) {
+    throw error instanceof Error
+      ? error
+      : new Error('Failed to get last execution')
   }
 }

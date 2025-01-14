@@ -3,7 +3,7 @@ import type {
   ExecutionState,
   TaskStatsDto,
   UpdateTaskStatsDto,
-} from '@fcm/shared/scheduler/types'
+} from '@fcm/shared/scheduler'
 import { Prisma, type TaskStats } from '@prisma/client'
 import type { ITXClientDenyList } from '@prisma/client/runtime/library'
 import { DatabaseError } from '../schema/types.js'

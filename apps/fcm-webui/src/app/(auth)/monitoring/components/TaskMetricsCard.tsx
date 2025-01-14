@@ -31,8 +31,8 @@ export function TaskMetricsCard({ taskId }: TaskMetricsCardProps) {
     }
 
     loadMetrics()
-    // Refresh every 30 seconds
-    const interval = setInterval(loadMetrics, 30000)
+    // Refresh every 5 seconds
+    const interval = setInterval(loadMetrics, 5000)
     return () => clearInterval(interval)
   }, [taskId])
 

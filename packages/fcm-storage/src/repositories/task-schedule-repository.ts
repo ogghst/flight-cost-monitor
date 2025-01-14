@@ -1,9 +1,10 @@
-import type {
-  CreateTaskScheduleDto,
-  TaskScheduleDto,
-  TaskState,
-  UpdateTaskScheduleDto,
-} from '@fcm/shared/scheduler/types'
+import {
+  TaskType,
+  type CreateTaskScheduleDto,
+  type TaskScheduleDto,
+  type TaskState,
+  type UpdateTaskScheduleDto,
+} from '@fcm/shared/scheduler'
 import { Prisma, type TaskSchedule } from '@prisma/client'
 import type { ITXClientDenyList } from '@prisma/client/runtime/library'
 import { DatabaseError } from '../schema/types.js'
@@ -22,7 +23,6 @@ export class TaskScheduleRepository {
         where: { id },
         include: {
           user: true,
-          search: true,
         },
       })
       return db ? await this.toDto(db) : null
@@ -37,16 +37,28 @@ export class TaskScheduleRepository {
   ): Promise<TaskScheduleDto | null> {
     const client = tx || this.prisma
     try {
-      const db = await client.taskSchedule.findFirst({
+      const db = (await client.taskSchedule.findFirst({
         where: {
-          searchId,
+          OR: [
+            { type: TaskType.ADVANCED_SEARCH },
+            { type: TaskType.SIMPLE_SEARCH },
+          ],
+          payload: searchId,
           deletedAt: null,
         },
         include: {
-          user: true,
-          search: true,
+          user: {
+            select: {
+              id: true,
+              email: true,
+            },
+          },
         },
-      })
+      })) as
+        | (TaskSchedule & {
+            user: { id: string; email: string }
+          })
+        | null
       return db ? await this.toDto(db) : null
     } catch (error) {
       throw new DatabaseError(
@@ -66,7 +78,6 @@ export class TaskScheduleRepository {
         },
         include: {
           user: true,
-          search: true,
         },
       })
       return await this.toDtoArray(db)
@@ -83,7 +94,6 @@ export class TaskScheduleRepository {
         orderBy: { createdAt: 'desc' },
         include: {
           user: true,
-          search: true,
         },
       })
       return await this.toDtoArray(db)
@@ -108,15 +118,20 @@ export class TaskScheduleRepository {
         throw new DatabaseError('User not found', null, 'NOT_FOUND')
       }
 
+      if ('schema' in data) {
+        delete (data as any).schema
+      }
+
+      const { userEmail, ...prismaData } = data
+
       const db = await client.taskSchedule.create({
         data: {
-          ...data,
+          ...prismaData,
           state: data.state || 'ENABLED',
           userId: user.id,
         },
         include: {
           user: true,
-          search: true,
         },
       })
       return await this.toDto(db)
@@ -136,7 +151,6 @@ export class TaskScheduleRepository {
         data,
         include: {
           user: true,
-          search: true,
         },
       })
       return await this.toDto(db)
@@ -160,7 +174,6 @@ export class TaskScheduleRepository {
         where: { id },
         include: {
           user: true,
-          search: true,
         },
       })
       return await this.toDto(db)
@@ -188,7 +201,6 @@ export class TaskScheduleRepository {
         },
         include: {
           user: true,
-          search: true,
         },
       })
       return await this.toDto(db)
@@ -217,12 +229,12 @@ export class TaskScheduleRepository {
   private async toDto(
     db: TaskSchedule & {
       user: { id: string; email: string }
-      search: { id: string; name?: string | null }
     }
   ): Promise<TaskScheduleDto> {
     return {
       ...db,
       description: db.description || undefined,
+      taskType: db.taskType as TaskType,
       state: db.state as TaskState,
       userEmail: db.user.email,
       lastRunAt: db.lastRunAt || undefined,
@@ -233,7 +245,6 @@ export class TaskScheduleRepository {
   private async toDtoArray(
     schedules: (TaskSchedule & {
       user: { id: string; email: string }
-      search: { id: string; name?: string | null }
     })[]
   ): Promise<TaskScheduleDto[]> {
     const dtos = await Promise.all(

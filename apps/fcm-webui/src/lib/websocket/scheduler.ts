@@ -14,13 +14,19 @@ export class SchedulerSocket {
 
   private constructor() {
     // Initialize socket connection
-    this.socket = io('/scheduler', {
-      path: '/api/ws',
-      autoConnect: false
+    this.socket = io('http://localhost:3001/tasks', {
+      transports: ['websocket', 'polling'],
+      path: '/socket.io/',
+      autoConnect: false,
+      withCredentials: true,
     })
 
     this.socket.on('connect', () => {
       console.log('Connected to scheduler websocket')
+    })
+
+    this.socket.on('connect_error', (error) => {
+      console.error('WebSocket connection error:', error)
     })
 
     this.socket.on('disconnect', () => {

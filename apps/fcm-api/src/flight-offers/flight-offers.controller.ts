@@ -237,6 +237,31 @@ export class FlightOffersController {
     return this.flightOffersService.getSearchById(id)
   }
 
+  @Get('usersearch/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Get search by User Search ID',
+    description: 'Retrieve all results by User Search ID',
+  })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'The ID of the user search to retrieve',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Search successfully retrieved',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Search not found',
+  })
+  async getSearchByUserSearchId(
+    @Param('id') id: string
+  ): Promise<FlightOfferSearchDto[]> {
+    return this.flightOffersService.getSearchByUserSearchId(id)
+  }
+
   @Delete('search/:id')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
