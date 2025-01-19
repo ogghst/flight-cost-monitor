@@ -1,8 +1,15 @@
 import { Prisma } from '@prisma/client'
 import type { ITXClientDenyList } from '@prisma/client/runtime/library'
-import type { CreateRole, UpdateRole } from '../schema/role.js'
+import type {
+  CreateRole,
+  UpdateRole,
+} from '../../../fcm-shared/dist/role/role.js'
 import { DatabaseError } from '../schema/types.js'
-import { fcmPrismaClient, type ExtendedPrismaClient, type ExtendedTransactionClient } from './prisma.js'
+import {
+  fcmPrismaClient,
+  type ExtendedPrismaClient,
+  type ExtendedTransactionClient,
+} from './prisma.js'
 
 export class RoleRepository {
   private prisma: ExtendedPrismaClient = fcmPrismaClient

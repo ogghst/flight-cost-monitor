@@ -11,12 +11,11 @@
     "typescript",
     "typescriptreact"
   ],
+  "eslint.useFlatConfig": true,
   "eslint.workingDirectories": [
     { "pattern": "apps/*/" },
     { "pattern": "packages/*/" }
   ],
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
   "[javascript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },

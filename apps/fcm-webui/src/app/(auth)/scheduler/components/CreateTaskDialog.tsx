@@ -1,47 +1,66 @@
 'use client'
 
+import { useUserSearches } from '@/hooks/useUserSearches'
 import {
   createTaskScheduleSchema,
-  type CreateTaskScheduleDto,
   TaskType,
+  type CreateTaskScheduleDto,
 } from '@fcm/shared/scheduler'
+import { SearchType } from '@fcm/shared/user-search'
 import { zodResolver } from '@hookform/resolvers/zod'
 import AddIcon from '@mui/icons-material/Add'
 import {
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  TextField,
   FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   FormHelperText,
-  CircularProgress,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
   Typography,
 } from '@mui/material'
-import { useState, useEffect } from 'react'
-import { useForm, Controller } from 'react-hook-form'
-import { createScheduledTaskAction } from '../../../actions/scheduler'
-import { useUserSearches } from '@/hooks/useUserSearches'
 import { useSession } from 'next-auth/react'
+import { useEffect, useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import { createScheduledTaskAction } from '../../../actions/scheduler'
 
 interface CreateTaskDialogProps {
   onTaskCreated: () => void
+}
+
+// Convert TaskType to SearchType
+function getSearchType(taskType: TaskType): SearchType {
+  switch (taskType) {
+    case TaskType.SIMPLE_SEARCH:
+      return SearchType.SIMPLE
+    case TaskType.ADVANCED_SEARCH:
+      return SearchType.ADVANCED
+    default:
+      return SearchType.SIMPLE
+  }
 }
 
 export function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedTaskType, setSelectedTaskType] = useState<TaskType>(TaskType.SIMPLE_SEARCH)
-  
+  const [selectedTaskType, setSelectedTaskType] = useState<TaskType>(
+    TaskType.SIMPLE_SEARCH
+  )
+
   const { data: session } = useSession()
-  const { data: userSearches, isLoading: isLoadingSearches, error: searchError } = useUserSearches(selectedTaskType)
-  
+  const {
+    data: userSearches,
+    isLoading: isLoadingSearches,
+    error: searchError,
+  } = useUserSearches(getSearchType(selectedTaskType))
+
   const {
     register,
     control,
@@ -57,7 +76,7 @@ export function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
       timeout: 30000,
       maxRetries: 3,
       userEmail: session?.user?.email || '',
-    }
+    },
   })
 
   // Set user email when session is loaded
@@ -76,14 +95,14 @@ export function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
 
   const onSubmit = async (data: CreateTaskScheduleDto) => {
     console.log('Form submitted with data:', data)
-    
+
     try {
       setIsSubmitting(true)
       setError(null)
-      
+
       const response = await createScheduledTaskAction(data)
       console.log('Server response:', response)
-      
+
       setOpen(false)
       reset()
       onTaskCreated()
@@ -110,11 +129,7 @@ export function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
         Create Task
       </Button>
 
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        maxWidth="sm"
-        fullWidth>
+      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>Create New Scheduled Task</DialogTitle>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogContent>
@@ -149,8 +164,12 @@ export function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
                         field.onChange(e)
                         setSelectedTaskType(e.target.value as TaskType)
                       }}>
-                      <MenuItem value={TaskType.SIMPLE_SEARCH}>Simple Search</MenuItem>
-                      <MenuItem value={TaskType.ADVANCED_SEARCH}>Advanced Search</MenuItem>
+                      <MenuItem value={TaskType.SIMPLE_SEARCH}>
+                        Simple Search
+                      </MenuItem>
+                      <MenuItem value={TaskType.ADVANCED_SEARCH}>
+                        Advanced Search
+                      </MenuItem>
                     </Select>
                   )}
                 />
@@ -172,7 +191,12 @@ export function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
                       error={!!errors.payload || !!searchError}>
                       {isLoadingSearches ? (
                         <MenuItem disabled>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}>
                             <CircularProgress size={20} />
                             <Typography>Loading searches...</Typography>
                           </Box>
@@ -203,7 +227,10 @@ export function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
                 label="Cron Expression"
                 {...register('cronExpression')}
                 error={!!errors.cronExpression}
-                helperText={errors.cronExpression?.message || 'e.g. */15 * * * * (every 15 minutes)'}
+                helperText={
+                  errors.cronExpression?.message ||
+                  'e.g. */15 * * * * (every 15 minutes)'
+                }
                 placeholder="*/15 * * * *"
                 fullWidth
               />
@@ -226,23 +253,18 @@ export function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
                 fullWidth
               />
             </Box>
-            
-            {error && (
-              <Box sx={{ mt: 2, color: 'error.main' }}>
-                {error}
-              </Box>
-            )}
+
+            {error && <Box sx={{ mt: 2, color: 'error.main' }}>{error}</Box>}
           </DialogContent>
 
           <DialogActions>
             <Button onClick={handleClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               variant="contained"
-              disabled={isSubmitting || isLoadingSearches}
-            >
+              disabled={isSubmitting || isLoadingSearches}>
               {isSubmitting ? 'Creating...' : 'Create'}
             </Button>
           </DialogActions>

@@ -1,48 +1,37 @@
-import { AuthType, OAuthProvider } from '@fcm/shared/auth'
-import { Prisma, type User as PrismaUser } from '@prisma/client'
+import { AuthType } from '@fcm/shared/types'
+import {
+  type CreateCredentialsUser,
+  type CreateOAuthUser,
+  type UpdateUser,
+  type UserWithRelations,
+} from '@fcm/shared/user'
+import { Prisma } from '@prisma/client'
 import type { ITXClientDenyList } from '@prisma/client/runtime/library'
 import { DatabaseError } from '../schema/types.js'
-import type {
-  CreateCredentialsUser,
-  CreateOAuthUser,
-} from '../schema/user/create.js'
-import type { UserWithRelations } from '../schema/user/types.js'
-import type { UpdateUser } from '../schema/user/update.js'
-import { fcmPrismaClient, type ExtendedPrismaClient, type ExtendedTransactionClient } from './prisma.js'
+import {
+  fcmPrismaClient,
+  type ExtendedPrismaClient,
+  type ExtendedTransactionClient,
+} from './prisma.js'
+
+// TODO: *use User instead of UserWithRelations*
 
 export class UserRepository {
   private prisma: ExtendedPrismaClient = fcmPrismaClient
 
-  private mapPrismaToUser(
-    prismaUser: PrismaUser & { refreshTokens?: any[] }
-  ): UserWithRelations {
-    const { oauthProvider, ...rest } = prismaUser
+  private mapPrismaToUser(prismaUser: any): UserWithRelations {
     return {
-      ...rest,
-      authType:
-        rest.authType == AuthType.CREDENTIAL
-          ? AuthType.CREDENTIAL
-          : AuthType.OAUTH,
-      oauthProvider: oauthProvider
-        ? oauthProvider === 'GITHUB'
-          ? OAuthProvider.GITHUB
-          : OAuthProvider.GOOGLE
-        : null,
-      password: rest.password || undefined,
-      username: rest.username || undefined,
-      oauthProfile: rest.oauthProfile ? String(rest.oauthProfile) : null,
-      roles: [],
-      refreshTokens: (prismaUser.refreshTokens || []).map((token) => ({
-        ...token,
-        generationNumber: 0,
-      })),
-      lastLogin: rest.lastLogin ? new Date(rest.lastLogin) : null,
-      passwordResetExpires: rest.passwordResetExpires
-        ? new Date(rest.passwordResetExpires)
-        : null,
-      createdAt: new Date(rest.createdAt),
-      updatedAt: new Date(rest.updatedAt),
-      deletedAt: rest.deletedAt ? new Date(rest.deletedAt) : null,
+      ...prismaUser,
+      username: prismaUser.username ?? undefined,
+      password: prismaUser.password ?? undefined,
+      firstName: prismaUser.firstName ?? undefined,
+      lastName: prismaUser.lastName ?? undefined,
+      avatar: prismaUser.avatar ?? undefined,
+      oauthProfile: prismaUser.oauthProfile ?? undefined,
+      oauthProviderId: prismaUser.oauthProviderId ?? undefined,
+      passwordResetToken: prismaUser.passwordResetToken ?? undefined,
+      passwordResetExpires: prismaUser.passwordResetExpires ?? undefined,
+      roles: prismaUser.roles ?? [],
     }
   }
 

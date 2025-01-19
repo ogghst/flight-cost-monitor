@@ -1,4 +1,3 @@
-import { OAuthProvider } from '@fcm/shared/auth'
 import { z } from 'zod'
 import { userSchema } from './base.js'
 
@@ -9,7 +8,7 @@ export const createCredentialsUserSchema = userSchema
     createdAt: true,
     updatedAt: true,
     deletedAt: true,
-    refreshTokens: true,
+    //refreshTokens: true,
     oauthProvider: true,
     oauthProviderId: true,
     oauthProfile: true,
@@ -27,24 +26,43 @@ export const createCredentialsUserSchema = userSchema
       ),
   })
 
+export const loginCredentialsUserSchema = createCredentialsUserSchema.omit({
+  active: true,
+  authType: true,
+  firstName: true,
+  lastName: true,
+  avatar: true,
+  username: true,
+})
+
 // Schema for creating a new OAuth user
-export const createOAuthUserSchema = userSchema
+export const createOAuthUserSchema = userSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+  //refreshTokens: true,
+  password: true,
+  passwordResetToken: true,
+  passwordResetExpires: true,
+  lastLogin: true,
+})
+
+export const loginOAuthUserSchema = createOAuthUserSchema
   .omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-    deletedAt: true,
-    refreshTokens: true,
-    password: true,
-    passwordResetToken: true,
-    passwordResetExpires: true,
-    lastLogin: true,
+    active: true,
+    authType: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    username: true,
   })
   .extend({
-    oauthProvider: z.nativeEnum(OAuthProvider),
-    oauthProviderId: z.string(),
+    accessToken: z.string(),
   })
 
 // TypeScript types
 export type CreateCredentialsUser = z.infer<typeof createCredentialsUserSchema>
 export type CreateOAuthUser = z.infer<typeof createOAuthUserSchema>
+export type LoginCredentialsUser = z.infer<typeof loginCredentialsUserSchema>
+export type LoginOAuthUser = z.infer<typeof loginOAuthUserSchema>

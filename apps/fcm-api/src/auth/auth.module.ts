@@ -1,8 +1,10 @@
+import { UsersModule } from '@/users/users.module.js'
+import { UsersService } from '@/users/users.service.js'
+import { refreshTokenRepository } from '@fcm/storage'
 import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
-import { userRepository, refreshTokenRepository } from '@fcm/storage'
 import { AuthController } from './controllers/auth.controller.js'
 import { OAuthController } from './controllers/oauth.controller.js'
 import { JwtAuthGuard } from './guards/jwt.guard.js'
@@ -10,7 +12,6 @@ import { RolesGuard } from './guards/roles.guard.js'
 import { AuthService } from './services/auth.service.js'
 import { TokenService } from './services/token.service.js'
 import { JwtStrategy } from './strategies/jwt.strategy.js'
-import { UsersModule } from '@/users/users.module.js'
 
 @Module({
   imports: [
@@ -18,9 +19,9 @@ import { UsersModule } from '@/users/users.module.js'
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
+        secret: configService.get('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_ACCESS_EXPIRATION', '15m'),
+          expiresIn: configService.get('JWT_ACCESS_EXPIRATION') ?? '900',
         },
       }),
       inject: [ConfigService],
@@ -29,13 +30,10 @@ import { UsersModule } from '@/users/users.module.js'
   ],
   providers: [
     {
-      provide: 'USER_REPOSITORY',
-      useValue: userRepository,
-    },
-    {
       provide: 'REFRESH_TOKEN_REPOSITORY',
       useValue: refreshTokenRepository,
     },
+    UsersService,
     AuthService,
     TokenService,
     JwtStrategy,

@@ -2,8 +2,7 @@
 
 import { useSearchForm } from '@/components/context/SearchFormContext'
 import { useSaveSearch } from '@/hooks/useSearches'
-import { SearchType } from '@fcm/shared/auth'
-import { UserSearchDto } from '@fcm/shared/user-search/types'
+import { SearchType, UserSearchDto } from '@fcm/shared/user-search'
 import { BookmarkAdd, Warning } from '@mui/icons-material'
 import {
   Button,
@@ -30,19 +29,19 @@ function compareSearchParameters(
   return current.parameters === loaded.parameters
 }
 
-export function SaveSearchButton({
-  searchType,
-}: SaveSearchButtonProps) {
+export function SaveSearchButton({ searchType }: SaveSearchButtonProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const { mutate: saveSearch, isPending } = useSaveSearch()
   const { data: session } = useSession()
   const { currentSearch } = useSearchForm()
 
-  const hasChanges = currentSearch?.id && !compareSearchParameters(currentSearch, {
-    ...currentSearch,
-    parameters: currentSearch.parameters
-  })
+  const hasChanges =
+    currentSearch?.id &&
+    !compareSearchParameters(currentSearch, {
+      ...currentSearch,
+      parameters: currentSearch.parameters,
+    })
 
   const buttonColor = hasChanges ? 'error' : 'primary'
   const tooltipTitle = hasChanges

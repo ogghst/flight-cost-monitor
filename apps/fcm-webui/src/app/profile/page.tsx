@@ -2,7 +2,8 @@
 
 import { getCurrentUser } from '@/app/actions/user'
 import { withErrorBoundary } from '@/components/error-boundary'
-import { AuthUser, OAuthProvider } from '@fcm/shared/auth'
+import { AuthUser } from '@fcm/shared/auth'
+import { OAuthProvider } from '@fcm/shared/types'
 import { GitHub } from '@mui/icons-material'
 import {
   Avatar,
@@ -49,7 +50,9 @@ function ProfilePage() {
     throw new Error('Failed to load user profile')
   }
 
-  const oauthProfile = userData.profile ? JSON.parse(userData.profile) : null
+  const oauthProfile = userData.oauthProfile
+    ? JSON.parse(userData.oauthProfile)
+    : null
 
   return (
     <Box sx={{ p: 3 }}>
@@ -62,7 +65,7 @@ function ProfilePage() {
           <Card>
             <CardContent sx={{ textAlign: 'center', py: 3 }}>
               <Avatar
-                src={userData.image || ''}
+                src={userData.avatar || ''}
                 alt={userData.firstName || 'Profile'}
                 sx={{ width: 120, height: 120, mx: 'auto', mb: 2 }}>
                 {userData.firstName?.[0]}

@@ -1,5 +1,4 @@
-import { Dictionaries, FlightOffer } from 'src/amadeus/types/common.js'
-import { TravelClass } from '../../types/common.js'
+import { Dictionaries, FlightOffer, TravelClass } from '../../types/common.js'
 
 export type FlightOfferSource = 'GDS'
 
@@ -10,6 +9,13 @@ export interface DateTimeRange {
   timeWindow?: string // 1-12H format
 }
 
+/**
+ * Represents an origin-destination pair in an advanced flight search request.
+ * Used in the Amadeus Flight Offers Advanced Search API to specify search criteria
+ * for a flight segment, including location codes, date/time ranges, and routing options.
+ * 
+ * @see https://developers.amadeus.com/self-service/category/air/api-doc/flight-offers-search/api-reference
+ */
 export interface OriginDestination {
   id: string
   originLocationCode: string

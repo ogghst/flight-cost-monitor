@@ -1,12 +1,12 @@
 'use server'
 
-import { makeServerRequest } from '@/lib/api/axiosConfig'
+import { api } from '@/lib/api/fetch-client'
 import { auth } from '@/lib/auth'
 import {
   CreateUserSearchDto,
   SearchQueryParams,
   UserSearchDto,
-} from '@fcm/shared/user-search/types'
+} from '@fcm/shared/user-search'
 
 export async function saveSearch(
   searchData: CreateUserSearchDto
@@ -28,11 +28,10 @@ export async function saveSearch(
       lastUsed: new Date(),
     }
 
-    return await makeServerRequest<UserSearchDto>(
-      'POST',
-      '/user-searches',
-      payload
-    )
+    return await api.post<UserSearchDto>('/user-searches', payload, {
+      // Revalidate user searches
+      tags: [`user-searches-${session.user.email}`],
+    })
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to save search: ${error.message}`)
@@ -50,11 +49,14 @@ export async function getUserSearches(
   }
 
   try {
-    const searches = await makeServerRequest<UserSearchDto[]>(
-      'GET',
+    const searches = await api.get<UserSearchDto[]>(
       `/user-searches/user/${session.user.email}`,
-      undefined,
-      params as Record<string, any>
+      {
+        ...(params && { params }),
+        // Cache for 30 seconds
+        revalidate: 30,
+        tags: [`user-searches-${session.user.email}`],
+      }
     )
 
     return searches.map((search) => ({
@@ -79,9 +81,13 @@ export async function getFavoriteSearches(): Promise<UserSearchDto[]> {
   }
 
   try {
-    const searches = await makeServerRequest<UserSearchDto[]>(
-      'GET',
-      `/user-searches/user/${session.user.id}/favorites`
+    const searches = await api.get<UserSearchDto[]>(
+      `/user-searches/user/${session.user.id}/favorites`,
+      {
+        // Cache for 30 seconds
+        revalidate: 30,
+        tags: [`user-favorites-${session.user.id}`],
+      }
     )
 
     return searches.map((search) => ({
@@ -106,9 +112,16 @@ export async function markSearchUsed(searchId: string): Promise<UserSearchDto> {
   }
 
   try {
-    return await makeServerRequest<UserSearchDto>(
-      'POST',
-      `/user-searches/${searchId}/used`
+    return await api.post<UserSearchDto>(
+      `/user-searches/${searchId}/used`,
+      null,
+      {
+        // Revalidate both user searches and favorites
+        tags: [
+          `user-searches-${session.user.email}`,
+          `user-favorites-${session.user.id}`,
+        ],
+      }
     )
   } catch (error) {
     if (error instanceof Error) {
@@ -127,9 +140,16 @@ export async function toggleSearchFavorite(
   }
 
   try {
-    return await makeServerRequest<UserSearchDto>(
-      'POST',
-      `/user-searches/${searchId}/toggle-favorite`
+    return await api.post<UserSearchDto>(
+      `/user-searches/${searchId}/toggle-favorite`,
+      null,
+      {
+        // Revalidate both user searches and favorites
+        tags: [
+          `user-searches-${session.user.email}`,
+          `user-favorites-${session.user.id}`,
+        ],
+      }
     )
   } catch (error) {
     if (error instanceof Error) {
@@ -139,14 +159,20 @@ export async function toggleSearchFavorite(
   }
 }
 
-export async function deleteSearch(searchId: string) {
+export async function deleteSearch(searchId: string): Promise<void> {
   const session = await auth()
   if (!session?.user?.email) {
     throw new Error('User not authenticated')
   }
 
   try {
-    await makeServerRequest('DELETE', `/user-searches/${searchId}`)
+    await api.delete(`/user-searches/${searchId}`, {
+      // Revalidate both user searches and favorites
+      tags: [
+        `user-searches-${session.user.email}`,
+        `user-favorites-${session.user.id}`,
+      ],
+    })
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to delete search: ${error.message}`)

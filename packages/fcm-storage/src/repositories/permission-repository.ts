@@ -1,10 +1,6 @@
 import { Prisma } from '@prisma/client'
 import type { ITXClientDenyList } from '@prisma/client/runtime/library'
-import type {
-  CreatePermission,
-  Permission,
-  UpdatePermission,
-} from '../schema/permission.js'
+
 import { DatabaseError } from '../schema/types.js'
 import {
   fcmPrismaClient,
@@ -12,13 +8,19 @@ import {
   type ExtendedTransactionClient,
 } from './prisma.js'
 
+import {
+  type CreatePermissionDto,
+  type PermissionDto,
+  type UpdatePermissionDto,
+} from '@fcm/shared/permission'
+
 export class PermissionRepository {
   private prisma: ExtendedPrismaClient = fcmPrismaClient
 
   async findById(
     id: string,
     tx?: ExtendedTransactionClient
-  ): Promise<Permission | null> {
+  ): Promise<PermissionDto | null> {
     const client = tx || this.prisma
     try {
       return await client.permission.findUnique({
@@ -32,7 +34,7 @@ export class PermissionRepository {
   async findByName(
     name: string,
     tx?: ExtendedTransactionClient
-  ): Promise<Permission | null> {
+  ): Promise<PermissionDto | null> {
     const client = tx || this.prisma
     try {
       return await client.permission.findUnique({
@@ -43,7 +45,9 @@ export class PermissionRepository {
     }
   }
 
-  async findAll(tx?: Prisma.TransactionClient): Promise<Permission[] | null> {
+  async findAll(
+    tx?: Prisma.TransactionClient
+  ): Promise<PermissionDto[] | null> {
     const client = tx || this.prisma
     try {
       return await client.permission.findMany({
@@ -55,9 +59,9 @@ export class PermissionRepository {
   }
 
   async create(
-    data: CreatePermission,
+    data: CreatePermissionDto,
     tx?: ExtendedTransactionClient
-  ): Promise<Permission | null> {
+  ): Promise<PermissionDto | null> {
     const client = tx || this.prisma
     try {
       return await client.permission.create({
@@ -79,9 +83,9 @@ export class PermissionRepository {
 
   async update(
     id: string,
-    data: UpdatePermission,
+    data: UpdatePermissionDto,
     tx?: ExtendedTransactionClient
-  ): Promise<Permission | null> {
+  ): Promise<PermissionDto | null> {
     const client = tx || this.prisma
     try {
       return await client.permission.update({
@@ -108,7 +112,7 @@ export class PermissionRepository {
   async delete(
     id: string,
     tx?: ExtendedTransactionClient
-  ): Promise<Permission | null> {
+  ): Promise<PermissionDto | null> {
     const client = tx || this.prisma
     try {
       return await client.permission.delete({
@@ -128,7 +132,7 @@ export class PermissionRepository {
     permissionId: string,
     roleId: string,
     tx?: ExtendedTransactionClient
-  ): Promise<Permission | null> {
+  ): Promise<PermissionDto | null> {
     const client = tx || this.prisma
     try {
       return await client.role.update({
@@ -160,7 +164,7 @@ export class PermissionRepository {
     permissionId: string,
     roleId: string,
     tx?: ExtendedTransactionClient
-  ): Promise<Permission | null> {
+  ): Promise<PermissionDto | null> {
     const client = tx || this.prisma
     try {
       return await client.role.update({
@@ -191,7 +195,7 @@ export class PermissionRepository {
   async getRolePermissions(
     roleId: string,
     tx?: ExtendedTransactionClient
-  ): Promise<Permission[] | null> {
+  ): Promise<PermissionDto[] | null> {
     const client = tx || this.prisma
     try {
       const role = await client.role.findUnique({
@@ -210,7 +214,7 @@ export class PermissionRepository {
     permissionIds: string[],
     roleId: string,
     tx?: ExtendedTransactionClient
-  ): Promise<Permission | null> {
+  ): Promise<PermissionDto | null> {
     const client = tx || this.prisma
     try {
       return await client.role.update({

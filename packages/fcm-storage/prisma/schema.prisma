@@ -21,7 +21,7 @@ model User {
   oauthProviderId String?
   oauthProfile    String?
 
-  image                String?
+  avatar                String?
   lastLogin            DateTime?
   passwordResetToken   String?   @unique
   passwordResetExpires DateTime?

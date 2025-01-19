@@ -1,5 +1,5 @@
-import { baseEntitySchema } from '@fcm/shared/types'
 import { z } from 'zod'
+import { baseEntitySchema } from '../types/base-entity.js'
 
 export const roleSchema = baseEntitySchema.extend({
   name: z.string(),
@@ -15,7 +15,13 @@ export const createRoleSchema = roleSchema.omit({
 })
 
 // Schema for updating an existing role
-export const updateRoleSchema = createRoleSchema.partial()
+export const updateRoleSchema = roleSchema
+  .omit({
+    createdAt: true,
+    updatedAt: true,
+    deletedAt: true,
+  })
+  .partial()
 
 // TypeScript types
 export type Role = z.infer<typeof roleSchema>

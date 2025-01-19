@@ -1,6 +1,5 @@
 import { FlightOffersService } from '@/flight-offers/flight-offers.service.js'
 import { UserSearchesService } from '@/user-searches/user-searches.service.js'
-import { FcmWinstonLogger, SearchType } from '@fcm/shared'
 import {
   FlightOfferSimpleSearchRequest,
   FlightOfferSimpleSearchResponse,
@@ -9,6 +8,7 @@ import {
   FlightOfferAdvancedSearchRequest,
   FlightOffersAdvancedResponse,
 } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
+import { FcmWinstonLogger } from '@fcm/shared/logging/winston'
 import {
   CreateTaskScheduleDto,
   ExecutionState,
@@ -17,6 +17,7 @@ import {
   TaskState,
   TaskType,
 } from '@fcm/shared/scheduler'
+import { SearchType } from '@fcm/shared/user-search'
 import {
   taskExecutionRepository,
   taskScheduleRepository,

@@ -6,15 +6,10 @@ import {
   Res,
   UnauthorizedException,
 } from '@nestjs/common'
-import {
-  ApiBody,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger'
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import type { Response } from 'express'
 import { Public } from '../decorators/public.decorator.js'
-import { OAuthLoginDto } from '../dto/oauth-login.dto.js'
+import { LoginOAuthDtoSwagger } from '../dto/oauth-login.dto.js'
 import { AuthService } from '../services/auth.service.js'
 
 @ApiTags('OAuth')
@@ -25,14 +20,14 @@ export class OAuthController {
   @Post('github')
   @Public()
   @ApiOperation({ summary: 'GitHub OAuth callback' })
-  @ApiBody({ type: OAuthLoginDto })
+  @ApiBody({ type: LoginOAuthDtoSwagger })
   @ApiResponse({
     status: 200,
     description: 'Successfully authenticated with GitHub',
   })
   @ApiResponse({ status: 401, description: 'Invalid OAuth data' })
   async githubCallback(
-    @Body() data: OAuthLoginDto,
+    @Body() data: LoginOAuthDtoSwagger,
     @Res({ passthrough: true }) response: Response
   ) {
     try {
@@ -40,7 +35,7 @@ export class OAuthController {
       const result = await this.authService.oauthLogin(data)
 
       // Set refresh token as httpOnly cookie
-      response.cookie('fcm_refresh_token', result.refreshToken, {
+      response.cookie('fcm_refresh_token', result.tokenPair.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
@@ -56,8 +51,9 @@ export class OAuthController {
       if (error instanceof UnauthorizedException) {
         throw error
       }
-      console.error('OAuth authentication failed:', error)
-      throw new InternalServerErrorException('OAuth authentication failed')
+      throw new InternalServerErrorException(
+        'OAuth authentication failed: ' + error
+      )
     }
   }
 }

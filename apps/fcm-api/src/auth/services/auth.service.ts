@@ -1,9 +1,9 @@
-import { AuthType, OAuthProvider } from '@fcm/shared'
-import type { UserRepository } from '@fcm/storage'
+import { UsersService } from '@/users/users.service.js'
+import { AuthResponse, AuthUserWithTokens, JwtPayload } from '@fcm/shared/auth'
+import { AuthType, OAuthProvider } from '@fcm/shared/types'
 import {
   BadRequestException,
   ConflictException,
-  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
@@ -11,9 +11,9 @@ import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { compare, hash } from 'bcrypt'
 import { randomBytes } from 'crypto'
-import type { AuthResponse, JwtPayload } from '../auth.types.js'
-import { LoginDto } from '../dto/login.dto.js'
-import { OAuthLoginDto } from '../dto/oauth-login.dto.js'
+import { toAuthUser } from '../auth.types.js'
+import { LoginCredentialsUserDtoSwagger } from '../dto/credential-login.dto.js'
+import { LoginOAuthDtoSwagger } from '../dto/oauth-login.dto.js'
 import { RegisterDto } from '../dto/register.dto.js'
 import {
   RequestPasswordResetDto,
@@ -27,17 +27,17 @@ export class AuthService {
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
-    @Inject('USER_REPOSITORY') private readonly userRepository: UserRepository
+    private readonly userService: UsersService
   ) {}
 
   async register(data: RegisterDto): Promise<AuthResponse> {
-    const existingUser = await this.userRepository.findByEmail(data.email)
+    const existingUser = await this.userService.findByEmail(data.email)
     if (existingUser) {
       throw new ConflictException('User already exists')
     }
 
     // Create user with hashed password
-    const user = await this.userRepository.createCredentialsUser({
+    const user = await this.userService.createWithCredentials({
       ...data,
       password: await hash(data.password, 10),
       active: true,
@@ -45,30 +45,19 @@ export class AuthService {
     })
 
     // Generate tokens
-    const tokens = await this.tokenService.generateTokenPair({
-      sub: user.id,
-      email: user.email,
-      roles: user.roles.map((r) => r.name),
-    })
+    const tokens = await this.tokenService.generateTokenPair(user.email)
 
     return {
       ...tokens,
-      user: {
-        email: user.email,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        roles: user.roles.map((r) => r.name),
-        authType: user.authType,
-      },
+      user: toAuthUser(user),
     }
   }
 
-  async login(data: LoginDto): Promise<AuthResponse> {
+  async login(
+    data: LoginCredentialsUserDtoSwagger
+  ): Promise<AuthUserWithTokens> {
     // Find user by email or username
-    const user = await (data.username.includes('@')
-      ? this.userRepository.findByEmail(data.username)
-      : this.userRepository.findByUsername(data.username))
+    const user = await this.userService.findByEmail(data.email)
 
     if (!user || !user.password || !user.active) {
       throw new UnauthorizedException('Invalid credentials')
@@ -81,78 +70,43 @@ export class AuthService {
     }
 
     // Update last login
-    await this.userRepository.updateLastLogin(user.id)
+    await this.userService.updateLastLogin(user.id)
 
     // Generate tokens
-    const tokens = await this.tokenService.generateTokenPair({
-      sub: user.id,
-      email: user.email,
-      roles: user.roles.map((r) => r.name),
-    })
+    const tokens = await this.tokenService.generateTokenPair(user.email)
 
-    return {
-      ...tokens,
-      user: {
-        email: user.email,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        roles: user.roles.map((r) => r.name),
-        authType: user.authType,
-      },
+    const ret: AuthUserWithTokens = {
+      tokenPair: tokens,
+      user: toAuthUser(user),
     }
+
+    return ret
   }
 
-  async oauthLogin(data: OAuthLoginDto): Promise<AuthResponse> {
+  async oauthLogin(data: LoginOAuthDtoSwagger): Promise<AuthUserWithTokens> {
     // Verify the OAuth token with provider
-    const verifiedData = await this.verifyOAuthToken(data)
+    await this.verifyOAuthToken(data)
 
     // Find or create user
-    let user = await this.userRepository.findByOAuth(
-      data.provider,
-      data.providerId
+    let user = await this.userService.findByOAuth(
+      data.oauthProvider,
+      data.oauthProviderId
     )
 
     if (!user) {
       // Create new OAuth user
-      user = await this.userRepository.createOAuthUser({
-        email: verifiedData.email,
-        oauthProvider:
-          data.provider === OAuthProvider.GITHUB
-            ? OAuthProvider.GITHUB
-            : OAuthProvider.GOOGLE,
-        oauthProviderId: data.providerId,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        oauthProfile: JSON.stringify({
-          avatar: data.avatar,
-          ...verifiedData,
-        }),
-        active: true,
-        authType: AuthType.OAUTH,
-      })
+      user = await this.userService.createWithOAuth(data)
     }
 
     // Update last login
-    await this.userRepository.updateLastLogin(user.id)
+    await this.userService.updateLastLogin(user.id)
 
     // Generate tokens
-    const tokens = await this.tokenService.generateTokenPair({
-      sub: user.id,
-      email: user.email,
-      roles: user.roles.map((r) => r.name),
-    })
+    const tokens = await this.tokenService.generateTokenPair(user.email)
 
     return {
-      ...tokens,
-      user: {
-        email: user.email,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        roles: user.roles.map((r) => r.name),
-        authType: user.authType,
-      },
+      tokenPair: tokens,
+      user: toAuthUser(user),
     }
   }
 
@@ -160,7 +114,7 @@ export class AuthService {
     await this.tokenService.revokeToken(refreshToken)
   }
 
-  async refreshTokens(refreshToken: string): Promise<AuthResponse> {
+  async refreshTokens(refreshToken: string): Promise<AuthUserWithTokens> {
     const tokens = await this.tokenService.refreshTokens(refreshToken)
 
     // Decode the new access token to get user ID
@@ -172,28 +126,23 @@ export class AuthService {
     }
 
     // Get fresh user data
-    const user = await this.userRepository.findById(payload.sub)
+    const user = await this.userService.findById(payload.sub)
     if (!user || !user.active) {
       throw new UnauthorizedException('User not found or inactive')
     }
 
-    return {
-      ...tokens,
-      user: {
-        email: user.email,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        roles: user.roles.map((r) => r.name),
-        authType: user.authType,
-      },
+    const ret: AuthUserWithTokens = {
+      tokenPair: tokens,
+      user: toAuthUser(user),
     }
+
+    return ret
   }
 
   async requestPasswordReset({
     email,
   }: RequestPasswordResetDto): Promise<void> {
-    const user = await this.userRepository.findByEmail(email)
+    const user = await this.userService.findByEmail(email)
     if (!user) {
       // Don't reveal if user exists
       return
@@ -204,30 +153,30 @@ export class AuthService {
     const expires = new Date()
     expires.setHours(expires.getHours() + 1) // Token expires in 1 hour
 
-    await this.userRepository.setResetToken(user.id, token, expires)
+    await this.userService.setResetToken(user.id, token, expires)
 
     // TODO: Send reset email
   }
 
   async resetPassword({ token, password }: ResetPasswordDto): Promise<void> {
-    const user = await this.userRepository.findByResetToken(token)
+    const user = await this.userService.findByResetToken(token)
     if (!user) {
       throw new BadRequestException('Invalid or expired reset token')
     }
 
     // Update password and clear reset token
-    await this.userRepository.update(user.id, {
+    await this.userService.update(user.id, {
       password: await hash(password, 10),
     })
-    await this.userRepository.clearResetToken(user.id)
+    await this.userService.clearResetToken(user.id)
 
     // Revoke all refresh tokens for security
     await this.tokenService.revokeAllUserTokens(user.id)
   }
 
-  private async verifyOAuthToken(data: OAuthLoginDto): Promise<any> {
+  private async verifyOAuthToken(data: LoginOAuthDtoSwagger): Promise<any> {
     // Implement provider-specific token verification
-    switch (data.provider) {
+    switch (data.oauthProvider) {
       case OAuthProvider.GITHUB:
         return this.verifyGithubToken(data.accessToken)
       case OAuthProvider.GOOGLE:
@@ -249,7 +198,7 @@ export class AuthService {
       }
       return response.json()
     } catch (error) {
-      throw new UnauthorizedException('Failed to verify GitHub token')
+      throw new UnauthorizedException('Failed to verify GitHub token: ' + error)
     }
   }
 
@@ -263,7 +212,7 @@ export class AuthService {
       }
       return response.json()
     } catch (error) {
-      throw new UnauthorizedException('Failed to verify Google token')
+      throw new UnauthorizedException('Failed to verify Google token: ' + error)
     }
   }
 }

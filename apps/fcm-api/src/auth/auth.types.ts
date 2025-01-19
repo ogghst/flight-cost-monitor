@@ -1,6 +1,4 @@
-import { AuthType, AuthUser } from '@fcm/shared'
-import { User } from '@fcm/storage'
-
+/*
 export interface JwtPayload {
   sub: string // User ID
   email: string
@@ -26,17 +24,18 @@ export interface RefreshTokenPayload {
   iat?: number
   exp?: number
 }
+*/
+
+import { AuthUser } from '@fcm/shared/auth'
+import { User } from '@fcm/shared/user'
 
 // Helper function to transform User to AuthUser
 export function toAuthUser(
   user: User & { roles: { name: string }[] }
 ): AuthUser {
+  const roles = user.roles.map((role) => role.name)
   return {
-    email: user.email,
-    username: user.username,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    roles: user.roles.map((role) => role.name),
-    authType: AuthType.CREDENTIAL,
+    ...user,
+    roles,
   }
 }

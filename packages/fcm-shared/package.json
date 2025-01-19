@@ -24,10 +24,6 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./types": {
-      "import": "./dist/types/index.js",
-      "types": "./dist/types/index.d.ts"
-    },
     "./amadeus/clients": {
       "import": "./dist/amadeus/clients/index.js",
       "types": "./dist/amadeus/clients/index.d.ts"
@@ -48,60 +44,57 @@
       "import": "./dist/amadeus/types/index.js",
       "types": "./dist/amadeus/types/index.d.ts"
     },
-    "./auth": {
-      "import": "./dist/auth/index.js",
-      "types": "./dist/auth/index.d.ts"
-    },
     "./logging": {
       "import": "./dist/logging/index.js",
       "types": "./dist/logging/index.d.ts"
     },
-    "./user-search/types": {
-      "import": "./dist/user-search/types.js",
-      "types": "./dist/user-search/types.d.ts"
+    "./logging/console": {
+      "import": "./dist/logging/console/index.js",
+      "types": "./dist/logging/console/index.d.ts"
+    },
+    "./logging/winston": {
+      "import": "./dist/logging/winston/index.js",
+      "types": "./dist/logging/winston/index.d.ts"
     },
     "./flight-offer-search": {
       "import": "./dist/flight-offer-search/index.js",
       "types": "./dist/flight-offer-search/types.d.ts"
     },
-    "./scheduler": {
-      "import": "./dist/scheduler/types.js",
-      "types": "./dist/scheduler/types.d.ts"
-    },
     "./monitoring": {
       "import": "./dist/monitoring/types.js",
       "types": "./dist/monitoring/types.d.ts"
-    }
-  },
-  "typesVersions": {
-    "*": {
-      "amadeus/clients": [
-        "./dist/amadeus/clients/index.d.ts"
-      ],
-      "amadeus/clients/flight-offer": [
-        "./dist/amadeus/clients/flight-offer/index.d.ts"
-      ],
-      "amadeus/types": [
-        "./dist/amadeus/types/index.d.ts"
-      ],
-      "logging": [
-        "./dist/logging/index.d.ts"
-      ],
-      "user-search/types": [
-        "./dist/user-search/types/types.d.ts"
-      ],
-      "/flight-offer-search": [
-        "./dist/flight-offer-search/index.d.ts"
-      ],
-      "/scheduler": [
-        "./dist/scheduler/types.d.ts"
-      ],
-      "/monitoring": [
-        "./dist/monitoring/types.d.ts"
-      ],
-      "/types": [
-        "./dist/types/types.d.ts"
-      ]
+    },
+    "./auth": {
+      "import": "./dist/auth/index.js",
+      "types": "./dist/auth/index.d.ts"
+    },
+    "./permission": {
+      "import": "./dist/permission/index.js",
+      "types": "./dist/permission/index.d.ts"
+    },
+    "./scheduler": {
+      "import": "./dist/scheduler/index.js",
+      "types": "./dist/scheduler/index.d.ts"
+    },
+    "./role": {
+      "import": "./dist/role/index.js",
+      "types": "./dist/role/index.d.ts"
+    },
+    "./flight-offer": {
+      "import": "./dist/flight-offer/index.js",
+      "types": "./dist/flight-offer/index.d.ts"
+    },
+    "./user-search": {
+      "import": "./dist/user-search/index.js",
+      "types": "./dist/user-search/index.d.ts"
+    },
+    "./user": {
+      "import": "./dist/user/index.js",
+      "types": "./dist/user/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types/index.js",
+      "types": "./dist/types/index.d.ts"
     }
   },
   "dependencies": {

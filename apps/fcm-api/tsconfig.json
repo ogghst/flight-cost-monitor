@@ -5,6 +5,10 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/examples.ts", "../../packages/fcm-shared/src/logging/logging.config.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/examples.ts",
+    "../../packages/fcm-shared/src/logging/winston/logging.config.ts"
+  ],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }

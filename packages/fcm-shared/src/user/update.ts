@@ -3,13 +3,13 @@ import { userSchema } from './base.js'
 
 // Schema for updating user profile
 export const updateUserSchema = userSchema.partial().omit({
-  id: true,
+  //id: true,
   email: true,
   authType: true,
   createdAt: true,
   updatedAt: true,
   deletedAt: true,
-  refreshTokens: true,
+  //refreshTokens: true,
   passwordResetToken: true,
   passwordResetExpires: true,
   lastLogin: true,
@@ -18,6 +18,7 @@ export const updateUserSchema = userSchema.partial().omit({
 // Schema for updating password
 export const updatePasswordSchema = z
   .object({
+    id: z.string(),
     currentPassword: z.string(),
     newPassword: z
       .string()

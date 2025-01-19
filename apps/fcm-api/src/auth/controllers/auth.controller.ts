@@ -1,15 +1,13 @@
-import type { AuthUser } from '@fcm/shared'
-import type { UserRepository } from '@fcm/storage'
 import {
   Body,
   Controller,
   Get,
   HttpStatus,
-  Inject,
   NotFoundException,
   Post,
+  Req,
+  Res,
   UnauthorizedException,
-  UseGuards,
 } from '@nestjs/common'
 import {
   ApiBearerAuth,
@@ -20,23 +18,26 @@ import {
 } from '@nestjs/swagger'
 import { Public } from '../decorators/public.decorator.js'
 import { CurrentUser } from '../decorators/user.decorator.js'
-import { AuthUserDto } from '../dto/auth-user.dto.js'
-import { LoginDto } from '../dto/login.dto.js'
-import { OAuthLoginDto } from '../dto/oauth-login.dto.js'
+import { AuthUserDtoSwagger } from '../dto/auth-user.dto.js'
+import { LoginCredentialsUserDtoSwagger } from '../dto/credential-login.dto.js'
+import { LoginOAuthDtoSwagger } from '../dto/oauth-login.dto.js'
 import { RegisterDto } from '../dto/register.dto.js'
 import {
   RequestPasswordResetDto,
   ResetPasswordDto,
 } from '../dto/reset-password.dto.js'
-import { JwtAuthGuard } from '../guards/jwt.guard.js'
 import { AuthService } from '../services/auth.service.js'
+
+import { UsersService } from '@/users/users.service.js'
+import { AuthResponse, type AuthUser } from '@fcm/shared/auth'
+import { type Request, type Response } from 'express'
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    @Inject('USER_REPOSITORY') private readonly userRepository: UserRepository
+    private readonly userService: UsersService
   ) {}
 
   @Public()
@@ -59,41 +60,33 @@ export class AuthController {
     return this.authService.register(data)
   }
 
-  @Public()
   @Post('login')
-  @ApiOperation({ summary: 'Login with username/email and password' })
-  @ApiBody({ type: LoginDto })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successfully logged in',
-    schema: {
-      type: 'object',
-      properties: {
-        accessToken: { type: 'string' },
-        refreshToken: { type: 'string' },
-        user: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            email: { type: 'string' },
-            username: { type: 'string' },
-          },
-        },
-      },
-    },
-  })
-  @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'Invalid credentials',
-  })
-  login(@Body() data: LoginDto) {
-    return this.authService.login(data)
+  async login(
+    @Body() data: LoginCredentialsUserDtoSwagger,
+    @Res({ passthrough: true }) response: Response
+  ): Promise<AuthResponse> {
+    const result = await this.authService.login(data)
+
+    // Set refresh token as HTTP-only cookie
+    response.cookie('fcm_refresh_token', result.tokenPair.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    })
+
+    // Return only access token and user info
+    return {
+      accessToken: result.tokenPair.accessToken,
+      user: result.user,
+    }
   }
 
   @Public()
   @Post('oauth/login')
   @ApiOperation({ summary: 'Login with OAuth provider' })
-  @ApiBody({ type: OAuthLoginDto })
+  @ApiBody({ type: LoginOAuthDtoSwagger })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully logged in with OAuth',
@@ -102,22 +95,13 @@ export class AuthController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid OAuth data',
   })
-  oauthLogin(@Body() data: OAuthLoginDto) {
+  oauthLogin(@Body() data: LoginOAuthDtoSwagger) {
     return this.authService.oauthLogin(data)
   }
 
   @Public()
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['refreshToken'],
-      properties: {
-        refreshToken: { type: 'string' },
-      },
-    },
-  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'New access token generated',
@@ -126,39 +110,57 @@ export class AuthController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid refresh token',
   })
-  refresh(@Body('refreshToken') refreshToken: string) {
+  async refresh(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response
+  ): Promise<AuthResponse> {
+    // try to get the token from the cookie
+    const refreshToken = request.cookies['fcm_refresh_token']
+
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token is required')
     }
-    return this.authService.refreshTokens(refreshToken)
+
+    // Get new tokens from auth service
+    const result = await this.authService.refreshTokens(refreshToken)
+
+    // Set the new refresh token as a cookie, just like in OAuth flow
+    response.cookie('fcm_refresh_token', result.tokenPair.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    })
+
+    // Only return the access token in the response body
+    return {
+      accessToken: result.tokenPair.accessToken,
+      user: result.user,
+    }
   }
 
   @Post('logout')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'Logout user' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['refreshToken'],
-      properties: {
-        refreshToken: { type: 'string' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successfully logged out',
-  })
-  @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'Invalid token',
-  })
-  async logout(@Body('refreshToken') refreshToken: string) {
-    if (!refreshToken) {
-      throw new UnauthorizedException('Refresh token is required')
+  async logout(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response
+  ) {
+    const refreshToken = request.cookies['fcm_refresh_token']
+
+    if (refreshToken) {
+      // Revoke the token in the database
+      await this.authService.logout(refreshToken)
     }
-    await this.authService.logout(refreshToken)
+
+    // Clear the refresh token cookie
+    response.clearCookie('fcm_refresh_token', {
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    })
+
     return { message: 'Logged out successfully' }
   }
 
@@ -193,13 +195,12 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Current user profile',
-    type: AuthUserDto,
+    type: AuthUserDtoSwagger,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
@@ -209,24 +210,17 @@ export class AuthController {
     status: HttpStatus.NOT_FOUND,
     description: 'User not found',
   })
-  async getProfile(@CurrentUser() user: AuthUser): Promise<AuthUserDto> {
+  async getProfile(@CurrentUser() user: AuthUser): Promise<AuthUserDtoSwagger> {
     // Fetch full user data including roles
-    const userData = await this.userRepository.findByEmail(user.email)
+    const userData = await this.userService.findByEmail(user.email)
+
     if (!userData) {
       throw new NotFoundException('User not found')
     }
 
-    // Convert to AuthUserDto
     return {
-      email: userData.email,
-      username: userData.username,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
+      ...userData,
       roles: userData.roles.map((role) => role.name),
-      authType: userData.authType,
-      oauthProvider: userData.oauthProvider,
-      profile: userData.oauthProfile,
-      image: userData.image,
     }
   }
 }

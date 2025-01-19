@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   fcm-webui:
@@ -16,7 +16,7 @@ services:
       - NEXT_PUBLIC_OAUTH_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_OAUTH_GOOGLE_CLIENT_ID:-your_google_client_id}
       - AUTH_SECRET=${AUTH_SECRET:-your-secret-key-min-32-chars-long}
       # API configuration
-      - API_URL=${API_URL:-http://fcm-api:3001}
+      - API_URL=${API_URL:-http://localhost:3001}
       - API_TIMEOUT=${API_TIMEOUT:-60000}
     depends_on:
       - fcm-api

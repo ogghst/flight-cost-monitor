@@ -1,4 +1,4 @@
-import { AuthUser } from '@fcm/shared'
+import { AuthUser } from '@fcm/shared/auth'
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { ROLES_KEY } from '../decorators/roles.decorator.js'

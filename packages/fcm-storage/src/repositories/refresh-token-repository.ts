@@ -1,7 +1,11 @@
+import type { RefreshToken } from '@fcm/shared/auth'
 import type { ITXClientDenyList } from '@prisma/client/runtime/library'
-import type { RefreshToken } from '../schema/refresh-token.js'
 import { DatabaseError } from '../schema/types.js'
-import { fcmPrismaClient, type ExtendedPrismaClient, type ExtendedTransactionClient } from './prisma.js'
+import {
+  fcmPrismaClient,
+  type ExtendedPrismaClient,
+  type ExtendedTransactionClient,
+} from './prisma.js'
 
 export class RefreshTokenRepository {
   private prisma: ExtendedPrismaClient = fcmPrismaClient
@@ -11,6 +15,7 @@ export class RefreshTokenRepository {
       id: prismaToken.id,
       token: prismaToken.token,
       userId: prismaToken.userId,
+      userEmail: prismaToken.user?.email ?? prismaToken.userId,
       expiresAt: new Date(prismaToken.expiresAt),
       revoked: prismaToken.revoked,
       replacedByToken: prismaToken.replacedByToken,
@@ -19,13 +24,6 @@ export class RefreshTokenRepository {
       createdAt: new Date(prismaToken.createdAt),
       updatedAt: new Date(prismaToken.updatedAt),
       deletedAt: prismaToken.deletedAt ? new Date(prismaToken.deletedAt) : null,
-    }
-
-    if (prismaToken.user) {
-      return {
-        ...token,
-        user: prismaToken.user,
-      }
     }
 
     return token
@@ -37,8 +35,18 @@ export class RefreshTokenRepository {
   ): Promise<RefreshToken> {
     const client = tx || this.prisma
     try {
-      const { user, ...tokenData } = data
-      const token = await client.refreshToken.create({ data: tokenData })
+      const { userEmail, ...tokenData } = data
+      const token = await client.refreshToken.create({
+        data: {
+          ...tokenData,
+          //userId: user.id,
+          user: {
+            connect: {
+              email: data.userEmail,
+            },
+          },
+        },
+      })
       return this.mapPrismaToRefreshToken(token)
     } catch (error) {
       throw new DatabaseError('Failed to create refresh token', error)

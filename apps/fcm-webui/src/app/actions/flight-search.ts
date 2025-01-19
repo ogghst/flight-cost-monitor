@@ -1,6 +1,6 @@
 'use server'
 
-import { makeServerRequest } from '@/lib/api/axiosConfig'
+import { api } from '@/lib/api/fetch-client'
 import { auth } from '@/lib/auth'
 import { amadeusConfig } from '@/lib/config/amadeus'
 import type {
@@ -14,6 +14,7 @@ import type {
 } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
 import { FlightOfferAdvancedClient } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
 import { type FlightOfferSearchDto } from '@fcm/shared/flight-offer-search'
+
 // Keep the local clients for fallback/testing purposes
 const flightClients = {
   simple: new FlightOfferClient(amadeusConfig),
@@ -25,11 +26,14 @@ export async function searchFlightsAction(
   savedSearchId?: string
 ): Promise<FlightOfferSimpleSearchResponse> {
   try {
-    return await makeServerRequest<FlightOfferSimpleSearchResponse>(
-      'POST',
+    return await api.post<FlightOfferSimpleSearchResponse>(
       '/flight-offers/simple',
-      JSON.stringify(params),
-      { savedSearchId }
+      params,
+      {
+        ...(savedSearchId && {
+          headers: { 'X-Saved-Search-Id': savedSearchId },
+        }),
+      }
     )
   } catch (error) {
     console.error('Simple search error:', error)
@@ -44,10 +48,9 @@ export async function searchFlightsAdvancedAction(
   params: FlightOfferAdvancedSearchRequest
 ): Promise<FlightOffersAdvancedResponse> {
   try {
-    return await makeServerRequest<FlightOffersAdvancedResponse>(
-      'POST',
+    return await api.post<FlightOffersAdvancedResponse>(
       '/flight-offers/advanced',
-      JSON.stringify(params)
+      params
     )
   } catch (error) {
     console.error('Advanced search error:', error)
@@ -90,12 +93,14 @@ export async function getUserSearchById(
   }
 
   try {
-    const searches = await makeServerRequest<FlightOfferSearchDto[]>(
-      'GET',
-      `/flight-offers/usersearch/${id}`
+    return await api.get<FlightOfferSearchDto[]>(
+      `/flight-offers/usersearch/${id}`,
+      {
+        // Enable cache with tag for revalidation
+        cache: 'force-cache',
+        tags: [`user-search-${id}`],
+      }
     )
-
-    return searches
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch user searches by id: ${error.message}`)

@@ -1,5 +1,4 @@
-import { SearchType } from 'src/auth/types.js'
-
+/*
 export interface UserSearchDto {
   id: string
   userEmail: string
@@ -26,17 +25,26 @@ export interface UpdateUserSearchDto {
   parameters: string
   favorite?: boolean
 }
+*/
 
+/*
 // API Error types
 export interface ApiError {
   code: string
   message: string
   details?: Record<string, string>
 }
-
+*/
+/*
 // Search query parameters
 export interface SearchQueryParams {
   searchType?: SearchType
   page?: number
   limit?: number
+}
+*/
+
+export enum SearchType {
+  SIMPLE = 'SIMPLE',
+  ADVANCED = 'ADVANCED',
 }

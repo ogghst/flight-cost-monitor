@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { SearchType } from '../auth/types.js'
+import { SearchType } from '../user-search/types.js'
 import { TravelClass } from './types.js'
 
 export const SearchParamsSchema = z.object({

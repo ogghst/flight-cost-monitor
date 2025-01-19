@@ -1,11 +1,14 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common'
-import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger'
+import { Controller, Get, Param } from '@nestjs/common'
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger'
 import { MonitoringService } from './monitoring.service.js'
-import { JwtAuthGuard } from '../auth/guards/jwt.guard.js'
 
 @ApiTags('Monitoring')
 @Controller('monitoring')
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access-token')
 export class MonitoringController {
   constructor(private readonly monitoringService: MonitoringService) {}
@@ -25,8 +28,8 @@ export class MonitoringController {
             successfulRuns: { type: 'number' },
             failedRuns: { type: 'number' },
             averageDuration: { type: 'number' },
-            successRate: { type: 'number' }
-          }
+            successRate: { type: 'number' },
+          },
         },
         recentExecutions: {
           type: 'array',
@@ -36,12 +39,12 @@ export class MonitoringController {
               id: { type: 'string' },
               status: { type: 'string' },
               startTime: { type: 'string' },
-              duration: { type: 'number' }
-            }
-          }
-        }
-      }
-    }
+              duration: { type: 'number' },
+            },
+          },
+        },
+      },
+    },
   })
   async getTaskMetrics(@Param('id') taskId: string) {
     return this.monitoringService.getTaskMetrics(taskId)
@@ -60,9 +63,9 @@ export class MonitoringController {
         totalFailed: { type: 'number' },
         successRate: { type: 'number' },
         averageDuration: { type: 'number' },
-        taskCount: { type: 'number' }
-      }
-    }
+        taskCount: { type: 'number' },
+      },
+    },
   })
   async getSystemMetrics() {
     return this.monitoringService.getSystemMetrics()

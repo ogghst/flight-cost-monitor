@@ -1,7 +1,13 @@
 'use client'
 
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { DateRange, Home, MonitorHeart, Search } from '@mui/icons-material'
+import {
+  DateRange,
+  Home,
+  MonitorHeart,
+  QueryStats,
+  Search,
+} from '@mui/icons-material'
 import {
   Drawer,
   List,
@@ -28,6 +34,7 @@ const menuItems = [
     icon: <Search />,
     path: '/flightsearchadvanced',
   },
+  { text: 'Statistics', icon: <QueryStats />, path: '/stats' },
   { text: 'Scheduler', icon: <DateRange />, path: '/scheduler' },
   { text: 'Monitor', icon: <MonitorHeart />, path: '/monitoring' },
 ]

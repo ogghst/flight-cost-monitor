@@ -1,16 +1,16 @@
-import { SearchType } from '@fcm/shared'
+import { SearchType } from '@fcm/shared/user-search'
 import { userSearchRepository } from '@fcm/storage/repositories'
 import { DatabaseError } from '@fcm/storage/schema'
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { CreateUserSearchDto } from './dto/create-user-search.dto.js'
-import { UpdateUserSearchDto } from './dto/update-user-search.dto.js'
-import { UserSearchDto } from './dto/user-search.dto.js'
+import { CreateUserSearchDtoSwagger } from './dto/create-user-search.dto.js'
+import { UpdateUserSearchDtoSwagger } from './dto/update-user-search.dto.js'
+import { UserSearchDtoSwagger } from './dto/user-search.dto.js'
 
 @Injectable()
 export class UserSearchesService {
   async create(
-    createUserSearchDto: CreateUserSearchDto
-  ): Promise<UserSearchDto> {
+    createUserSearchDto: CreateUserSearchDtoSwagger
+  ): Promise<UserSearchDtoSwagger> {
     try {
       return await userSearchRepository.create(createUserSearchDto)
     } catch (error) {
@@ -21,7 +21,7 @@ export class UserSearchesService {
     }
   }
 
-  async findById(id: string): Promise<UserSearchDto> {
+  async findById(id: string): Promise<UserSearchDtoSwagger> {
     const search = await userSearchRepository.findById(id)
     if (!search) {
       throw new NotFoundException(`Search with ID ${id} not found`)
@@ -32,7 +32,7 @@ export class UserSearchesService {
   async findByUserEmail(
     userEmail: string,
     searchType?: SearchType
-  ): Promise<UserSearchDto[]> {
+  ): Promise<UserSearchDtoSwagger[]> {
     try {
       return await userSearchRepository.findByUserEmail(userEmail, searchType)
     } catch (error) {
@@ -43,7 +43,7 @@ export class UserSearchesService {
     }
   }
 
-  async findFavorites(userEmail: string): Promise<UserSearchDto[]> {
+  async findFavorites(userEmail: string): Promise<UserSearchDtoSwagger[]> {
     try {
       return await userSearchRepository.findFavorites(userEmail)
     } catch (error) {
@@ -56,8 +56,8 @@ export class UserSearchesService {
 
   async update(
     id: string,
-    updateUserSearchDto: UpdateUserSearchDto
-  ): Promise<UserSearchDto> {
+    updateUserSearchDto: UpdateUserSearchDtoSwagger
+  ): Promise<UserSearchDtoSwagger> {
     try {
       return await userSearchRepository.update(id, updateUserSearchDto)
     } catch (error) {
@@ -68,7 +68,7 @@ export class UserSearchesService {
     }
   }
 
-  async updateLastUsed(id: string): Promise<UserSearchDto> {
+  async updateLastUsed(id: string): Promise<UserSearchDtoSwagger> {
     try {
       return await userSearchRepository.updateLastUsed(id)
     } catch (error) {
@@ -79,7 +79,7 @@ export class UserSearchesService {
     }
   }
 
-  async toggleFavorite(id: string): Promise<UserSearchDto> {
+  async toggleFavorite(id: string): Promise<UserSearchDtoSwagger> {
     try {
       return await userSearchRepository.toggleFavorite(id)
     } catch (error) {

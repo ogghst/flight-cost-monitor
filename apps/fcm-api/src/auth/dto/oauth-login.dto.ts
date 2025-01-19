@@ -1,20 +1,17 @@
-import { ApiProperty } from '@nestjs/swagger'
-import {
-  IsEmail,
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-} from 'class-validator'
+import { createZodDto } from '@anatine/zod-nestjs'
+import { loginOAuthUserSchema } from '@fcm/shared/user'
 
+export class LoginOAuthDtoSwagger extends createZodDto(loginOAuthUserSchema) {}
+
+/*
 export class OAuthLoginDto {
   @ApiProperty({
-    enum: ['GITHUB', 'GOOGLE'],
+    enum: [OAuthProvider],
     description: 'OAuth provider',
   })
-  @IsEnum(['GITHUB', 'GOOGLE'])
+  @IsEnum(OAuthProvider)
   @IsNotEmpty()
-  provider: 'GITHUB' | 'GOOGLE'
+  provider: OAuthProvider
 
   @ApiProperty({
     description: 'Provider-specific user ID',
@@ -60,3 +57,4 @@ export class OAuthLoginDto {
   @IsNotEmpty()
   accessToken: string
 }
+*/

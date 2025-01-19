@@ -1,6 +1,7 @@
-import { BaseLogger, LogEntry, LoggerOptions } from '@fcm/shared'
 import * as winston from 'winston'
 import 'winston-daily-rotate-file'
+import { BaseLogger } from '../base-logger.js'
+import { LogEntry, LoggerOptions } from '../types.js'
 
 export interface FcmWinstonLoggerOptions extends LoggerOptions {
   logDirectory?: string
@@ -54,11 +55,18 @@ export class FcmWinstonLogger extends BaseLogger {
             winston.format.colorize(),
             winston.format.printf(
               ({ context, level, timestamp, message, ms, ...meta }) => {
-                const ctx = context ? `[${context}]` : ''
+                const ctx = context ? `[${context}] ` : ''
+                // Format metadata in a cleaner way
                 const metaStr = Object.keys(meta).length
-                  ? ` ${JSON.stringify(meta)}`
+                  ? '\n' + Object.entries(meta)
+                      .map(([key, value]) => `  ${key}: ${
+                        typeof value === 'object' 
+                          ? JSON.stringify(value, null, 2).replace(/\n/g, '\n  ') 
+                          : value
+                      }`)
+                      .join('\n')
                   : ''
-                return `${timestamp} ${level} ${ctx} ${message}${metaStr}`
+                return `${timestamp} ${level} ${ctx}${message}${metaStr}`
               }
             )
           ),

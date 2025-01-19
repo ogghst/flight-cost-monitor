@@ -8,7 +8,7 @@ export class DatabaseError extends Error {
     this.name = 'DatabaseError'
   }
 }
-
+/*
 export interface BaseRefreshToken {
   id: string
   token: string
@@ -19,7 +19,7 @@ export interface BaseRefreshToken {
   family: string
   generationNumber: number
 }
-
+*/
 /*
 export function toAuthUser(user: UserWithRelations): AuthUser {
   return {

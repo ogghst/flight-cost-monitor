@@ -1,4 +1,4 @@
-import { AuthUser } from '@fcm/shared'
+import { AuthUser } from '@fcm/shared/auth'
 import { createParamDecorator, ExecutionContext } from '@nestjs/common'
 
 export const CurrentUser = createParamDecorator(

@@ -1,9 +1,9 @@
-import type { SearchType } from '@fcm/shared/auth'
 import type {
   CreateUserSearchDto,
+  SearchType,
   UpdateUserSearchDto,
   UserSearchDto,
-} from '@fcm/shared/user-search/types'
+} from '@fcm/shared/user-search'
 import { Prisma } from '@prisma/client'
 import type { ITXClientDenyList } from '@prisma/client/runtime/library'
 import { DatabaseError } from '../schema/types.js'
@@ -31,8 +31,8 @@ export class UserSearchRepository {
       return search
         ? {
             ...search,
+            searchType: search.searchType as SearchType,
             userEmail: search.user.email,
-            name: search.name ?? undefined,
           }
         : null
     } catch (error) {
@@ -62,8 +62,8 @@ export class UserSearchRepository {
       })
       return searches.map((search) => ({
         ...search,
-        userEmail: userEmail,
-        name: search.name ?? undefined,
+        searchType: search.searchType as SearchType,
+        userEmail: search.user.email,
       }))
     } catch (error) {
       throw new DatabaseError('Failed to find user searches', error)
@@ -91,8 +91,8 @@ export class UserSearchRepository {
       })
       return searches.map((search) => ({
         ...search,
-        userEmail,
-        name: search.name ?? undefined,
+        searchType: search.searchType as SearchType,
+        userEmail: search.user.email,
       }))
     } catch (error) {
       throw new DatabaseError('Failed to find favorite searches', error)
@@ -106,7 +106,7 @@ export class UserSearchRepository {
     const client = tx || this.prisma
     try {
       // Create search with user ID
-      const createdSearch = await client.userSearch.create({
+      const search = await client.userSearch.create({
         data: {
           searchType: data.searchType,
           parameters: data.parameters,
@@ -123,9 +123,9 @@ export class UserSearchRepository {
       })
 
       return {
-        ...createdSearch,
-        userEmail: data.userEmail,
-        name: createdSearch.name ?? undefined,
+        ...search,
+        searchType: search.searchType as SearchType,
+        userEmail: search.user.email,
       }
     } catch (error) {
       if (error instanceof DatabaseError) {
@@ -142,7 +142,7 @@ export class UserSearchRepository {
   ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
-      const updatedSearch = await client.userSearch.update({
+      const search = await client.userSearch.update({
         where: { id },
         data,
         include: {
@@ -150,9 +150,9 @@ export class UserSearchRepository {
         },
       })
       return {
-        ...updatedSearch,
-        userEmail: updatedSearch.user.email,
-        name: updatedSearch.name ?? undefined,
+        ...search,
+        searchType: search.searchType as SearchType,
+        userEmail: search.user.email,
       }
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -170,7 +170,7 @@ export class UserSearchRepository {
   ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
-      const updatedSearch = await client.userSearch.update({
+      const search = await client.userSearch.update({
         where: { id },
         data: {
           lastUsed: new Date(),
@@ -180,9 +180,9 @@ export class UserSearchRepository {
         },
       })
       return {
-        ...updatedSearch,
-        userEmail: updatedSearch.user.email,
-        name: updatedSearch.name ?? undefined,
+        ...search,
+        searchType: search.searchType as SearchType,
+        userEmail: search.user.email,
       }
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -219,9 +219,9 @@ export class UserSearchRepository {
         },
       })
       return {
-        ...updatedSearch,
+        ...search,
+        searchType: updatedSearch.searchType as SearchType,
         userEmail: updatedSearch.user.email,
-        name: updatedSearch.name ?? undefined,
       }
     } catch (error) {
       throw new DatabaseError('Failed to toggle favorite status', error)
@@ -234,16 +234,16 @@ export class UserSearchRepository {
   ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
-      const deletedSearch = await client.userSearch.delete({
+      const search = await client.userSearch.delete({
         where: { id },
         include: {
           user: true,
         },
       })
       return {
-        ...deletedSearch,
-        userEmail: deletedSearch.user.email,
-        name: deletedSearch.name ?? undefined,
+        ...search,
+        searchType: search.searchType as SearchType,
+        userEmail: search.user.email,
       }
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -261,7 +261,7 @@ export class UserSearchRepository {
   ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
-      const deletedSearch = await client.userSearch.update({
+      const search = await client.userSearch.update({
         where: { id },
         data: {
           deletedAt: new Date(),
@@ -271,9 +271,9 @@ export class UserSearchRepository {
         },
       })
       return {
-        ...deletedSearch,
-        userEmail: deletedSearch.user.email,
-        name: deletedSearch.name ?? undefined,
+        ...search,
+        searchType: search.searchType as SearchType,
+        userEmail: search.user.email,
       }
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -291,7 +291,7 @@ export class UserSearchRepository {
   ): Promise<UserSearchDto> {
     const client = tx || this.prisma
     try {
-      const restoredSearch = await client.userSearch.update({
+      const search = await client.userSearch.update({
         where: { id },
         data: {
           deletedAt: null,
@@ -301,9 +301,9 @@ export class UserSearchRepository {
         },
       })
       return {
-        ...restoredSearch,
-        userEmail: restoredSearch.user.email,
-        name: restoredSearch.name ?? undefined,
+        ...search,
+        searchType: search.searchType as SearchType,
+        userEmail: search.user.email,
       }
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {

@@ -25,7 +25,7 @@ import {
   FlightOfferSimpleSearchRequest,
   FlightOfferSimpleSearchResponse,
 } from '@fcm/shared/amadeus/clients/flight-offer'
-import { SearchType } from '@fcm/shared/auth'
+import { SearchType } from '@fcm/shared/user-search'
 import { FlightSearchForm } from './components/FlightSearchForm'
 
 const DEBOUNCE_TIME = 300

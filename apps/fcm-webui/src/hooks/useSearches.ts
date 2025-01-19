@@ -6,7 +6,7 @@ import {
   saveSearch,
 } from '@/app/actions/search'
 import { showNotification } from '@/services/NotificationService'
-import { SearchType } from '@fcm/shared/auth'
+import { SearchType } from '@fcm/shared/user-search'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 export function useUserSearches(
@@ -36,7 +36,9 @@ export function useSaveSearch() {
     mutationFn: saveSearch,
     onSuccess: (savedSearch) => {
       queryClient.invalidateQueries({ queryKey: ['user-searches'] })
-      showNotification.success(`Search "${savedSearch.name}" saved successfully`)
+      showNotification.success(
+        `Search "${savedSearch.name}" saved successfully`
+      )
     },
     onError: (error: Error) => {
       showNotification.error(

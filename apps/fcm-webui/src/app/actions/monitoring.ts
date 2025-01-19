@@ -1,15 +1,19 @@
 'use server'
 
-import { makeServerRequest } from '@/lib/api/axiosConfig'
+import { api } from '@/lib/api/fetch-client'
 import type { TaskMetrics, SystemMetrics } from '@fcm/shared/monitoring'
 
 export async function getTaskMetricsAction(
   taskId: string
 ): Promise<TaskMetrics> {
   try {
-    return await makeServerRequest<TaskMetrics>(
-      'GET',
-      `/monitoring/tasks/${taskId}/metrics`
+    return await api.get<TaskMetrics>(
+      `/monitoring/tasks/${taskId}/metrics`,
+      {
+        // Cache for 30 seconds with revalidation tag
+        revalidate: 30,
+        tags: [`task-metrics-${taskId}`],
+      }
     )
   } catch (error) {
     console.error('Get task metrics error:', error)
@@ -22,10 +26,11 @@ export async function getTaskMetricsAction(
 
 export async function getSystemMetricsAction(): Promise<SystemMetrics> {
   try {
-    return await makeServerRequest<SystemMetrics>(
-      'GET',
-      '/monitoring/system'
-    )
+    return await api.get<SystemMetrics>('/monitoring/system', {
+      // Cache for 15 seconds with revalidation tag
+      revalidate: 15,
+      tags: ['system-metrics'],
+    })
   } catch (error) {
     console.error('Get system metrics error:', error)
     if (error instanceof Error) {

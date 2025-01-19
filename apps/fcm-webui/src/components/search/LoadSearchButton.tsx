@@ -4,8 +4,7 @@ import { useSearchForm } from '@/components/context/SearchFormContext'
 import { useLoadSearch, useUserSearches } from '@/hooks/useSearches'
 import { showNotification } from '@/services/NotificationService'
 import { FlightOfferSimpleSearchRequest } from '@fcm/shared/amadeus/clients/flight-offer'
-import { SearchType } from '@fcm/shared/auth'
-import { UserSearchDto } from '@fcm/shared/user-search/types'
+import { SearchType, UserSearchDto } from '@fcm/shared/user-search'
 import { BookmarkOutlined, CheckCircle, Clear, Star } from '@mui/icons-material'
 import {
   Box,

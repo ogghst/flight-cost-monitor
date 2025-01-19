@@ -1,33 +1,19 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
-import { UserSearchDto, SearchQueryParams } from '@fcm/shared/user-search'
-import { SearchType } from '@fcm/shared/auth'
-import { TaskType } from '@fcm/shared/scheduler'
 import { getUserSearches } from '@/app/actions/search'
+import { SearchQueryParams, SearchType } from '@fcm/shared/user-search'
+import { useQuery } from '@tanstack/react-query'
 
-// Convert TaskType to SearchType
-function getSearchType(taskType: TaskType): SearchType {
-  switch (taskType) {
-    case TaskType.SIMPLE_SEARCH:
-      return SearchType.SIMPLE
-    case TaskType.ADVANCED_SEARCH:
-      return SearchType.ADVANCED
-    default:
-      return SearchType.SIMPLE
-  }
-}
-
-export function useUserSearches(taskType: TaskType) {
+export function useUserSearches(searchType: SearchType) {
   return useQuery({
-    queryKey: ['userSearches', taskType],
+    queryKey: ['userSearches', searchType],
     queryFn: async () => {
       const params: SearchQueryParams = {
-        searchType: getSearchType(taskType)
+        searchType: searchType,
       }
       const searches = await getUserSearches(params)
       return searches
     },
-    enabled: !!taskType, // Only fetch when taskType is available
+    enabled: !!searchType, // Only fetch when taskType is available
   })
 }

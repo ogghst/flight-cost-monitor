@@ -1,6 +1,5 @@
 import { InjectLogger } from '@/logging/decorators/inject-logger.decorator.js'
 import { formatError } from '@/utils/error.utils.js'
-import { SearchType } from '@fcm/shared'
 import { AmadeusApiError, ClientConfig } from '@fcm/shared/amadeus/clients'
 import {
   FlightOfferClient,
@@ -17,8 +16,9 @@ import {
   FlightOfferSearchDto,
   FlightOfferSearchParams,
 } from '@fcm/shared/flight-offer-search'
+import { type Logger } from '@fcm/shared/logging'
+import { SearchType } from '@fcm/shared/user-search'
 
-import type { Logger } from '@fcm/shared/logging'
 import { flightOfferSearchRepository } from '@fcm/storage/repositories'
 import {
   BadRequestException,

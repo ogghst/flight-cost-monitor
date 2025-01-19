@@ -1,6 +1,6 @@
-import { type AuthUser } from '@fcm/shared'
 import * as flightOffer from '@fcm/shared/amadeus/clients/flight-offer'
 import * as flightOfferAdvanced from '@fcm/shared/amadeus/clients/flight-offer-advanced'
+import { type AuthUser } from '@fcm/shared/auth'
 import {
   type FlightOffersAdvancedSearchRequest,
   FlightOfferSearchDto,
@@ -14,7 +14,6 @@ import {
   Param,
   Post,
   Query,
-  UseGuards,
   ValidationPipe,
 } from '@nestjs/common'
 import {
@@ -27,7 +26,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger'
 import { CurrentUser } from '../auth/decorators/user.decorator.js'
-import { JwtAuthGuard } from '../auth/guards/jwt.guard.js'
 import { FlightOfferSimpleSearchRequestDto } from './dto/search-flight-offers.dto.js'
 import { FlightOffersService } from './flight-offers.service.js'
 
@@ -38,7 +36,6 @@ export class FlightOffersController {
   constructor(private readonly flightOffersService: FlightOffersService) {}
 
   @Post('simple')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Search flight offers',
     description:
@@ -98,7 +95,6 @@ export class FlightOffersController {
   }
 
   @Post('advanced')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Advanced flight offers search',
     description:
@@ -182,7 +178,6 @@ export class FlightOffersController {
   }
 
   @Get('history')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Get user search history',
     description:
@@ -213,7 +208,6 @@ export class FlightOffersController {
   }
 
   @Get('search/:id')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Get search by ID',
     description: 'Retrieve a specific flight offer search by ID',
@@ -238,7 +232,6 @@ export class FlightOffersController {
   }
 
   @Get('usersearch/:id')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Get search by User Search ID',
     description: 'Retrieve all results by User Search ID',
@@ -263,7 +256,6 @@ export class FlightOffersController {
   }
 
   @Delete('search/:id')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Delete search',
     description: 'Soft delete a flight offer search',

@@ -1,77 +1,13 @@
-import { OAuthProvider } from '@fcm/shared'
-import type { CreateCredentialsUser, CreateOAuthUser } from '@fcm/storage'
+import { createZodDto } from '@anatine/zod-nestjs'
 import {
-  IsEmail,
-  IsEnum,
-  IsOptional,
-  IsString,
-  Matches,
-  MinLength,
-} from 'class-validator'
+  createCredentialsUserSchema,
+  createOAuthUserSchema,
+} from '@fcm/shared/user'
 
-export class CreateUserWithCredentialsDto
-  implements Omit<CreateCredentialsUser, 'authType' | 'active'>
-{
-  @IsEmail()
-  email: string
+export class CreateUserWithCredentialsDtoSwagger extends createZodDto(
+  createCredentialsUserSchema
+) {}
 
-  @IsString()
-  @IsOptional()
-  username?: string
-
-  @IsString()
-  @MinLength(8)
-  @Matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-    {
-      message:
-        'Password must contain uppercase, lowercase, number and special character',
-    }
-  )
-  password: string
-
-  @IsString()
-  @IsOptional()
-  firstName?: string
-
-  @IsString()
-  @IsOptional()
-  lastName?: string
-
-  @IsString()
-  @IsOptional()
-  image?: string
-}
-
-export class CreateUserWithOAuthDto
-  implements Omit<CreateOAuthUser, 'authType' | 'active'>
-{
-  @IsEmail()
-  email: string
-
-  @IsString()
-  @IsOptional()
-  username?: string
-
-  @IsString()
-  @IsOptional()
-  firstName?: string
-
-  @IsString()
-  @IsOptional()
-  lastName?: string
-
-  @IsString()
-  @IsOptional()
-  image?: string
-
-  @IsEnum(['GITHUB', 'GOOGLE'])
-  oauthProvider: OAuthProvider
-
-  @IsString()
-  oauthProviderId: string
-
-  @IsString()
-  @IsOptional()
-  oauthProfile?: string
-}
+export class CreateUserWithOAuthDtoSwagger extends createZodDto(
+  createOAuthUserSchema
+) {}

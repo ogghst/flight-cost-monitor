@@ -1,20 +1,4 @@
-import { IsString, IsOptional, IsUrl } from 'class-validator'
-import type { UpdateUser } from '@fcm/storage'
+import { createZodDto } from '@anatine/zod-nestjs'
+import { updateUserSchema } from '@fcm/shared/user'
 
-export class UpdateUserDto implements UpdateUser {
-  @IsString()
-  @IsOptional()
-  username?: string
-
-  @IsString()
-  @IsOptional()
-  firstName?: string
-
-  @IsString()
-  @IsOptional()
-  lastName?: string
-
-  @IsUrl()
-  @IsOptional()
-  image?: string
-}
+export class UpdateUserDtoSwagger extends createZodDto(updateUserSchema) {}

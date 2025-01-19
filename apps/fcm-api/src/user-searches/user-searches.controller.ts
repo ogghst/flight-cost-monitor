@@ -1,4 +1,4 @@
-import { SearchType } from '@fcm/shared'
+import { SearchType } from '@fcm/shared/user-search'
 import {
   Body,
   Controller,
@@ -12,9 +12,9 @@ import {
   Query,
 } from '@nestjs/common'
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
-import { CreateUserSearchDto } from './dto/create-user-search.dto.js'
-import { UpdateUserSearchDto } from './dto/update-user-search.dto.js'
-import { UserSearchDto } from './dto/user-search.dto.js'
+import { CreateUserSearchDtoSwagger } from './dto/create-user-search.dto.js'
+import { UpdateUserSearchDtoSwagger } from './dto/update-user-search.dto.js'
+import { UserSearchDtoSwagger } from './dto/user-search.dto.js'
 import { UserSearchesService } from './user-searches.service.js'
 
 @ApiTags('User Searches')
@@ -27,11 +27,11 @@ export class UserSearchesController {
   @ApiResponse({
     status: 201,
     description: 'The search has been successfully created.',
-    type: UserSearchDto,
+    type: UserSearchDtoSwagger,
   })
   async create(
-    @Body() createUserSearchDto: CreateUserSearchDto
-  ): Promise<UserSearchDto> {
+    @Body() createUserSearchDto: CreateUserSearchDtoSwagger
+  ): Promise<UserSearchDtoSwagger> {
     return await this.userSearchesService.create(createUserSearchDto)
   }
 
@@ -45,12 +45,12 @@ export class UserSearchesController {
   @ApiResponse({
     status: 200,
     description: 'Returns the list of user searches.',
-    type: [UserSearchDto],
+    type: [UserSearchDtoSwagger],
   })
   async findByUserEmail(
     @Param('userId') userId: string,
     @Query('searchType') searchType?: SearchType
-  ): Promise<UserSearchDto[]> {
+  ): Promise<UserSearchDtoSwagger[]> {
     const type = searchType as SearchType
     return await this.userSearchesService.findByUserEmail(userId, type)
   }
@@ -60,11 +60,11 @@ export class UserSearchesController {
   @ApiResponse({
     status: 200,
     description: 'Returns the list of favorite searches.',
-    type: [UserSearchDto],
+    type: [UserSearchDtoSwagger],
   })
   async findFavorites(
     @Param('userEmail') userEmail: string
-  ): Promise<UserSearchDto[]> {
+  ): Promise<UserSearchDtoSwagger[]> {
     return await this.userSearchesService.findFavorites(userEmail)
   }
 
@@ -73,10 +73,10 @@ export class UserSearchesController {
   @ApiResponse({
     status: 200,
     description: 'Returns the search data.',
-    type: UserSearchDto,
+    type: UserSearchDtoSwagger,
   })
   @ApiResponse({ status: 404, description: 'Search not found.' })
-  async findOne(@Param('id') id: string): Promise<UserSearchDto> {
+  async findOne(@Param('id') id: string): Promise<UserSearchDtoSwagger> {
     return await this.userSearchesService.findById(id)
   }
 
@@ -85,13 +85,13 @@ export class UserSearchesController {
   @ApiResponse({
     status: 200,
     description: 'The search has been successfully updated.',
-    type: UserSearchDto,
+    type: UserSearchDtoSwagger,
   })
   @ApiResponse({ status: 404, description: 'Search not found.' })
   async update(
     @Param('id') id: string,
-    @Body() updateUserSearchDto: UpdateUserSearchDto
-  ): Promise<UserSearchDto> {
+    @Body() updateUserSearchDto: UpdateUserSearchDtoSwagger
+  ): Promise<UserSearchDtoSwagger> {
     return await this.userSearchesService.update(id, updateUserSearchDto)
   }
 
@@ -100,10 +100,10 @@ export class UserSearchesController {
   @ApiResponse({
     status: 200,
     description: 'The search timestamp has been updated.',
-    type: UserSearchDto,
+    type: UserSearchDtoSwagger,
   })
   @ApiResponse({ status: 404, description: 'Search not found.' })
-  async updateLastUsed(@Param('id') id: string): Promise<UserSearchDto> {
+  async updateLastUsed(@Param('id') id: string): Promise<UserSearchDtoSwagger> {
     return await this.userSearchesService.updateLastUsed(id)
   }
 
@@ -112,10 +112,10 @@ export class UserSearchesController {
   @ApiResponse({
     status: 200,
     description: 'The favorite status has been toggled.',
-    type: UserSearchDto,
+    type: UserSearchDtoSwagger,
   })
   @ApiResponse({ status: 404, description: 'Search not found.' })
-  async toggleFavorite(@Param('id') id: string): Promise<UserSearchDto> {
+  async toggleFavorite(@Param('id') id: string): Promise<UserSearchDtoSwagger> {
     return await this.userSearchesService.toggleFavorite(id)
   }
 

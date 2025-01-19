@@ -1,4 +1,4 @@
-import { AuthType } from '@fcm/shared'
+import { AuthType } from '@fcm/shared/types'
 import { userRepository } from '@fcm/storage'
 import { DatabaseError } from '@fcm/storage/schema'
 import {
@@ -8,67 +8,54 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { hash } from 'bcrypt'
-import {
-  CreateUserWithCredentialsDto,
-  CreateUserWithOAuthDto,
-} from './dto/create-user.dto.js'
-import { UpdateUserDto } from './dto/update-user.dto.js'
-import { UserDto, UserWithRelationsDto } from './dto/user.dto.js'
+
+import { LoginOAuthDtoSwagger } from '@/auth/dto/oauth-login.dto.js'
+import { CreateUserWithCredentialsDtoSwagger } from './dto/create-user.dto.js'
+import { UpdateUserDtoSwagger } from './dto/update-user.dto.js'
+import { UserWithRelationsDtoSwagger } from './dto/user.dto.js'
 
 @Injectable()
 export class UsersService {
-  async findById(id: string): Promise<UserWithRelationsDto> {
+  async findById(id: string): Promise<UserWithRelationsDtoSwagger> {
     const user = await userRepository.findById(id)
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`)
     }
-    return {
-      ...user,
-      roles: user.roles.map((role) => role.name),
-    }
+    return user
   }
 
-  async findByEmail(email: string): Promise<UserWithRelationsDto> {
+  async findByEmail(email: string): Promise<UserWithRelationsDtoSwagger> {
     const user = await userRepository.findByEmail(email)
     if (!user) {
       throw new NotFoundException(`User with email ${email} not found`)
     }
-    return {
-      ...user,
-      roles: user.roles.map((role) => role.name),
-    }
+    return user
   }
 
-  async findByUsername(username: string): Promise<UserWithRelationsDto> {
+  async findByUsername(username: string): Promise<UserWithRelationsDtoSwagger> {
     const user = await userRepository.findByUsername(username)
     if (!user) {
       throw new NotFoundException(`User with username ${username} not found`)
     }
-    return {
-      ...user,
-      roles: user.roles.map((role) => role.name),
-    }
+    return user
   }
 
   async findByOAuth(
     provider: string,
     providerId: string
-  ): Promise<UserWithRelationsDto> {
+  ): Promise<UserWithRelationsDtoSwagger> {
     const user = await userRepository.findByOAuth(provider, providerId)
     if (!user) {
       throw new NotFoundException(
         `User with provider ${provider} and providerId ${providerId} not found`
       )
     }
-    return {
-      ...user,
-      roles: user.roles.map((role) => role.name),
-    }
+    return user
   }
 
   async createWithCredentials(
-    data: CreateUserWithCredentialsDto
-  ): Promise<UserDto> {
+    data: CreateUserWithCredentialsDtoSwagger
+  ): Promise<UserWithRelationsDtoSwagger> {
     try {
       // Check if email is already in use
       const existingEmail = await userRepository.findByEmail(data.email)
@@ -109,7 +96,9 @@ export class UsersService {
     }
   }
 
-  async createWithOAuth(data: CreateUserWithOAuthDto): Promise<UserDto> {
+  async createWithOAuth(
+    data: LoginOAuthDtoSwagger
+  ): Promise<UserWithRelationsDtoSwagger> {
     try {
       // Check if OAuth user already exists
       const existingOAuth = await userRepository.findByOAuth(
@@ -128,6 +117,7 @@ export class UsersService {
         )
       }
 
+      /*
       // Check if username is already in use
       if (data.username) {
         const existingUsername = await userRepository.findByUsername(
@@ -137,6 +127,7 @@ export class UsersService {
           throw new ConflictException('Username already in use')
         }
       }
+        */
 
       // Create OAuth user
       return await userRepository.createOAuthUser({
@@ -159,7 +150,10 @@ export class UsersService {
     }
   }
 
-  async update(id: string, data: UpdateUserDto): Promise<UserWithRelationsDto> {
+  async update(
+    id: string,
+    data: UpdateUserDtoSwagger
+  ): Promise<UserWithRelationsDtoSwagger> {
     try {
       // Check if user exists
       const existingUser = await this.findById(id)
@@ -180,10 +174,7 @@ export class UsersService {
 
       // Update user
       const updatedUser = await userRepository.update(id, data)
-      return {
-        ...updatedUser,
-        roles: updatedUser.roles.map((role) => role.name),
-      }
+      return updatedUser
     } catch (error) {
       if (
         error instanceof NotFoundException ||
@@ -219,5 +210,33 @@ export class UsersService {
       }
       throw new BadRequestException('Failed to delete user')
     }
+  }
+
+  async updateLastLogin(userId: string): Promise<void> {
+    await userRepository.updateLastLogin(userId)
+  }
+
+  async setResetToken(
+    userId: string,
+    token: string,
+    expires: Date
+  ): Promise<void> {
+    await userRepository.setResetToken(userId, token, expires)
+  }
+
+  async findByResetToken(token: string): Promise<UserWithRelationsDtoSwagger> {
+    const user = await userRepository.findByResetToken(token)
+    if (!user) {
+      throw new NotFoundException('User not found')
+    }
+    return user
+  }
+
+  async clearResetToken(userId: string): Promise<UserWithRelationsDtoSwagger> {
+    const user = await userRepository.clearResetToken(userId)
+    if (!user) {
+      throw new NotFoundException('User not found')
+    }
+    return user
   }
 }

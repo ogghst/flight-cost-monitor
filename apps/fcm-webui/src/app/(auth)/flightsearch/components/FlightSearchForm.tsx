@@ -1,12 +1,14 @@
 'use client'
 
+import { getCurrentUser } from '@/app/actions/user'
 import { useSearchForm } from '@/components/context/SearchFormContext'
 import {
   FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES,
   FlightOfferSimpleSearchRequest,
 } from '@fcm/shared/amadeus/clients/flight-offer'
 import { TravelClass } from '@fcm/shared/amadeus/types'
-import { SearchType } from '@fcm/shared/auth'
+import { AuthUser } from '@fcm/shared/auth'
+import { SearchType } from '@fcm/shared/user-search'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Box,
@@ -21,7 +23,7 @@ import {
 } from '@mui/material'
 import { DatePicker } from '@mui/x-date-pickers'
 import dayjs from 'dayjs'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Controller, useForm, useFormState } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -86,6 +88,15 @@ export function FlightSearchForm({
   isFieldsDisabled = false,
 }: FlightSearchFormProps) {
   const { currentSearch, setCurrentSearch } = useSearchForm()
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user = await getCurrentUser()
+      setCurrentUser(user)
+    }
+    fetchUser()
+  }, [])
 
   // Parse the current search parameters if they exist
   const getInitialValues = () => {
@@ -121,19 +132,26 @@ export function FlightSearchForm({
         })
       } else {
         setCurrentSearch({
-          id: '',
-          name: 'Untitled Search',
-          searchType: SearchType.SIMPLE,
           parameters: JSON.stringify(formValues),
-          userEmail: '',
-          createdAt: new Date(),
+          deletedAt: null,
+          favorite: false,
           lastUsed: new Date(),
           updatedAt: new Date(),
-          favorite: false,
+          id: '',
+          createdAt: new Date(),
+          userEmail: currentUser?.email ?? '',
+          searchType: SearchType.SIMPLE,
         })
       }
     }
-  }, [dirtyFields, getValues, currentSearch, setCurrentSearch])
+  }, [
+    dirtyFields,
+    getValues,
+    currentSearch,
+    setCurrentSearch,
+    currentUser?.email,
+    currentUser?.id,
+  ])
 
   // Reset form when initialValues or currentSearch changes
   useEffect(() => {
@@ -155,11 +173,12 @@ export function FlightSearchForm({
         name: 'Untitled Search',
         searchType: SearchType.SIMPLE,
         parameters: JSON.stringify(data),
-        userEmail: '',
+        userEmail: currentUser?.email ?? '',
         createdAt: new Date(),
         lastUsed: new Date(),
         updatedAt: new Date(),
         favorite: false,
+        deletedAt: null,
       })
     }
 

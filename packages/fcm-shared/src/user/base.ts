@@ -1,10 +1,12 @@
-import { AuthType, OAuthProvider } from '@fcm/shared/auth'
-import { baseEntitySchema } from '@fcm/shared/types'
 import { z } from 'zod'
-import type { BaseRefreshToken } from '../types.js'
+import { baseEntitySchema } from '../types/base-entity.js'
+import { AuthType, OAuthProvider } from '../types/index.js'
 
 // Base user schema for database records
 export const userSchema = baseEntitySchema.extend({
+  // Id
+  id: z.string(),
+
   // Authentication
   email: z.string().email(),
   username: z.string().optional(),
@@ -13,7 +15,7 @@ export const userSchema = baseEntitySchema.extend({
   // Profile
   firstName: z.string().min(1).optional().nullable(),
   lastName: z.string().min(1).optional().nullable(),
-  image: z.string().url().optional().nullable(),
+  avatar: z.string().url().optional().nullable(),
   active: z.boolean().default(true),
 
   // OAuth
@@ -26,9 +28,11 @@ export const userSchema = baseEntitySchema.extend({
   lastLogin: z.date().optional().nullable(),
   passwordResetToken: z.string().optional().nullable(),
   passwordResetExpires: z.date().optional().nullable(),
-  refreshTokens: z.array(z.custom<BaseRefreshToken>()).default([]).nullable(),
+  //refreshTokens: z.array(z.custom<BaseRefreshToken>()).default([]).nullable(),
+  //roles: z.array(z.custom<Role>()).default([]).nullable(),
 })
 
+/*
 // Type for basic user data
 export const userDataSchema = z.object({
   id: z.string(),
@@ -38,7 +42,13 @@ export const userDataSchema = z.object({
   lastName: z.string().optional().nullable(),
   image: z.string().optional().nullable(),
 })
+*/
+
+export const userWithRelationsSchema = userSchema.extend({
+  roles: z.array(z.object({ name: z.string() })),
+})
 
 // TypeScript types
 export type User = z.infer<typeof userSchema>
-export type UserData = z.infer<typeof userDataSchema>
+//export type UserData = z.infer<typeof userDataSchema>
+export type UserWithRelations = z.infer<typeof userWithRelationsSchema>

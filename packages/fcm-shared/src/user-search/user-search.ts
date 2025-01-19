@@ -1,11 +1,13 @@
-import { SearchType } from '@fcm/shared/auth'
-import { baseEntitySchema } from '@fcm/shared/types'
+import { baseEntitySchema } from '../types/base-entity.js'
+import { SearchType } from '../user-search/index.js'
+
 import { z } from 'zod'
 
 // Base Schema that maps to UserSearchDto
 export const userSearchSchema = baseEntitySchema.extend({
+  id: z.string(),
   userEmail: z.string().email(),
-  searchType: z.enum(Object.values(SearchType) as [string, ...string[]]),
+  searchType: z.nativeEnum(SearchType),
   parameters: z.string(), // JSON string for SQLite
   name: z.string().optional().nullable(),
   favorite: z.boolean().default(false),
@@ -15,7 +17,7 @@ export const userSearchSchema = baseEntitySchema.extend({
 // Create Schema that maps to CreateUserSearchDto
 export const createUserSearchSchema = z.object({
   userEmail: z.string().email(),
-  searchType: z.enum(Object.values(SearchType) as [string, ...string[]]),
+  searchType: z.nativeEnum(SearchType),
   parameters: z.string(), // JSON string
   name: z.string().optional(),
   favorite: z.boolean().default(false),
@@ -38,6 +40,16 @@ export function parseParameters<T>(jsonString: string): T {
   try {
     return JSON.parse(jsonString) as T
   } catch (error) {
-    throw new Error('Failed to parse search parameters')
+    throw new Error('Failed to parse search parameters: ' + error)
   }
 }
+
+export interface SearchQueryParams {
+  searchType?: SearchType
+  page?: number
+  limit?: number
+}
+
+export type UserSearchDto = z.infer<typeof userSearchSchema>
+export type CreateUserSearchDto = z.infer<typeof createUserSearchSchema>
+export type UpdateUserSearchDto = z.infer<typeof updateUserSearchSchema>

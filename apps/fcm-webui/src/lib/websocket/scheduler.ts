@@ -7,10 +7,12 @@ interface SchedulerEvents {
   'task:execution': (taskId: string, status: string) => void
 }
 
+type EventHandler = (...args: unknown[]) => void
+
 export class SchedulerSocket {
   private static instance: SchedulerSocket
   private socket: Socket | null = null
-  private handlers: Map<string, Set<Function>> = new Map()
+  private handlers: Map<string, Set<EventHandler>> = new Map()
 
   private constructor() {
     // Initialize socket connection
@@ -70,17 +72,17 @@ export class SchedulerSocket {
     }
 
     const handlers = this.handlers.get(event)!
-    handlers.add(handler)
+    handlers.add(handler as EventHandler)
 
     return () => {
-      handlers.delete(handler)
+      handlers.delete(handler as EventHandler)
       if (handlers.size === 0) {
         this.handlers.delete(event)
       }
     }
   }
 
-  private emit(event: string, ...args: any[]): void {
+  private emit(event: keyof SchedulerEvents, ...args: unknown[]): void {
     const handlers = this.handlers.get(event)
     if (handlers) {
       handlers.forEach(handler => handler(...args))

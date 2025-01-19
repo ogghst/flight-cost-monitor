@@ -1,6 +1,6 @@
 'use server'
 
-import { makeServerRequest } from '@/lib/api/axiosConfig'
+import { api } from '@/lib/api/fetch-client'
 import { auth } from '@/lib/auth'
 import { AuthUser } from '@fcm/shared/auth'
 
@@ -11,7 +11,11 @@ export async function getCurrentUser(): Promise<AuthUser> {
   }
 
   try {
-    return await makeServerRequest<AuthUser>('GET', '/auth/me')
+    return await api.get<AuthUser>('/auth/me', {
+      // Cache for 1 minute with revalidation tag
+      revalidate: 60,
+      tags: ['user-profile'],
+    })
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch user data: ${error.message}`)
@@ -36,10 +40,13 @@ export async function updateUserProfile(profileData: {
   }
 
   try {
-    return await makeServerRequest<UpdateProfileResponse>(
-      'PATCH',
+    return await api.patch<UpdateProfileResponse>(
       '/users/profile',
-      JSON.stringify(profileData)
+      profileData,
+      {
+        // Revalidate user profile cache
+        tags: ['user-profile'],
+      }
     )
   } catch (error) {
     if (error instanceof Error) {
@@ -64,10 +71,9 @@ export async function changePassword(passwordData: {
   }
 
   try {
-    return await makeServerRequest<PasswordChangeResponse>(
-      'POST',
+    return await api.post<PasswordChangeResponse>(
       '/auth/password/change',
-      JSON.stringify(passwordData)
+      passwordData
     )
   } catch (error) {
     if (error instanceof Error) {
@@ -84,10 +90,9 @@ interface PasswordResetRequestResponse {
 
 export async function requestPasswordReset(email: string) {
   try {
-    return await makeServerRequest<PasswordResetRequestResponse>(
-      'POST',
+    return await api.post<PasswordResetRequestResponse>(
       '/auth/password/reset-request',
-      JSON.stringify({ email })
+      { email }
     )
   } catch (error) {
     if (error instanceof Error) {
@@ -107,10 +112,9 @@ export async function resetPassword(resetData: {
   password: string
 }) {
   try {
-    return await makeServerRequest<PasswordResetResponse>(
-      'POST',
+    return await api.post<PasswordResetResponse>(
       '/auth/password/reset',
-      JSON.stringify(resetData)
+      resetData
     )
   } catch (error) {
     if (error instanceof Error) {

@@ -1,10 +1,11 @@
-import { TravelClass } from 'src/amadeus/index.js'
-import { SearchType } from 'src/auth/types.js'
+import { TravelClass } from '../amadeus/index.js'
+
 import { FlightOfferAdvancedSearchRequest } from '../amadeus/clients/flight-offer-advanced/flight-offers-advanced-types.js'
 import type {
   FlightOfferSimpleSearchRequest,
   FlightSegment,
 } from '../amadeus/clients/flight-offer/flight-offers-types.js'
+import { SearchType } from '../user-search/types.js'
 
 // Keep existing types as they are
 export type { FlightOfferAdvancedSearchRequest as FlightOffersAdvancedSearchRequest } from '../amadeus/clients/flight-offer-advanced/flight-offers-advanced-types.js'

@@ -1,4 +1,4 @@
-import { LogEntry, Logger, LogMetadata } from './types.js'
+import { LogEntry, Logger, LogMetadata } from '../types.js'
 
 export class ConsoleLogger implements Logger {
     private context?: string

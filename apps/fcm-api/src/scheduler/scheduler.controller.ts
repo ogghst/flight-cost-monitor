@@ -1,6 +1,5 @@
 import { CurrentUser } from '@/auth/decorators/user.decorator.js'
-import { type AuthUser } from '@fcm/shared'
-import { TaskStatsDto } from '@fcm/shared/scheduler'
+import { type AuthUser } from '@fcm/shared/auth'
 import {
   Body,
   Controller,
@@ -12,7 +11,6 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
   ValidationPipe,
 } from '@nestjs/common'
 import {
@@ -24,7 +22,6 @@ import {
   ApiTags,
   getSchemaPath,
 } from '@nestjs/swagger'
-import { JwtAuthGuard } from '../auth/guards/jwt.guard.js'
 import {
   CreateTaskScheduleDtoSwagger,
   TaskExecutionDtoSwagger,
@@ -35,7 +32,6 @@ import { SchedulerService } from './scheduler.service.js'
 
 @ApiTags('Scheduler')
 @Controller('tasks')
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access-token')
 export class SchedulerController {
   constructor(private readonly schedulerService: SchedulerService) {}
@@ -100,7 +96,7 @@ export class SchedulerController {
   })
   async getTask(@Param('id') id: string): Promise<{
     task: TaskScheduleDtoSwagger
-    stats: TaskStatsDto
+    stats: TaskStatsDtoSwagger
     isActive: boolean
     nextRun: Date
   }> {

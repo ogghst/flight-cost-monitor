@@ -1,6 +1,6 @@
 'use client'
 
-import { UserSearchDto } from '@fcm/shared/user-search/types'
+import { UserSearchDto } from '@fcm/shared/user-search'
 import { createContext, useContext, useState } from 'react'
 
 interface SearchFormContextType {

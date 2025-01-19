@@ -1,3 +1,4 @@
+import { LoginOAuthDtoSwagger } from '@/auth/dto/oauth-login.dto.js'
 import {
   Body,
   Controller,
@@ -10,12 +11,9 @@ import {
   Post,
 } from '@nestjs/common'
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
-import {
-  CreateUserWithCredentialsDto,
-  CreateUserWithOAuthDto,
-} from './dto/create-user.dto.js'
-import { UpdateUserDto } from './dto/update-user.dto.js'
-import { UserDto, UserWithRelationsDto } from './dto/user.dto.js'
+import { CreateUserWithCredentialsDtoSwagger } from './dto/create-user.dto.js'
+import { UpdateUserDtoSwagger } from './dto/update-user.dto.js'
+import { UserDtoSwagger, UserWithRelationsDtoSwagger } from './dto/user.dto.js'
 import { UsersService } from './users.service.js'
 
 @ApiTags('Users')
@@ -28,7 +26,7 @@ export class UsersController {
   @ApiResponse({
     status: 201,
     description: 'The user has been successfully created.',
-    type: UserDto,
+    type: UserDtoSwagger,
   })
   @ApiResponse({ status: 400, description: 'Invalid input data.' })
   @ApiResponse({
@@ -36,8 +34,8 @@ export class UsersController {
     description: 'User with this email or username already exists.',
   })
   async createWithCredentials(
-    @Body() createUserDto: CreateUserWithCredentialsDto
-  ): Promise<UserDto> {
+    @Body() createUserDto: CreateUserWithCredentialsDtoSwagger
+  ): Promise<UserWithRelationsDtoSwagger> {
     return await this.usersService.createWithCredentials(createUserDto)
   }
 
@@ -46,7 +44,7 @@ export class UsersController {
   @ApiResponse({
     status: 201,
     description: 'The user has been successfully created or linked.',
-    type: UserDto,
+    type: UserWithRelationsDtoSwagger,
   })
   @ApiResponse({ status: 400, description: 'Invalid input data.' })
   @ApiResponse({
@@ -54,8 +52,8 @@ export class UsersController {
     description: 'OAuth user already exists or email is in use.',
   })
   async createWithOAuth(
-    @Body() createUserDto: CreateUserWithOAuthDto
-  ): Promise<UserDto> {
+    @Body() createUserDto: LoginOAuthDtoSwagger
+  ): Promise<UserWithRelationsDtoSwagger> {
     return await this.usersService.createWithOAuth(createUserDto)
   }
 
@@ -64,10 +62,12 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'Returns the user data.',
-    type: UserWithRelationsDto,
+    type: UserWithRelationsDtoSwagger,
   })
   @ApiResponse({ status: 404, description: 'User not found.' })
-  async findById(@Param('id') id: string): Promise<UserWithRelationsDto> {
+  async findById(
+    @Param('id') id: string
+  ): Promise<UserWithRelationsDtoSwagger> {
     return await this.usersService.findById(id)
   }
 
@@ -76,12 +76,12 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'Returns the user data.',
-    type: UserWithRelationsDto,
+    type: UserWithRelationsDtoSwagger,
   })
   @ApiResponse({ status: 404, description: 'User not found.' })
   async findByEmail(
     @Param('email') email: string
-  ): Promise<UserWithRelationsDto> {
+  ): Promise<UserWithRelationsDtoSwagger> {
     return await this.usersService.findByEmail(email)
   }
 
@@ -90,13 +90,13 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'Returns the user data if found.',
-    type: UserWithRelationsDto,
+    type: UserWithRelationsDtoSwagger,
   })
   @ApiResponse({ status: 404, description: 'User not found.' })
   async findByOAuth(
     @Param('provider') provider: string,
     @Param('providerId') providerId: string
-  ): Promise<UserWithRelationsDto> {
+  ): Promise<UserWithRelationsDtoSwagger> {
     const user = await this.usersService.findByOAuth(provider, providerId)
     if (!user) {
       return null
@@ -109,14 +109,14 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'The user has been successfully updated.',
-    type: UserWithRelationsDto,
+    type: UserWithRelationsDtoSwagger,
   })
   @ApiResponse({ status: 400, description: 'Invalid input data.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
   async update(
     @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto
-  ): Promise<UserWithRelationsDto> {
+    @Body() updateUserDto: UpdateUserDtoSwagger
+  ): Promise<UserWithRelationsDtoSwagger> {
     return await this.usersService.update(id, updateUserDto)
   }
 

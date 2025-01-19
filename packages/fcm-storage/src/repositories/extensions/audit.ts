@@ -1,4 +1,4 @@
-import { FcmWinstonLogger } from '@fcm/shared/logging'
+import { FcmWinstonLogger } from '@fcm/shared/logging/winston'
 import { Prisma } from '@prisma/client'
 import type { PrismaClient } from '@prisma/client/extension'
 

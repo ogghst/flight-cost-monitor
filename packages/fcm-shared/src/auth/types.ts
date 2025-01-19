@@ -1,28 +1,42 @@
-export enum SearchType {
-  SIMPLE = 'SIMPLE',
-  ADVANCED = 'ADVANCED',
-}
+import { z } from 'zod'
+import { userSchema } from '../user/base.js'
 
-export enum AuthType {
-  OAUTH = 'OAUTH',
-  CREDENTIAL = 'CREDENTIAL',
-}
-
-export const _PROVIDERS = ['GITHUB', 'GOOGLE'] as const
-export enum OAuthProvider {
-  GITHUB = 'GITHUB',
-  GOOGLE = 'GOOGLE',
-}
-
+/*
 export interface TokenPayload {
   sub: string
   email: string
-  authType: AuthType
   roles: string[]
-  iat: number
-  exp: number
+}
+*/
+
+export interface JwtPayload {
+  sub: string // User ID
+  jti?: string // Token ID
+  family?: string // Token family for rotation
+  roles?: string[] // User roles
+  type?: 'access' | 'refresh' // Token type
+  iat?: number // Issued at
+  exp?: number // Expiration
 }
 
+/*
+export interface AccessTokenPayload {
+  sub: string // User ID
+  email: string // User email
+  roles: string[] // User roles
+  iat: number // Issued at
+  exp: number // Expiration
+  iss: string // Issuer
+  aud: string // Audience
+  jti: string // Token ID
+}
+  */
+
+export interface RefreshTokenPayload extends JwtPayload {
+  type: 'refresh'
+}
+
+/*
 export interface RefreshTokenPayload {
   sub: string // User ID
   jti: string // Token ID
@@ -30,27 +44,51 @@ export interface RefreshTokenPayload {
   iat: number
   exp: number
 }
+*/
 
-export interface AccessTokenResponse {
+export interface TokenPair {
   accessToken: string
-  refreshToken: string
-  expiresIn: number
+  refreshToken: string // For internal use only
 }
 
-export interface AuthResponse extends AccessTokenResponse {
+/*
+export interface AuthUser {
+  id: string
+  email: string
+  username: string
+  displayName: string // For UI display purposes
+  firstName?: string
+  lastName?: string
+  roles: string[]
+  authType: AuthType
+  oauthProvider?: OAuthProvider
+  avatar?: string // Consistent naming for profile image
+}
+*/
+
+export const authUserSchema = userSchema.extend({
+  roles: z.array(z.string()),
+})
+
+export type AuthUser = z.infer<typeof authUserSchema>
+
+export interface AuthUserWithTokens {
+  user: AuthUser
+  tokenPair: TokenPair
+}
+
+export interface AuthResponse {
+  accessToken: string
   user: AuthUser
 }
 
-export interface AuthUser {
-  email: string
-  username?: string
-  firstName?: string
-  lastName?: string
-  authType: AuthType
-  oauthProvider?: OAuthProvider
-  profile?: string
-  roles: string[]
-  image?: string
+/*
+export interface TokenResponse {
+  accessToken: string
+}
+
+export interface LogoutResponse {
+  message: string
 }
 
 export interface OAuthUserData {
@@ -63,7 +101,9 @@ export interface OAuthUserData {
   image?: string
   profile?: any
 }
+*/
 
+/*
 export interface LoginCredentials {
   username: string // Can be username or email
   password: string
@@ -78,3 +118,4 @@ export interface PasswordReset {
   password: string
   confirmPassword: string
 }
+*/

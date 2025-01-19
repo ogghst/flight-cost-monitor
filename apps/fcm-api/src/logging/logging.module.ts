@@ -1,4 +1,4 @@
-import { FcmWinstonLogger } from '@fcm/shared/logging'
+import { FcmWinstonLogger } from '@fcm/shared/logging/winston'
 import { Global, Module } from '@nestjs/common'
 import { LOGGER } from './logging.constants.js'
 
