@@ -28,16 +28,23 @@ import {
 } from '../dto/reset-password.dto.js'
 import { AuthService } from '../services/auth.service.js'
 
+import { extractRefreshTokenFromCookies } from '@/common/cookies.js'
+import { InjectLogger } from '@/logging/index.js'
 import { UsersService } from '@/users/users.service.js'
-import { AuthResponse, type AuthUser } from '@fcm/shared/auth'
+import { AuthUserWithTokens, type AuthUser } from '@fcm/shared/auth'
+import { type Logger } from '@fcm/shared/logging'
+import { Throttle } from '@nestjs/throttler'
 import { type Request, type Response } from 'express'
+import { TokenService } from '../services/token.service.js'
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly userService: UsersService
+    private readonly userService: UsersService,
+    private readonly refreshTokenService: TokenService,
+    @InjectLogger() private readonly logger: Logger
   ) {}
 
   @Public()
@@ -56,33 +63,34 @@ export class AuthController {
     status: HttpStatus.CONFLICT,
     description: 'Username/email already exists',
   })
-  register(@Body() data: RegisterDto) {
-    return this.authService.register(data)
-  }
-
-  @Post('login')
-  async login(
-    @Body() data: LoginCredentialsUserDtoSwagger,
+  register(
+    @Body() data: RegisterDto,
     @Res({ passthrough: true }) response: Response
-  ): Promise<AuthResponse> {
-    const result = await this.authService.login(data)
-
-    // Set refresh token as HTTP-only cookie
-    response.cookie('fcm_refresh_token', result.tokenPair.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    })
-
-    // Return only access token and user info
-    return {
-      accessToken: result.tokenPair.accessToken,
-      user: result.user,
-    }
+  ) {
+    return this.authService.register(data, response)
   }
 
+  @Throttle({
+    short: { limit: 2, ttl: 1000 },
+    long: { limit: 5, ttl: 60000 },
+  })
+  @Public()
+  @Post('login')
+  @ApiBody({ type: LoginCredentialsUserDtoSwagger })
+  async login(
+    @Body() loginCredentials: LoginCredentialsUserDtoSwagger,
+    @Res({ passthrough: true }) response: Response
+  ): Promise<AuthUserWithTokens> {
+    this.logger.debug('Login request received', { loginCredentials })
+
+    const result = await this.authService.login(loginCredentials, response)
+    return result
+  }
+
+  @Throttle({
+    short: { limit: 2, ttl: 1000 },
+    long: { limit: 5, ttl: 60000 },
+  })
   @Public()
   @Post('oauth/login')
   @ApiOperation({ summary: 'Login with OAuth provider' })
@@ -95,8 +103,13 @@ export class AuthController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid OAuth data',
   })
-  oauthLogin(@Body() data: LoginOAuthDtoSwagger) {
-    return this.authService.oauthLogin(data)
+  async oauthLogin(
+    @Body() data: LoginOAuthDtoSwagger,
+    @Res({ passthrough: true }) response: Response
+  ) {
+    this.logger.debug('OAuth login request received', { data })
+    const result = await this.authService.oauthLogin(data, response)
+    return result
   }
 
   @Public()
@@ -113,30 +126,25 @@ export class AuthController {
   async refresh(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response
-  ): Promise<AuthResponse> {
-    // try to get the token from the cookie
-    const refreshToken = request.cookies['fcm_refresh_token']
-
-    if (!refreshToken) {
-      throw new UnauthorizedException('Refresh token is required')
-    }
-
-    // Get new tokens from auth service
-    const result = await this.authService.refreshTokens(refreshToken)
-
-    // Set the new refresh token as a cookie, just like in OAuth flow
-    response.cookie('fcm_refresh_token', result.tokenPair.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
+  ): Promise<AuthUserWithTokens> {
+    this.logger.debug('Token refresh requested', {
+      cookies: request.headers.cookie,
     })
 
-    // Only return the access token in the response body
-    return {
-      accessToken: result.tokenPair.accessToken,
-      user: result.user,
+    const refreshToken = extractRefreshTokenFromCookies(request)
+    
+    if (!refreshToken) {
+      this.logger.error('No refresh token found in request')
+      throw new UnauthorizedException('No refresh token provided')
+    }
+
+    try {
+      const result = await this.authService.refreshTokens(refreshToken, response)
+      this.logger.debug('Token refresh successful')
+      return result
+    } catch (error) {
+      this.logger.error('Token refresh failed', { error })
+      throw new UnauthorizedException('Invalid refresh token')
     }
   }
 
@@ -146,14 +154,14 @@ export class AuthController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response
   ) {
+    this.logger.debug('Logout request received')
+
     const refreshToken = request.cookies['fcm_refresh_token']
 
     if (refreshToken) {
-      // Revoke the token in the database
       await this.authService.logout(refreshToken)
     }
 
-    // Clear the refresh token cookie
     response.clearCookie('fcm_refresh_token', {
       path: '/',
       httpOnly: true,
@@ -173,6 +181,7 @@ export class AuthController {
     description: 'Reset email sent if account exists',
   })
   async requestPasswordReset(@Body() data: RequestPasswordResetDto) {
+    this.logger.debug('Password reset requested for', { email: data.email })
     await this.authService.requestPasswordReset(data)
     return { message: 'If the email exists, a reset link will be sent' }
   }
@@ -190,6 +199,7 @@ export class AuthController {
     description: 'Invalid or expired token',
   })
   async resetPassword(@Body() data: ResetPasswordDto) {
+    this.logger.debug('Password reset attempt')
     await this.authService.resetPassword(data)
     return { message: 'Password reset successfully' }
   }
@@ -211,7 +221,8 @@ export class AuthController {
     description: 'User not found',
   })
   async getProfile(@CurrentUser() user: AuthUser): Promise<AuthUserDtoSwagger> {
-    // Fetch full user data including roles
+    this.logger.debug('Profile request received for user', { email: user.email })
+
     const userData = await this.userService.findByEmail(user.email)
 
     if (!userData) {
@@ -220,7 +231,7 @@ export class AuthController {
 
     return {
       ...userData,
-      roles: userData.roles.map((role) => role.name),
+      roles: userData.roles.map((r) => r.name),
     }
   }
 }

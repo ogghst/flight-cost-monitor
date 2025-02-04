@@ -1,27 +1,31 @@
 'use client'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
+import { Alert, Button, TextField } from '@mui/material'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Button, TextField, Alert } from '@mui/material'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 
 const loginSchema = z.object({
   username: z.string().min(1, 'Username is required'),
-  password: z.string().min(8, 'Password must be at least 8 characters')
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 })
 
 type LoginFormData = z.infer<typeof loginSchema>
 
-export function LoginForm() {
+function LoginFormContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams?.get('callbackUrl') || '/'
-  
+
   const [error, setError] = useState<string | null>(null)
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
   })
 
   const onSubmit = async (data: LoginFormData) => {
@@ -30,7 +34,7 @@ export function LoginForm() {
         username: data.username,
         password: data.password,
         redirect: false,
-        callbackUrl: callbackUrl
+        callbackUrl: callbackUrl,
       })
 
       if (result?.error) {
@@ -78,10 +82,17 @@ export function LoginForm() {
         fullWidth
         variant="contained"
         disabled={isSubmitting}
-        sx={{ mb: 2 }}
-      >
+        sx={{ mb: 2 }}>
         {isSubmitting ? 'Signing in...' : 'Sign In'}
       </Button>
     </form>
+  )
+}
+
+export default function LoginForm() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginFormContent />
+    </Suspense>
   )
 }

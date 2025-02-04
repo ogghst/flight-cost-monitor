@@ -66,20 +66,23 @@ export interface AuthUser {
 }
 */
 
-export const authUserSchema = userSchema.extend({
-  roles: z.array(z.string()),
-})
+export const authUserSchema = userSchema
+  .extend({
+    roles: z.array(z.string()),
+  })
+  .omit({
+    refreshTokenExpiresAt: true,
+    passwordResetExpires: true,
+    passwordResetToken: true,
+    password: true,
+  })
+  .describe('Authenticated user data')
 
 export type AuthUser = z.infer<typeof authUserSchema>
 
 export interface AuthUserWithTokens {
   user: AuthUser
-  tokenPair: TokenPair
-}
-
-export interface AuthResponse {
   accessToken: string
-  user: AuthUser
 }
 
 /*

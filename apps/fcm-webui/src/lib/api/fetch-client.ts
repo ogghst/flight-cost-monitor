@@ -24,6 +24,7 @@ type RequestOptions = {
 
 async function getAuthHeader() {
   const session = await auth()
+  console.log('Session in getAuthHeader:', session) // Keeping this for debugging
   return session?.accessToken ? `Bearer ${session.accessToken}` : ''
 }
 
@@ -41,7 +42,7 @@ export async function fetchApi<T>(
   } = options
 
   const authHeader = await getAuthHeader()
-
+  
   const requestHeaders: HeadersInit = {
     'Content-Type': 'application/json',
     Authorization: authHeader,
@@ -51,7 +52,7 @@ export async function fetchApi<T>(
   const requestInit: RequestInit = {
     method,
     headers: requestHeaders,
-    credentials: 'include',
+    credentials: 'include', // Essential for sending and receiving cookies
     cache,
     next: {
       tags,
@@ -68,35 +69,54 @@ export async function fetchApi<T>(
   try {
     const response = await fetch(`${API_URL}${endpoint}`, requestInit)
 
-    // Handle 401 with token refresh
+    // Handle 401 Unauthorized responses with token refresh
     if (response.status === 401) {
-      const refreshResponse = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        credentials: 'include',
-      })
+      try {
+        console.log('Attempting token refresh...')
+        // Attempt to refresh the token
+        const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include', // Essential for cookies
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
 
-      if (!refreshResponse.ok) {
-        throw new ApiError('Session expired', 401)
+        if (!refreshResponse.ok) {
+          console.error('Token refresh failed:', await refreshResponse.text())
+          throw new ApiError('Session expired', 401)
+        }
+
+        const refreshData = await refreshResponse.json()
+        console.log('Token refresh successful')
+
+        // Get new auth header with refreshed token
+        const newAuthHeader = `Bearer ${refreshData.accessToken}`
+
+        // Retry the original request with the new token
+        console.log('Retrying original request with new token...')
+        const retryResponse = await fetch(`${API_URL}${endpoint}`, {
+          ...requestInit,
+          headers: {
+            ...requestHeaders,
+            Authorization: newAuthHeader,
+          },
+        })
+
+        if (!retryResponse.ok) {
+          throw new ApiError(
+            'Request failed after token refresh',
+            retryResponse.status,
+            await retryResponse.json().catch(() => null)
+          )
+        }
+
+        return retryResponse.json()
+      } catch (refreshError) {
+        console.error('Token refresh error:', refreshError)
+        // If refresh fails, user needs to login again
+        throw new ApiError('Authentication expired', 401)
       }
-
-      // Retry original request with new token
-      const retryResponse = await fetch(`${API_URL}${endpoint}`, {
-        ...requestInit,
-        headers: {
-          ...requestHeaders,
-          Authorization: await getAuthHeader(),
-        },
-      })
-
-      if (!retryResponse.ok) {
-        throw new ApiError(
-          'Request failed',
-          retryResponse.status,
-          await retryResponse.json().catch(() => null)
-        )
-      }
-
-      return retryResponse.json()
     }
 
     if (!response.ok) {
@@ -109,6 +129,7 @@ export async function fetchApi<T>(
 
     return response.json()
   } catch (error) {
+    console.error('API request error:', error)
     if (error instanceof ApiError) {
       throw error
     }
@@ -120,7 +141,7 @@ export async function fetchApi<T>(
   }
 }
 
-// Helper methods
+// Helper methods for common HTTP operations
 export const api = {
   get: <T>(
     endpoint: string,

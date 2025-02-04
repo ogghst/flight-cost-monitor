@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth'
-import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   // Only add auth headers to API calls
@@ -15,7 +15,12 @@ export async function middleware(request: NextRequest) {
 
   // Get session token from cookie
   const session = await auth()
-  
+
+  // If there's a session error, redirect to sign in
+  if (session?.error === 'RefreshAccessTokenError') {
+    return NextResponse.redirect(new URL('/auth/signin', request.url))
+  }
+
   // If we have an access token, use it
   if (session?.accessToken) {
     const requestHeaders = new Headers(request.headers)
@@ -32,8 +37,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/api/:path*',
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/api/:path*', '/((?!api|_next/static|_next/image|favicon.ico).*)'],
 }

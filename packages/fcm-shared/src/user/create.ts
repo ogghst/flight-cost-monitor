@@ -15,6 +15,7 @@ export const createCredentialsUserSchema = userSchema
     passwordResetToken: true,
     passwordResetExpires: true,
     lastLogin: true,
+    refreshTokenExpiresAt: true,
   })
   .extend({
     password: z
@@ -46,6 +47,7 @@ export const createOAuthUserSchema = userSchema.omit({
   passwordResetToken: true,
   passwordResetExpires: true,
   lastLogin: true,
+  refreshTokenExpiresAt: true,
 })
 
 export const loginOAuthUserSchema = createOAuthUserSchema

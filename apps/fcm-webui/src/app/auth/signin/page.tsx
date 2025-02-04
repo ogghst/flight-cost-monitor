@@ -1,8 +1,16 @@
 'use client'
+
+import LoginForm from '@/components/auth/LoginForm'
 import { GitHub } from '@mui/icons-material'
-import { Box, Button, Container, Typography, Divider, Paper } from '@mui/material'
+import {
+  Box,
+  Button,
+  Container,
+  Divider,
+  Paper,
+  Typography,
+} from '@mui/material'
 import { signIn } from 'next-auth/react'
-import { LoginForm } from '@/components/auth/LoginForm'
 
 export default function SignIn() {
   return (

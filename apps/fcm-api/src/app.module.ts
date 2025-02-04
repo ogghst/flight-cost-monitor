@@ -9,6 +9,8 @@ import { SchedulerModule } from './scheduler/scheduler.module.js'
 import { UserSearchesModule } from './user-searches/user-searches.module.js'
 import { UsersModule } from './users/users.module.js'
 import { WebsocketModule } from './websocket/websocket.module.js'
+import { ThrottlerModule } from '@nestjs/throttler'
+import { ScheduleModule } from '@nestjs/schedule'
 
 @Module({
   imports: [
@@ -25,6 +27,19 @@ import { WebsocketModule } from './websocket/websocket.module.js'
     WebsocketModule,
     UsersModule,
     UserSearchesModule,
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1000,
+        limit: 50,
+      },
+      {
+        name: 'long',
+        ttl: 60000,
+        limit: 1000,
+      },
+    ]),
+    ScheduleModule.forRoot(),
   ],
 })
 export class AppModule {}

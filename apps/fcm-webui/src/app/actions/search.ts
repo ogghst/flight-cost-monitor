@@ -44,6 +44,7 @@ export async function getUserSearches(
   params?: SearchQueryParams
 ): Promise<UserSearchDto[]> {
   const session = await auth()
+  console.log('Session in getUserSearches:', session) // Add this
   if (!session?.user?.id) {
     throw new Error('User not authenticated')
   }

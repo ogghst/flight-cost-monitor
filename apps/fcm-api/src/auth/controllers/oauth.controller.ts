@@ -1,3 +1,5 @@
+import { InjectLogger } from '@/logging/index.js'
+import { type Logger } from '@fcm/shared/logging'
 import {
   Body,
   Controller,
@@ -15,7 +17,10 @@ import { AuthService } from '../services/auth.service.js'
 @ApiTags('OAuth')
 @Controller('auth/oauth')
 export class OAuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    @InjectLogger() private readonly logger: Logger
+  ) {}
 
   @Post('github')
   @Public()
@@ -30,23 +35,13 @@ export class OAuthController {
     @Body() data: LoginOAuthDtoSwagger,
     @Res({ passthrough: true }) response: Response
   ) {
+    this.logger.debug('GitHub OAuth callback request received', { data })
+
     try {
       // OAuth verification is handled in oauthLogin
-      const result = await this.authService.oauthLogin(data)
+      const result = await this.authService.oauthLogin(data, response)
 
-      // Set refresh token as httpOnly cookie
-      response.cookie('fcm_refresh_token', result.tokenPair.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        path: '/',
-      })
-
-      return {
-        ...result,
-        refreshToken: undefined, // Don't send refresh token in response body
-      }
+      return result
     } catch (error) {
       if (error instanceof UnauthorizedException) {
         throw error

@@ -6,14 +6,9 @@ import NextAuth, { NextAuthConfig } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GitHub from 'next-auth/providers/github'
 
-interface TokenResponse {
-  accessToken: string
-  refreshToken: string
-}
-
 const log = new ConsoleLogger()
 
-export const config = {
+export const config: NextAuthConfig = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -22,6 +17,8 @@ export const config = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
+        log.debug('credentials authorize callback triggered:', { credentials })
+
         try {
           const response = await fetch(`${process.env.API_URL}/auth/login`, {
             method: 'POST',
@@ -45,8 +42,11 @@ export const config = {
     GitHub({
       clientId: process.env.AUTH_GITHUB_ID!,
       clientSecret: process.env.AUTH_GITHUB_SECRET!,
+
       async profile(profile, tokens) {
         //const { firstName, lastName } = parseName(profile.name ?? undefined)
+
+        log.debug('github profile callback triggered:', { profile, tokens })
 
         if (!profile.email) {
           throw new Error('Email is required')
@@ -93,7 +93,7 @@ export const config = {
             name: data.user.username || data.user.email,
             image: profile.avatar_url,
             roles: data.user.roles,
-            accessToken: data.tokenPair.accessToken,
+            accessToken: data.accessToken,
           }
         } catch (error) {
           console.error('OAuth token exchange failed:', error)
@@ -104,54 +104,84 @@ export const config = {
   ],
   callbacks: {
     async signIn({ user }) {
+      log.debug('signIn callback triggered:', { user })
+
       return !!user
     },
 
-    async jwt({ token, trigger }) {
-      log.debug(
-        'jwt callback. objects:\n   token: ' +
-          JSON.stringify(token) +
-          '\n   trigger: ' +
-          JSON.stringify(trigger)
-      )
+    // apps/fcm-webui/src/lib/auth.ts
+    async jwt({ token, user, account, trigger }) {
+      const log = new ConsoleLogger()
+      log.debug('JWT callback triggered:', { token, user, account, trigger })
 
-      // Return previous token if the access token has not expired
-      if (Date.now() < (token.expiresAt as number)) {
-        return token
-      }
-
-      // Access token has expired, try to refresh it
-      try {
-        const response = await fetch(`${process.env.API_URL}/auth/refresh`, {
-          method: 'POST',
-          credentials: 'include', // Important for sending cookies
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-
-        if (!response.ok) throw new Error('Failed to refresh token')
-
-        const tokens = await response.json()
-
+      // Case 1: Initial sign-in with OAuth provider
+      if (account && user) {
+        // When signing in via OAuth, the user object contains data
+        // from our profile() callback where we did the token exchange
         return {
           ...token,
-          accessToken: tokens.accessToken,
-          expiresAt: Date.now() + 15 * 60 * 1000, // 15 minutes from now
+          accessToken: user.accessToken,
+          roles: user.roles || [],
+          sub: user.id, // Important: set the subject claim to user ID
+          email: user.email,
+          name: user.name || user.email,
+          picture: user.image,
+          expiresAt: Date.now() + 14 * 60 * 1000, // 14 minutes for safety margin
         }
-      } catch (error) {
-        console.error('Error refreshing token:', error)
-        return { ...token, error: 'RefreshAccessTokenError' as const }
       }
+
+      // Case 2: Token refresh is needed (happens automatically)
+      const shouldRefresh =
+        !token.expiresAt || Date.now() > (token.expiresAt as number) - 60000 // 1 min buffer
+
+      if (shouldRefresh) {
+        try {
+          const response = await fetch(`${process.env.API_URL}/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include', // Important for the refresh token cookie
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            cache: 'no-cache',
+            mode: 'cors',
+          })
+
+          if (!response.ok) {
+            throw new Error(`Refresh failed: ${response.status}`)
+          }
+
+          const data = await response.json()
+
+          if (!data.accessToken) {
+            throw new Error('No access token in refresh response')
+          }
+
+          log.debug('Token refreshed successfully')
+
+          // Update token with new data while preserving existing claims
+          return {
+            ...token,
+            accessToken: data.accessToken,
+            expiresAt: Date.now() + 14 * 60 * 1000,
+            error: undefined, // Clear any previous errors
+          }
+        } catch (error) {
+          log.error('Token refresh failed:', { error })
+
+          // Return token with error - will trigger re-login on protected routes
+          return {
+            ...token,
+            error: 'RefreshAccessTokenError',
+          }
+        }
+      }
+
+      // Case 3: Token is still valid, return as is
+      return token
     },
 
     async session({ session, token }) {
-      log.debug(
-        'session callback. objects:\n   token: ' +
-          JSON.stringify(token) +
-          '\n    session: ' +
-          JSON.stringify(session)
-      )
+      log.debug('session callback triggered:', { session, token })
 
       return {
         ...session,
@@ -177,6 +207,16 @@ export const config = {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-} satisfies NextAuthConfig
+}
 
-export const { handlers, auth, signIn, signOut } = NextAuth(config)
+export const {
+  handlers,
+  auth,
+  signIn,
+  signOut,
+}: {
+  handlers: any
+  auth: any
+  signIn: any
+  signOut: any
+} = NextAuth(config)

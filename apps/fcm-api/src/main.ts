@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { IoAdapter } from '@nestjs/platform-socket.io'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
+import cookieParser from 'cookie-parser'
 import { UnauthorizedExceptionFilter } from './filters/unauthorized-exception.filter.js'
 import { LoggingInterceptor } from './interceptors/logging.interceptor.js'
 import { formatError } from './utils/error.utils.js'
@@ -25,6 +26,9 @@ async function bootstrap() {
       bufferLogs: true,
       abortOnError: false,
     })
+
+    // Enable cookie parsing middleware early in the stack
+    app.use(cookieParser())
 
     // Patch Swagger to work with Zod schemas
     patchNestjsSwagger()
@@ -92,10 +96,12 @@ async function bootstrap() {
       customSiteTitle: 'FCM API Documentation',
     })
 
-    // Configure CORS
+    // Configure CORS with settings that support secure cookie transmission
     app.enableCors({
       origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-      credentials: true,
+      credentials: true, // Essential for sending cookies cross-origin
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     })
 
     const port = process.env.PORT || 3001
