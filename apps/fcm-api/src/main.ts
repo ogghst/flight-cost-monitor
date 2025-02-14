@@ -1,20 +1,24 @@
 import { AppModule } from '@/app.module.js'
-import { FcmWinstonLogger } from '@fcm/shared/logging'
 import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { UnauthorizedExceptionFilter } from './filters/unauthorized-exception.filter.js'
 import { LoggingInterceptor } from './interceptors/logging.interceptor.js'
 import { formatError } from './utils/error.utils.js'
+import { NestLogger } from './utils/NestLogger.js'
 
 async function bootstrap() {
   // Create logger instance for bootstrapping
-  const logger = FcmWinstonLogger.getInstance({
-    context: 'fcm-api',
-    logDirectory: '/logs',
-    maxFiles: '2',
-    maxSize: '100mb',
-    minLevel: 'debug',
+  //const logger = FcmWinstonLogger.getInstance({
+  //  context: 'fcm-api',
+  //  logDirectory: '/logs',
+  //  maxFiles: '2',
+  //  maxSize: '100mb',
+  //  minLevel: 'debug',
+  //})
+
+  const logger = NestLogger.getInstance({
+    context: 'FCM-API',
   })
 
   try {

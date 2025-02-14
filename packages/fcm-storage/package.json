@@ -9,7 +9,7 @@
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "debug": "node --loader ts-node/esm src/examples.ts",
-    "clean": "rimraf node_modules prisma/.prisma .turbo .next dist out coverage tsconfig.tsbuildinfo tsconfig.build.tsbuildinfo",
+    "clean": "rimraf node_modules prisma/.prisma .turbo .next dist out coverage",
     "db:generate": "rimraf node_modules/.prisma && prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
