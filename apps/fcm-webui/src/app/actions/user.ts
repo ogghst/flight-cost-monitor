@@ -13,7 +13,7 @@ export async function getCurrentUser(): Promise<AuthUser> {
   try {
     return await api.get<AuthUser>('/auth/me', {
       // Cache for 1 minute with revalidation tag
-      revalidate: 60,
+      //revalidate: 60,
       tags: ['user-profile'],
     })
   } catch (error) {

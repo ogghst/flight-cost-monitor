@@ -1,3 +1,4 @@
+import { JwtAuthGuard } from '@/auth/guards/jwt.guard.js'
 import * as flightOffer from '@fcm/shared/amadeus/clients/flight-offer'
 import * as flightOfferAdvanced from '@fcm/shared/amadeus/clients/flight-offer-advanced'
 import { type AuthUser } from '@fcm/shared/auth'
@@ -14,10 +15,10 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
   ValidationPipe,
 } from '@nestjs/common'
 import {
-  ApiBearerAuth,
   ApiBody,
   ApiOperation,
   ApiParam,
@@ -31,7 +32,7 @@ import { FlightOffersService } from './flight-offers.service.js'
 
 @ApiTags('Flight Offers')
 @Controller('flight-offers')
-@ApiBearerAuth('access-token')
+@UseGuards(JwtAuthGuard)
 export class FlightOffersController {
   constructor(private readonly flightOffersService: FlightOffersService) {}
 

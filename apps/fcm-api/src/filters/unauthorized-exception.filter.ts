@@ -15,7 +15,7 @@ export class UnauthorizedExceptionFilter implements ExceptionFilter {
     this.logger = FcmWinstonLogger.getInstance()
   }
 
-  catch(exception: UnauthorizedException, host: ArgumentsHost) {
+  async catch(exception: UnauthorizedException, host: ArgumentsHost) {
     const ctx = host.switchToHttp()
     const request = ctx.getRequest<Request>()
     const response = ctx.getResponse<Response>()

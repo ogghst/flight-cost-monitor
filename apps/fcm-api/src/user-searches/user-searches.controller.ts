@@ -1,3 +1,4 @@
+import { JwtAuthGuard } from '@/auth/guards/jwt.guard.js'
 import { SearchType } from '@fcm/shared/user-search'
 import {
   Body,
@@ -10,6 +11,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common'
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { CreateUserSearchDtoSwagger } from './dto/create-user-search.dto.js'
@@ -19,6 +21,7 @@ import { UserSearchesService } from './user-searches.service.js'
 
 @ApiTags('User Searches')
 @Controller('user-searches')
+@UseGuards(JwtAuthGuard)
 export class UserSearchesController {
   constructor(private readonly userSearchesService: UserSearchesService) {}
 

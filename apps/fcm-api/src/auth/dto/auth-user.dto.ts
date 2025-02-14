@@ -1,8 +1,8 @@
 import { SwaggerSchema } from '@/common/decorators/swagger-schema.decorator.js'
 import { createZodDto } from '@anatine/zod-nestjs'
-import { authUserSchema } from '@fcm/shared/auth'
+import { AuthUserSchema } from '@fcm/shared/auth'
 
-@SwaggerSchema(authUserSchema, {
+@SwaggerSchema(AuthUserSchema, {
   examples: {
     id: '123e4567-e89b-12d3-a456-426614174000',
     email: 'user@example.com',
@@ -15,4 +15,4 @@ import { authUserSchema } from '@fcm/shared/auth'
     roles: ['user', 'admin'],
   },
 })
-export class AuthUserDtoSwagger extends createZodDto(authUserSchema) {}
+export class AuthUserDtoSwagger extends createZodDto(AuthUserSchema) {}

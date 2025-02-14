@@ -1,8 +1,10 @@
+import { extractRefreshTokenFromCookies } from '@/common/cookies.js'
 import { UsersService } from '@/users/users.service.js'
 import { AuthUser, JwtPayload } from '@fcm/shared/auth'
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PassportStrategy } from '@nestjs/passport'
+import { Request } from 'express'
 import { ExtractJwt, Strategy } from 'passport-jwt'
 import { toAuthUser } from '../auth.types.js'
 
@@ -15,7 +17,9 @@ export class JwtRefreshStrategy extends PassportStrategy(
 
   constructor(userService: UsersService, configService: ConfigService) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (req: Request) => extractRefreshTokenFromCookies(req),
+      ]),
       ignoreExpiration: false,
       secretOrKey: configService.get('JWT_REFRESH_SECRET'),
     })
@@ -23,6 +27,10 @@ export class JwtRefreshStrategy extends PassportStrategy(
   }
 
   async validate(payload: JwtPayload): Promise<AuthUser> {
+    if (!payload.sub || !payload.roles) {
+      throw new UnauthorizedException('Invalid refresh jwt payload.')
+    }
+
     const user = await this.userService.findByEmail(payload.sub)
 
     if (!user || !user.active) {

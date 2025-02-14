@@ -10,6 +10,7 @@ import {
 export class RefreshTokenRepository {
   private prisma: ExtendedPrismaClient = fcmPrismaClient
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapPrismaToRefreshToken(prismaToken: any): RefreshToken {
     const token = {
       id: prismaToken.id,
@@ -35,6 +36,7 @@ export class RefreshTokenRepository {
   ): Promise<RefreshToken> {
     const client = tx || this.prisma
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { userEmail, ...tokenData } = data
       const token = await client.refreshToken.create({
         data: {
@@ -79,6 +81,21 @@ export class RefreshTokenRepository {
     try {
       const refreshTokens = await client.refreshToken.findMany({
         where: { userId },
+      })
+      return refreshTokens.map(this.mapPrismaToRefreshToken)
+    } catch (error) {
+      throw new DatabaseError('Failed to find user refresh tokens', error)
+    }
+  }
+
+  async findByUserEmail(
+    userEmail: string,
+    tx?: ExtendedTransactionClient
+  ): Promise<RefreshToken[]> {
+    const client = tx || this.prisma
+    try {
+      const refreshTokens = await client.refreshToken.findMany({
+        where: { user: { email: userEmail } },
       })
       return refreshTokens.map(this.mapPrismaToRefreshToken)
     } catch (error) {

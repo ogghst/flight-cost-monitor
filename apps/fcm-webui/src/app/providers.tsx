@@ -10,7 +10,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import dayjs from 'dayjs'
-import 'dayjs/locale/en' // Base English locale
+import 'dayjs/locale/en'
 import 'dayjs/locale/en-gb'
 import 'dayjs/locale/it'
 import 'dayjs/locale/it-ch'
@@ -27,24 +27,15 @@ dayjs.extend(relativeTime)
 dayjs.extend(utc)
 dayjs.extend(timezone)
 
-// Helper function to normalize locale string
 function normalizeLocale(locale: string): string {
-  // Convert locale to lowercase for consistent handling
   const lowercaseLocale = locale.toLowerCase()
-
-  // Map of supported locales to their dayjs equivalents
   const localeMap: Record<string, string> = {
     'en-us': 'en',
     'en-gb': 'en-gb',
     'it-it': 'it',
     'it-ch': 'it-ch',
   }
-
-  // Get the base locale (e.g., 'en' from 'en-US')
   const baseLocale = lowercaseLocale.split('-')[0]
-
-  // Return the mapped locale if it exists, otherwise try the base locale,
-  // and fall back to 'en' if neither exists
   return localeMap[lowercaseLocale] || baseLocale || 'en'
 }
 
@@ -54,21 +45,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 1 minute
+            staleTime: 60 * 1000,
             retry: 1,
           },
         },
       })
   )
 
-  // Get and normalize browser locale
   const adapterLocale = useMemo(() => {
     const browserLocale =
       typeof window !== 'undefined' ? navigator.language : 'en'
     return normalizeLocale(browserLocale)
   }, [])
 
-  // Initialize dayjs with the normalized locale
   dayjs.locale(adapterLocale)
 
   return (

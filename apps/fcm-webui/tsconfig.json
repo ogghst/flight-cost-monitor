@@ -30,7 +30,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true
+    "incremental": true,
+    "typeRoots": ["./node_modules/@types", "./types"]
   },
   "include": [
     "next-env.d.ts",
@@ -38,7 +39,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".old/DatabaseContext.tsx.old"
-, ".old/axiosClientConfig.ts.old", ".old/providers.tsx", "src/context/SearchFormContext.tsx-old", "src/context/SimpleSearchContext.tsx.old", "src/context/SimpleSearchFormContext.tsx-old", ".old/providers/providers.tsx", ".old/axiosConfig.ts"  ],
-  "exclude": ["node_modules"]
+    "types/**/*.d.ts"
+  ],
+  "exclude": ["node_modules", ".old"]
 }

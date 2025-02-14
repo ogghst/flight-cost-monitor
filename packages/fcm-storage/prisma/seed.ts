@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
@@ -19,25 +19,25 @@ async function main() {
         update: {},
         create: {
           name: 'ADMIN',
-          description: 'Administrator role with full access'
-        }
+          description: 'Administrator role with full access',
+        },
       }),
       prisma.role.upsert({
         where: { name: 'USER' },
         update: {},
         create: {
           name: 'USER',
-          description: 'Regular user role'
-        }
+          description: 'Regular user role',
+        },
       }),
       prisma.role.upsert({
         where: { name: 'API_USER' },
         update: {},
         create: {
           name: 'API_USER',
-          description: 'API access role'
-        }
-      })
+          description: 'API access role',
+        },
+      }),
     ])
 
     console.log(`Created ${roles.length} roles`)
@@ -50,44 +50,46 @@ async function main() {
         update: {},
         create: {
           name: 'user:read',
-          description: 'Can read user data'
-        }
+          description: 'Can read user data',
+        },
       }),
       prisma.permission.upsert({
         where: { name: 'user:write' },
         update: {},
         create: {
           name: 'user:write',
-          description: 'Can modify user data'
-        }
+          description: 'Can modify user data',
+        },
       }),
       prisma.permission.upsert({
         where: { name: 'flight:read' },
         update: {},
         create: {
           name: 'flight:read',
-          description: 'Can read flight data'
-        }
+          description: 'Can read flight data',
+        },
       }),
       prisma.permission.upsert({
         where: { name: 'flight:write' },
         update: {},
         create: {
           name: 'flight:write',
-          description: 'Can modify flight data'
-        }
-      })
+          description: 'Can modify flight data',
+        },
+      }),
     ])
 
     console.log(`Created ${permissions.length} permissions`)
 
     // Assign permissions to roles
     console.log('Assigning permissions to roles...')
-    
+
     // Find roles and permissions by name for type safety
     const adminRole = await prisma.role.findUnique({ where: { name: 'ADMIN' } })
     const userRole = await prisma.role.findUnique({ where: { name: 'USER' } })
-    const apiRole = await prisma.role.findUnique({ where: { name: 'API_USER' } })
+    const apiRole = await prisma.role.findUnique({
+      where: { name: 'API_USER' },
+    })
 
     if (adminRole && userRole && apiRole) {
       await Promise.all([
@@ -96,9 +98,9 @@ async function main() {
           where: { id: adminRole.id },
           data: {
             permissions: {
-              connect: permissions.map(p => ({ id: p.id }))
-            }
-          }
+              connect: permissions.map((p) => ({ id: p.id })),
+            },
+          },
         }),
         // Regular user gets read permissions
         prisma.role.update({
@@ -106,10 +108,10 @@ async function main() {
           data: {
             permissions: {
               connect: permissions
-                .filter(p => p.name.endsWith(':read'))
-                .map(p => ({ id: p.id }))
-            }
-          }
+                .filter((p) => p.name.endsWith(':read'))
+                .map((p) => ({ id: p.id })),
+            },
+          },
         }),
         // API user gets flight permissions
         prisma.role.update({
@@ -117,17 +119,17 @@ async function main() {
           data: {
             permissions: {
               connect: permissions
-                .filter(p => p.name.startsWith('flight:'))
-                .map(p => ({ id: p.id }))
-            }
-          }
-        })
+                .filter((p) => p.name.startsWith('flight:'))
+                .map((p) => ({ id: p.id })),
+            },
+          },
+        }),
       ])
     }
 
     // Create test users
     console.log('Creating test users...')
-    
+
     const users = await Promise.all([
       // Admin user
       prisma.user.upsert({
@@ -142,9 +144,9 @@ async function main() {
           authType: 'CREDENTIALS',
           active: true,
           roles: {
-            connect: [{ name: 'ADMIN' }]
-          }
-        }
+            connect: [{ name: 'ADMIN' }],
+          },
+        },
       }),
       // Regular user
       prisma.user.upsert({
@@ -159,9 +161,9 @@ async function main() {
           authType: 'CREDENTIALS',
           active: true,
           roles: {
-            connect: [{ name: 'USER' }]
-          }
-        }
+            connect: [{ name: 'USER' }],
+          },
+        },
       }),
       // API user
       prisma.user.upsert({
@@ -176,9 +178,9 @@ async function main() {
           authType: 'CREDENTIALS',
           active: true,
           roles: {
-            connect: [{ name: 'API_USER' }]
-          }
-        }
+            connect: [{ name: 'API_USER' }],
+          },
+        },
       }),
       // Example OAuth user
       prisma.user.upsert({
@@ -194,19 +196,18 @@ async function main() {
           oauthProviderId: '12345',
           oauthProfile: JSON.stringify({
             login: 'oauth_user',
-            avatar_url: 'https://github.com/ghost.png'
+            avatar_url: 'https://github.com/ghost.png',
           }),
           active: true,
           roles: {
-            connect: [{ name: 'USER' }]
-          }
-        }
-      })
+            connect: [{ name: 'USER' }],
+          },
+        },
+      }),
     ])
 
     console.log(`Created ${users.length} users`)
     console.log('Seed completed successfully')
-
   } catch (error) {
     console.error('Error during seed:', error)
     throw error

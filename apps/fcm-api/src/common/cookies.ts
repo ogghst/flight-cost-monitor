@@ -4,13 +4,14 @@ import { Request } from 'express'
 // We're using a fixed configuration object to ensure consistency
 export const cookieConfig = {
   refreshToken: {
-    name: 'fcm_refresh_token',
+    name: 'authjs.refresh-token', // Synced with NextAuth cookie name
     options: {
       path: '/',
       httpOnly: true, // Essential for security - prevents JavaScript access
       sameSite: 'lax' as const, // Allows cookies in common cross-origin scenarios while maintaining security
       secure: process.env.NODE_ENV === 'production', // Only use HTTPS in production
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
+      domain: process.env.COOKIE_DOMAIN || undefined // Configurable domain for different environments
     },
   },
 }

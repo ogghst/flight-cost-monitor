@@ -3,39 +3,44 @@ import {
   Controller,
   Get,
   HttpStatus,
-  NotFoundException,
   Post,
   Req,
   Res,
-  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common'
 import {
   ApiBearerAuth,
-  ApiBody,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger'
+import { Request, Response } from 'express'
 import { Public } from '../decorators/public.decorator.js'
 import { CurrentUser } from '../decorators/user.decorator.js'
-import { AuthUserDtoSwagger } from '../dto/auth-user.dto.js'
-import { LoginCredentialsUserDtoSwagger } from '../dto/credential-login.dto.js'
-import { LoginOAuthDtoSwagger } from '../dto/oauth-login.dto.js'
-import { RegisterDto } from '../dto/register.dto.js'
-import {
-  RequestPasswordResetDto,
-  ResetPasswordDto,
-} from '../dto/reset-password.dto.js'
-import { AuthService } from '../services/auth.service.js'
+import { JwtAuthGuard } from '../guards/jwt.guard.js'
+import { JwtRefreshAuthGuard } from '../guards/jwt-refresh-auth.guard.js'
 
 import { extractRefreshTokenFromCookies } from '@/common/cookies.js'
 import { InjectLogger } from '@/logging/index.js'
+import { UserWithRelationsDtoSwagger } from '@/users/dto/user.dto.js'
 import { UsersService } from '@/users/users.service.js'
-import { AuthUserWithTokens, type AuthUser } from '@fcm/shared/auth'
+import { 
+  AuthErrorCode,
+  AuthErrorResponse,
+  AuthMeResponse,
+  AuthSession,
+  TokenError,
+  validateTokenFormat
+} from '@fcm/shared/auth'
 import { type Logger } from '@fcm/shared/logging'
+import { ConfigService } from '@nestjs/config'
 import { Throttle } from '@nestjs/throttler'
-import { type Request, type Response } from 'express'
+import { AuthService } from '../services/auth.service.js'
 import { TokenService } from '../services/token.service.js'
+import { LoginCredentialsUserDtoSwagger } from '../dto/credential-login.dto.js'
+import { LoginOAuthDtoSwagger } from '../dto/oauth-login.dto.js'
+import { RegisterDto } from '../dto/register.dto.js'
+import { RequestPasswordResetDto, ResetPasswordDto } from '../dto/reset-password.dto.js'
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -43,31 +48,36 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UsersService,
-    private readonly refreshTokenService: TokenService,
+    private readonly tokenService: TokenService,
+    private readonly configService: ConfigService,
     @InjectLogger() private readonly logger: Logger
   ) {}
 
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register new user' })
-  @ApiBody({ type: RegisterDto })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'User successfully registered',
   })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input data',
-  })
-  @ApiResponse({
-    status: HttpStatus.CONFLICT,
-    description: 'Username/email already exists',
-  })
-  register(
+  async register(
     @Body() data: RegisterDto,
     @Res({ passthrough: true }) response: Response
   ) {
-    return this.authService.register(data, response)
+    try {
+      // Register user and generate tokens
+      const result = await this.authService.register(data)
+      
+      // Generate token pair using our token service
+      await this.tokenService.generateTokenPair(result.user, response)
+      
+      return {
+        user: result.user,
+        message: 'Registration successful'
+      }
+    } catch (error) {
+      this.handleAuthError(error)
+    }
   }
 
   @Throttle({
@@ -76,162 +86,185 @@ export class AuthController {
   })
   @Public()
   @Post('login')
-  @ApiBody({ type: LoginCredentialsUserDtoSwagger })
   async login(
-    @Body() loginCredentials: LoginCredentialsUserDtoSwagger,
+    @Body() credentials: LoginCredentialsDto,
     @Res({ passthrough: true }) response: Response
-  ): Promise<AuthUserWithTokens> {
-    this.logger.debug('Login request received', { loginCredentials })
+  ): Promise<AuthSession> {
+    try {
+      this.logger.debug('Processing login request', { 
+        email: credentials.email 
+      })
 
-    const result = await this.authService.login(loginCredentials, response)
-    return result
-  }
+      // Authenticate user
+      const user = await this.authService.validateUser(
+        credentials.email,
+        credentials.password
+      )
 
-  @Throttle({
-    short: { limit: 2, ttl: 1000 },
-    long: { limit: 5, ttl: 60000 },
-  })
-  @Public()
-  @Post('oauth/login')
-  @ApiOperation({ summary: 'Login with OAuth provider' })
-  @ApiBody({ type: LoginOAuthDtoSwagger })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successfully logged in with OAuth',
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid OAuth data',
-  })
-  async oauthLogin(
-    @Body() data: LoginOAuthDtoSwagger,
-    @Res({ passthrough: true }) response: Response
-  ) {
-    this.logger.debug('OAuth login request received', { data })
-    const result = await this.authService.oauthLogin(data, response)
-    return result
+      // Generate tokens
+      const tokens = await this.tokenService.generateTokenPair(user, response)
+
+      // Validate access token before sending
+      const validation = validateTokenFormat(tokens.accessToken)
+      if (!validation.isValid) {
+        throw new TokenError(
+          'Generated invalid access token',
+          AuthErrorCode.TOKEN_INVALID
+        )
+      }
+
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          roles: user.roles.map(r => r.name),
+          name: user.username || undefined
+        },
+        accessToken: tokens.accessToken
+      }
+    } catch (error) {
+      this.handleAuthError(error)
+    }
   }
 
   @Public()
   @Post('refresh')
-  @ApiOperation({ summary: 'Refresh access token' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'New access token generated',
-  })
-  @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'Invalid refresh token',
-  })
+  @UseGuards(JwtRefreshAuthGuard)
   async refresh(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response
-  ): Promise<AuthUserWithTokens> {
-    this.logger.debug('Token refresh requested', {
-      cookies: request.headers.cookie,
-    })
-
-    const refreshToken = extractRefreshTokenFromCookies(request)
-    
-    if (!refreshToken) {
-      this.logger.error('No refresh token found in request')
-      throw new UnauthorizedException('No refresh token provided')
-    }
-
+  ): Promise<{ accessToken: string }> {
     try {
-      const result = await this.authService.refreshTokens(refreshToken, response)
-      this.logger.debug('Token refresh successful')
-      return result
+      this.logger.debug('Processing token refresh request')
+
+      const refreshToken = extractRefreshTokenFromCookies(request)
+      if (!refreshToken) {
+        throw new TokenError(
+          'No refresh token provided',
+          AuthErrorCode.TOKEN_MISSING
+        )
+      }
+
+      if (!request.user) {
+        throw new TokenError(
+          'No user found in refresh token',
+          AuthErrorCode.TOKEN_INVALID
+        )
+      }
+
+      const user = request.user as UserWithRelationsDtoSwagger
+      const accessToken = await this.tokenService.rotateTokens(
+        refreshToken,
+        user,
+        response
+      )
+
+      return { accessToken }
     } catch (error) {
-      this.logger.error('Token refresh failed', { error })
-      throw new UnauthorizedException('Invalid refresh token')
+      this.handleAuthError(error)
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  @ApiBearerAuth()
+  async getProfile(@CurrentUser() user: UserWithRelationsDtoSwagger): Promise<AuthMeResponse> {
+    try {
+      this.logger.debug('Retrieving user profile', { 
+        userId: user.id 
+      })
+
+      const userData = await this.userService.findByEmail(user.email)
+      if (!userData) {
+        throw new TokenError(
+          'User not found',
+          AuthErrorCode.USER_NOT_FOUND
+        )
+      }
+
+      return {
+        id: userData.id,
+        email: userData.email,
+        username: userData.username,
+        roles: userData.roles.map(r => r.name),
+        preferences: userData.preferences
+      }
+    } catch (error) {
+      this.handleAuthError(error)
     }
   }
 
   @Post('logout')
-  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
   async logout(
-    @Req() request: Request,
+    @CurrentUser() user: UserWithRelationsDtoSwagger,
     @Res({ passthrough: true }) response: Response
   ) {
-    this.logger.debug('Logout request received')
+    try {
+      this.logger.debug('Processing logout request', { 
+        userId: user.id 
+      })
 
-    const refreshToken = request.cookies['fcm_refresh_token']
+      // Revoke all refresh tokens for the user
+      await this.tokenService.revokeAllUserTokens(user.email)
 
-    if (refreshToken) {
-      await this.authService.logout(refreshToken)
+      // Clear refresh token cookie
+      response.clearCookie('fcm_refresh_token', {
+        httpOnly: true,
+        secure: this.configService.get('NODE_ENV') === 'production',
+        sameSite: 'lax',
+        path: '/'
+      })
+
+      return { message: 'Logged out successfully' }
+    } catch (error) {
+      this.handleAuthError(error)
+    }
+  }
+
+  private handleAuthError(error: unknown): never {
+    if (error instanceof TokenError) {
+      // Convert TokenError to standardized error response
+      const errorResponse: AuthErrorResponse = {
+        code: error.code,
+        message: error.message,
+        details: error.details
+      }
+      
+      // Log the error with context
+      this.logger.error('Authentication error', errorResponse)
+
+      // Determine appropriate HTTP status
+      const statusCode = this.getHttpStatusForErrorCode(error.code)
+      throw new HttpException(errorResponse, statusCode)
     }
 
-    response.clearCookie('fcm_refresh_token', {
-      path: '/',
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+    // Handle unexpected errors
+    this.logger.error('Unexpected authentication error', { 
+      error: error instanceof Error ? error.message : 'Unknown error'
     })
-
-    return { message: 'Logged out successfully' }
+    
+    throw new HttpException(
+      {
+        code: AuthErrorCode.TOKEN_INVALID,
+        message: 'Authentication failed'
+      },
+      HttpStatus.UNAUTHORIZED
+    )
   }
 
-  @Public()
-  @Post('password/reset-request')
-  @ApiOperation({ summary: 'Request password reset' })
-  @ApiBody({ type: RequestPasswordResetDto })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Reset email sent if account exists',
-  })
-  async requestPasswordReset(@Body() data: RequestPasswordResetDto) {
-    this.logger.debug('Password reset requested for', { email: data.email })
-    await this.authService.requestPasswordReset(data)
-    return { message: 'If the email exists, a reset link will be sent' }
-  }
-
-  @Public()
-  @Post('password/reset')
-  @ApiOperation({ summary: 'Reset password with token' })
-  @ApiBody({ type: ResetPasswordDto })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Password successfully reset',
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid or expired token',
-  })
-  async resetPassword(@Body() data: ResetPasswordDto) {
-    this.logger.debug('Password reset attempt')
-    await this.authService.resetPassword(data)
-    return { message: 'Password reset successfully' }
-  }
-
-  @Get('me')
-  @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Current user profile',
-    type: AuthUserDtoSwagger,
-  })
-  @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'Not authenticated',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'User not found',
-  })
-  async getProfile(@CurrentUser() user: AuthUser): Promise<AuthUserDtoSwagger> {
-    this.logger.debug('Profile request received for user', { email: user.email })
-
-    const userData = await this.userService.findByEmail(user.email)
-
-    if (!userData) {
-      throw new NotFoundException('User not found')
-    }
-
-    return {
-      ...userData,
-      roles: userData.roles.map((r) => r.name),
+  private getHttpStatusForErrorCode(code: AuthErrorCode): number {
+    switch (code) {
+      case AuthErrorCode.TOKEN_EXPIRED:
+      case AuthErrorCode.TOKEN_INVALID:
+      case AuthErrorCode.TOKEN_MISSING:
+        return HttpStatus.UNAUTHORIZED
+      case AuthErrorCode.USER_NOT_FOUND:
+        return HttpStatus.NOT_FOUND
+      case AuthErrorCode.INVALID_CREDENTIALS:
+        return HttpStatus.UNAUTHORIZED
+      default:
+        return HttpStatus.INTERNAL_SERVER_ERROR
     }
   }
 }

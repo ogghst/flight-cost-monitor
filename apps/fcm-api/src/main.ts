@@ -1,24 +1,28 @@
 import { AppModule } from '@/app.module.js'
 import { patchNestjsSwagger } from '@anatine/zod-nestjs'
-import { FcmWinstonLogger } from '@fcm/shared/logging/winston'
 import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { IoAdapter } from '@nestjs/platform-socket.io'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import cookieParser from 'cookie-parser'
-import { UnauthorizedExceptionFilter } from './filters/unauthorized-exception.filter.js'
 import { LoggingInterceptor } from './interceptors/logging.interceptor.js'
+import { ConsoleLoggerWrapper } from './users/console.logger.wrapper.js'
 import { formatError } from './utils/error.utils.js'
 
 async function bootstrap() {
   // Create logger instance for bootstrapping
+
+  /*
   const logger = FcmWinstonLogger.getInstance({
     context: 'fcm-api',
     logDirectory: '/logs',
     maxFiles: '2',
-    maxSize: '100mb',
+    maxSize: '1mb',
     minLevel: 'debug',
   })
+    */
+
+  const logger = new ConsoleLoggerWrapper()
 
   try {
     const app = await NestFactory.create(AppModule, {
@@ -40,7 +44,7 @@ async function bootstrap() {
     app.useGlobalInterceptors(new LoggingInterceptor())
 
     // Register unauthorized exception filter
-    app.useGlobalFilters(new UnauthorizedExceptionFilter())
+    //app.useGlobalFilters(new UnauthorizedExceptionFilter())
 
     app.useGlobalPipes(new ValidationPipe({ transform: true }))
 
@@ -91,17 +95,26 @@ async function bootstrap() {
         tagsSorter: 'alpha',
         operationsSorter: 'alpha',
       },
-      customCssUrl: '/swagger-custom.css', // Optional: Add custom styling
-      customfavIcon: '/favicon.ico',
+      //customCssUrl: '/swagger-custom.css', // Optional: Add custom styling
+      //customfavIcon: '/favicon.ico',
       customSiteTitle: 'FCM API Documentation',
     })
 
     // Configure CORS with settings that support secure cookie transmission
     app.enableCors({
-      origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-      credentials: true, // Essential for sending cookies cross-origin
-      allowedHeaders: ['Content-Type', 'Authorization'],
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+      origin: true,
+      credentials: true,
+      /*allowedHeaders: [
+        'X-CSRF-Token',
+        'X-Requested-With',
+        'Accept',
+        'Content-Type',
+        'Authorization',
+        'Origin',
+
+      ],*/
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      //maxAge: 600, // Cache preflight requests for 10 minutes
     })
 
     const port = process.env.PORT || 3001

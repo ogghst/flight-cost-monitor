@@ -26,13 +26,13 @@ export interface RefreshTokenPayload {
 }
 */
 
-import { AuthUser } from '@fcm/shared/auth'
 import { User } from '@fcm/shared/user'
+import { AuthUserDtoSwagger } from './dto/auth-user.dto.js'
 
 // Helper function to transform User to AuthUser
 export function toAuthUser(
   user: User & { roles: { name: string }[] }
-): AuthUser {
+): AuthUserDtoSwagger {
   const roles = user.roles.map((role) => role.name)
   return {
     ...user,

@@ -1,3 +1,4 @@
+import { AuthGuard } from '@/components/auth/AuthGuard'
 import FcmLayout from '@/components/layout/FcmLayout'
 import { Providers } from '@/app/providers'
 
@@ -6,7 +7,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <body>
         <Providers>
-          <FcmLayout>{children}</FcmLayout>
+          <AuthGuard>
+            <FcmLayout>{children}</FcmLayout>
+          </AuthGuard>
         </Providers>
       </body>
     </html>

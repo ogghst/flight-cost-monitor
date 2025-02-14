@@ -7,7 +7,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { hash } from 'bcrypt'
+import bcryptjs from 'bcryptjs'
+const { hash, compare } = bcryptjs
 
 import { LoginOAuthDtoSwagger } from '@/auth/dto/oauth-login.dto.js'
 import { CreateUserWithCredentialsDtoSwagger } from './dto/create-user.dto.js'
