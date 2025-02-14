@@ -30,10 +30,11 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  refreshTokens      RefreshToken[]
-  roles             Role[]         @relation("UserRoles")
-  searches          UserSearch[]
+  refreshTokens       RefreshToken[]
+  roles               Role[]              @relation("UserRoles")
+  searches            UserSearch[]
   flightOfferSearches FlightOfferSearch[]
+  tasks               TaskSchedule[]
 
   @@unique([oauthProvider, oauthProviderId])
   @@index([email])
@@ -82,21 +83,90 @@ model Permission {
 }
 
 model UserSearch {
-  id         String    @id @default(cuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id])
-  searchType String // "FLIGHT", "HOTEL", etc.
-  parameters String // JSON string of search parameters
-  name       String? // Optional saved search name
-  favorite   Boolean   @default(false)
-  lastUsed   DateTime  @default(now())
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  deletedAt  DateTime?
+  id                  String              @id @default(cuid())
+  userId              String
+  user                User                @relation(fields: [userId], references: [id])
+  searchType          String // "FLIGHT", "HOTEL", etc.
+  parameters          String // JSON string of search parameters
+  name                String? // Optional saved search name
+  favorite            Boolean             @default(false)
+  lastUsed            DateTime            @default(now())
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  deletedAt           DateTime?
   flightOfferSearches FlightOfferSearch[]
 
   @@index([userId])
   @@index([searchType])
+}
+
+model TaskSchedule {
+  id             String    @id @default(cuid())
+  name           String
+  description    String?
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  taskType       String   @default("")
+  payload        String   @default("")
+  state          String // "ENABLED" or "DISABLED"
+  cronExpression String
+  timeout        Int // milliseconds
+  maxRetries     Int       @default(3)
+  lastRunAt      DateTime?
+  nextRunAt      DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  executions TaskExecution[]
+  stats      TaskStats[]
+
+  @@index([userId])
+  @@index([state])
+}
+
+model TaskExecution {
+  id        String       @id @default(cuid())
+  taskId    String
+  task      TaskSchedule @relation(fields: [taskId], references: [id])
+  state     String // "PENDING", "RUNNING", "COMPLETED", "FAILED", "TIMEOUT", "SKIPPED"
+  startTime DateTime
+  endTime   DateTime?
+  duration  Int? // milliseconds
+  attempt   Int          @default(1)
+  error     String? // JSON string of error details
+  result    String? // JSON string of execution result
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([taskId])
+  @@index([state])
+  @@index([startTime])
+}
+
+model TaskStats {
+  id                 String       @id @default(cuid())
+  taskId             String
+  task               TaskSchedule @relation(fields: [taskId], references: [id])
+  totalRuns          Int          @default(0)
+  successfulRuns     Int          @default(0)
+  failedRuns         Int          @default(0)
+  averageDuration    Float        @default(0)
+  lastExecutionState String
+  lastError          String?
+  periodStart        DateTime
+  periodEnd          DateTime
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([taskId])
+  @@index([periodStart])
+  @@index([periodEnd])
 }
 
 model AuditLog {
@@ -111,37 +181,37 @@ model AuditLog {
 }
 
 model FlightOfferSearch {
-  id            String    @id @default(cuid())
+  id            String              @id @default(cuid())
   userId        String
-  user          User      @relation(fields: [userId], references: [id])
-  searchType    String    // "SIMPLE" or "ADVANCED"
-  parameters    String    // JSON string of search parameters
-  savedSearchId String?   // Optional reference to UserSearch if this was from a saved search
-  userSearch    UserSearch? @relation(fields: [savedSearchId], references: [id])
-  status        String    // "COMPLETED", "FAILED", "PARTIAL"
+  user          User                @relation(fields: [userId], references: [id])
+  searchType    String // "SIMPLE" or "ADVANCED"
+  parameters    String // JSON string of search parameters
+  savedSearchId String? // Optional reference to UserSearch if this was from a saved search
+  userSearch    UserSearch?         @relation(fields: [savedSearchId], references: [id])
+  status        String // "COMPLETED", "FAILED", "PARTIAL"
   totalResults  Int
   results       FlightOfferResult[]
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([userId])
   @@index([searchType])
 }
 
 model FlightOfferResult {
-  id                String    @id @default(cuid())
+  id                String            @id @default(cuid())
   searchId          String
-  search           FlightOfferSearch @relation(fields: [searchId], references: [id])
-  offerId          String    // Amadeus offer ID
-  price            Decimal
+  search            FlightOfferSearch @relation(fields: [searchId], references: [id])
+  offerId           String // Amadeus offer ID
+  price             Decimal
   validatingCarrier String
-  segments         String    // JSON array of flight segments
-  
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  deletedAt        DateTime?
+  segments          String // JSON array of flight segments
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([searchId])
   @@index([offerId])

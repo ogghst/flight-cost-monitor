@@ -160,7 +160,9 @@ export default function FlightSearchPage() {
           isFieldsDisabled={isUserSearchActive}
           initialValues={
             currentSearch
-              ? currentSearch.parameters
+              ? (JSON.parse(
+                  currentSearch.parameters
+                ) as FlightOfferSimpleSearchRequest)
               : FLIGHT_OFFERS_DEFAULT_SEARCH_VALUES
           }
         />

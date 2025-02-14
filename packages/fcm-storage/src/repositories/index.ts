@@ -1,3 +1,8 @@
+export * from './prisma.js'
+export * from './task-execution-repository.js'
+export * from './task-schedule-repository.js'
+export * from './task-stats-repository.js'
+
 export {
   flightOfferSearchRepository,
   FlightOfferSearchRepository,

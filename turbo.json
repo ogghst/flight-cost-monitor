@@ -13,7 +13,9 @@
     "AUTH_GITHUB_ID",
     "AUTH_GITHUB_SECRET",
     "API_URL",
-    "API_TIMEOUT"
+    "API_TIMEOUT",
+    "CORS_ORIGIN",
+    "WS_PORT"
   ],
   "tasks": {
     "build": {

@@ -1,6 +1,7 @@
 'use server'
 
 import { makeServerRequest } from '@/lib/api/axiosConfig'
+import { auth } from '@/lib/auth'
 import { amadeusConfig } from '@/lib/config/amadeus'
 import type {
   FlightOfferSimpleSearchRequest,
@@ -12,7 +13,7 @@ import type {
   FlightOffersAdvancedResponse,
 } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
 import { FlightOfferAdvancedClient } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
-
+import { type FlightOfferSearchDto } from '@fcm/shared/flight-offer-search'
 // Keep the local clients for fallback/testing purposes
 const flightClients = {
   simple: new FlightOfferClient(amadeusConfig),
@@ -77,5 +78,28 @@ export async function searchFlightsAdvancedActionLocal(
   } catch (error) {
     console.error('Advanced search error:', error)
     throw new Error('Failed to search flights')
+  }
+}
+
+export async function getUserSearchById(
+  id: string
+): Promise<FlightOfferSearchDto[]> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error('User not authenticated')
+  }
+
+  try {
+    const searches = await makeServerRequest<FlightOfferSearchDto[]>(
+      'GET',
+      `/flight-offers/usersearch/${id}`
+    )
+
+    return searches
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to fetch user searches by id: ${error.message}`)
+    }
+    throw new Error('Failed to fetch user searches')
   }
 }

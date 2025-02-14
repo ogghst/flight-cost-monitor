@@ -2,6 +2,7 @@
 
 import { useSearchForm } from '@/components/context/SearchFormContext'
 import { useLoadSearch, useUserSearches } from '@/hooks/useSearches'
+import { showNotification } from '@/services/NotificationService'
 import { FlightOfferSimpleSearchRequest } from '@fcm/shared/amadeus/clients/flight-offer'
 import { SearchType } from '@fcm/shared/auth'
 import { UserSearchDto } from '@fcm/shared/user-search/types'
@@ -24,7 +25,6 @@ import {
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { useState } from 'react'
-import { showNotification } from '@/services/NotificationService'
 
 dayjs.extend(relativeTime)
 
@@ -34,8 +34,11 @@ interface LoadSearchButtonProps {
 }
 
 function formatSearchDetails(search: UserSearchDto) {
-  // Parse the stored search parameters from string to object
-  const parameters = search.parameters as FlightOfferSimpleSearchRequest
+  // Check if search.parameters is already an object
+  const parameters =
+    typeof search.parameters === 'string'
+      ? (JSON.parse(search.parameters) as FlightOfferSimpleSearchRequest)
+      : (search.parameters as FlightOfferSimpleSearchRequest)
 
   return [
     `${parameters.originLocationCode} → ${parameters.destinationLocationCode}`,
@@ -87,7 +90,8 @@ export function LoadSearchButton({
   const { currentSearch, setCurrentSearch } = useSearchForm()
 
   const handleLoadSearch = (search: UserSearchDto) => {
-    const parsedParameters = search.parameters as FlightOfferSimpleSearchRequest
+    const parsedParameters = //search.parameters
+      JSON.parse(search.parameters) as FlightOfferSimpleSearchRequest
 
     // Update the current search in context
     setCurrentSearch(search)
@@ -99,7 +103,9 @@ export function LoadSearchButton({
     onLoadSearch(parsedParameters)
 
     setOpen(false)
-    showNotification.success(`Loaded search: ${search.name || 'Untitled Search'}`)
+    showNotification.success(
+      `Loaded search: ${search.name || 'Untitled Search'}`
+    )
   }
 
   const handleClearSearch = () => {
@@ -123,14 +129,10 @@ export function LoadSearchButton({
 
     return (
       <ButtonGroup variant="contained" color="success" size="small">
-        <Button 
-          startIcon={<CheckCircle />}
-          onClick={() => setOpen(true)}>
+        <Button startIcon={<CheckCircle />} onClick={() => setOpen(true)}>
           {currentSearch.name || 'Search Loaded'}
         </Button>
-        <Button
-          color="error"
-          onClick={handleClearSearch}>
+        <Button color="error" onClick={handleClearSearch}>
           <Clear />
         </Button>
       </ButtonGroup>

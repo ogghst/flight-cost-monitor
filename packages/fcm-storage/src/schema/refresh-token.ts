@@ -1,5 +1,5 @@
+import { baseEntitySchema } from '@fcm/shared/types'
 import { z } from 'zod'
-import { baseEntitySchema } from './base-entity.js'
 import { userSchema } from './user/base.js'
 
 export const refreshTokenSchema = baseEntitySchema.extend({

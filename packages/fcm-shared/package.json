@@ -24,6 +24,10 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./types": {
+      "import": "./dist/types/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
     "./amadeus/clients": {
       "import": "./dist/amadeus/clients/index.js",
       "types": "./dist/amadeus/clients/index.d.ts"
@@ -59,6 +63,14 @@
     "./flight-offer-search": {
       "import": "./dist/flight-offer-search/index.js",
       "types": "./dist/flight-offer-search/types.d.ts"
+    },
+    "./scheduler": {
+      "import": "./dist/scheduler/types.js",
+      "types": "./dist/scheduler/types.d.ts"
+    },
+    "./monitoring": {
+      "import": "./dist/monitoring/types.js",
+      "types": "./dist/monitoring/types.d.ts"
     }
   },
   "typesVersions": {
@@ -80,6 +92,15 @@
       ],
       "/flight-offer-search": [
         "./dist/flight-offer-search/index.d.ts"
+      ],
+      "/scheduler": [
+        "./dist/scheduler/types.d.ts"
+      ],
+      "/monitoring": [
+        "./dist/monitoring/types.d.ts"
+      ],
+      "/types": [
+        "./dist/types/types.d.ts"
       ]
     }
   },

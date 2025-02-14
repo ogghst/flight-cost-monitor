@@ -10,7 +10,7 @@ export const auditExtension = Prisma.defineExtension((client) => {
     query: {
       $allModels: {
         async create({ model, args, query }) {
-          if (model != 'UserSearch') {
+          if (model.toLowerCase() != 'usersearch') {
             return query(args)
           }
 

@@ -73,23 +73,52 @@ export class FlightOfferSearchRepository {
     }
   }
 
+  async findByUserSearchId(
+    id: string,
+    tx?: ExtendedTransactionClient
+  ): Promise<FlightOfferSearchDto[]> {
+    const client = tx || this.prisma
+    try {
+      const searches = await client.flightOfferSearch.findMany({
+        where: {
+          savedSearchId: id,
+          deletedAt: null,
+        },
+        include: {
+          results: {
+            where: { deletedAt: null },
+          },
+          user: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+      return searches.map(this.mapToDto)
+    } catch (error) {
+      throw new DatabaseError(
+        'Failed to find flight offer searches by user search',
+        error
+      )
+    }
+  }
+
   async create(
     data: CreateFlightOfferSearchDto,
     tx?: ExtendedTransactionClient
   ): Promise<FlightOfferSearchDto> {
     const client = tx || this.prisma
-    if (data.savedSearchId == undefined) data.savedSearchId = ''
     try {
       const created = await client.flightOfferSearch.create({
         data: {
           user: {
             connect: { email: data.userEmail },
           },
-          userSearch: {
-            connect: {
-              id: data.savedSearchId, // This will properly set the savedSearchId field
-            },
-          },
+          // Only include userSearch connection if savedSearchId exists and is not empty
+          ...(data.savedSearchId &&
+            data.savedSearchId !== '' && {
+              userSearch: {
+                connect: { id: data.savedSearchId },
+              },
+            }),
           searchType: data.searchType,
           parameters: JSON.stringify(data.parameters),
           status: '',

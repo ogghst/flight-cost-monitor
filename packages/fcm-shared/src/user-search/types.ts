@@ -1,13 +1,11 @@
-import { FlightOfferAdvancedSearchRequest } from 'src/amadeus/clients/flight-offer-advanced/flight-offers-advanced-types.js'
 import { SearchType } from 'src/auth/types.js'
-import { FlightOfferSimpleSearchRequest } from 'src/flight-offer-search/types.js'
 
 export interface UserSearchDto {
   id: string
   userEmail: string
   searchType: SearchType
-  parameters: FlightOfferSimpleSearchRequest | FlightOfferAdvancedSearchRequest // | Record<string, string>
   name?: string
+  parameters: string
   favorite: boolean
   lastUsed?: Date
   createdAt: Date

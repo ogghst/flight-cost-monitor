@@ -105,9 +105,7 @@ export class FlightOffersService {
         userEmail,
       })
 
-      const response = await this.flightClient.searchFlightOffers({
-        ...params,
-      })
+      const response = await this.flightClient.searchFlightOffers(params)
 
       this.logger.info('Flight offers search completed', {
         count: response.data.length,
@@ -158,6 +156,18 @@ export class FlightOffersService {
         error: error instanceof Error ? error.message : 'INTERNAL_SERVER_ERROR',
         status: 500,
       })
+    }
+  }
+
+  async getSearchByUserSearchId(id: string): Promise<FlightOfferSearchDto[]> {
+    try {
+      return await flightOfferSearchRepository.findByUserSearchId(id)
+    } catch (error) {
+      this.logger.error(
+        'Failed to retrieve search by User Search ID',
+        formatError(error)
+      )
+      throw new InternalServerErrorException('Failed to retrieve search')
     }
   }
 

@@ -1,6 +1,4 @@
 import { SearchType } from '@fcm/shared'
-import { FlightOfferAdvancedSearchRequest } from '@fcm/shared/amadeus/clients/flight-offer-advanced'
-import { FlightOfferSimpleSearchRequest } from '@fcm/shared/flight-offer-search'
 import type { UserSearchDto as SharedDto } from '@fcm/shared/user-search/types'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsDate, IsEmail, IsEnum, IsOptional } from 'class-validator'
@@ -21,7 +19,7 @@ export class UserSearchDto implements SharedDto {
   searchType: string
 
   @ApiProperty({ description: 'Search parameters in JSON format' })
-  parameters: FlightOfferSimpleSearchRequest | FlightOfferAdvancedSearchRequest
+  parameters: string
 
   @ApiProperty({
     description: 'Optional user-given name for the search',
