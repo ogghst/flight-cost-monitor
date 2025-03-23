@@ -3,7 +3,6 @@
   "extends": "./base.json",
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
-    "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": false,
     "incremental": true,

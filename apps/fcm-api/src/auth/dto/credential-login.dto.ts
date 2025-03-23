@@ -1,6 +1,7 @@
 import { createZodDto } from '@anatine/zod-nestjs'
 import { loginCredentialsUserSchema } from '@fcm/shared/user'
 
-export class LoginCredentialsDtoSwagger extends createZodDto(
+
+export class LoginCredentialsUserDtoSwagger extends createZodDto(
   loginCredentialsUserSchema
 ) {}

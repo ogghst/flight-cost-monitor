@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+coFROM node:20-alpine AS builder
 WORKDIR /app
 
 # Install pnpm

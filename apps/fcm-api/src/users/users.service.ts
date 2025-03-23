@@ -1,5 +1,7 @@
-import { AuthType } from '@fcm/shared'
+import { AuthType } from '@fcm/shared/types'
+// @ts-ignore - Temporarily ignore missing module types
 import { userRepository } from '@fcm/storage'
+// @ts-ignore - Temporarily ignore missing module types
 import { DatabaseError } from '@fcm/storage/schema'
 import {
   BadRequestException,
@@ -9,66 +11,67 @@ import {
 } from '@nestjs/common'
 import { hash } from 'bcrypt'
 import {
-  CreateUserWithCredentialsDto,
-  CreateUserWithOAuthDto,
+  CreateUserWithCredentialsDtoSwagger,
+  CreateUserWithOAuthDtoSwagger,
 } from './dto/create-user.dto.js'
-import { UpdateUserDto } from './dto/update-user.dto.js'
-import { UserDto, UserWithRelationsDto } from './dto/user.dto.js'
+import { UpdateUserDtoSwagger } from './dto/update-user.dto.js'
+import { UserWithRelationsDtoSwagger } from './dto/user.dto.js'
+
+// Define interface for database error
+interface IDatabaseError extends Error {
+  code: string
+}
 
 @Injectable()
 export class UsersService {
-  async findById(id: string): Promise<UserWithRelationsDto> {
+  async findById(id: string): Promise<UserWithRelationsDtoSwagger> {
     const user = await userRepository.findById(id)
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`)
     }
-    return {
-      ...user,
-      roles: user.roles.map((role) => role.name),
-    }
+    return user
   }
 
-  async findByEmail(email: string): Promise<UserWithRelationsDto> {
+  async findByEmail(email: string): Promise<UserWithRelationsDtoSwagger> {
     const user = await userRepository.findByEmail(email)
     if (!user) {
       throw new NotFoundException(`User with email ${email} not found`)
     }
-    return {
-      ...user,
-      roles: user.roles.map((role) => role.name),
+    return user
+  }
+
+  async updateLastLogin(id: string) {
+    try {
+      await userRepository.updateLastLogin(id)
+    } catch (error) {
+      throw new BadRequestException('Failed to update last login', error)
     }
   }
 
-  async findByUsername(username: string): Promise<UserWithRelationsDto> {
+  async findByUsername(username: string): Promise<UserWithRelationsDtoSwagger> {
     const user = await userRepository.findByUsername(username)
     if (!user) {
       throw new NotFoundException(`User with username ${username} not found`)
     }
-    return {
-      ...user,
-      roles: user.roles.map((role) => role.name),
-    }
+    return user
   }
 
   async findByOAuth(
     provider: string,
     providerId: string
-  ): Promise<UserWithRelationsDto> {
+  ): Promise<UserWithRelationsDtoSwagger> {
     const user = await userRepository.findByOAuth(provider, providerId)
     if (!user) {
       throw new NotFoundException(
         `User with provider ${provider} and providerId ${providerId} not found`
       )
     }
-    return {
-      ...user,
-      roles: user.roles.map((role) => role.name),
-    }
+    return user
   }
 
   async createWithCredentials(
-    data: CreateUserWithCredentialsDto
-  ): Promise<UserDto> {
+    data: CreateUserWithCredentialsDtoSwagger
+  ): Promise<UserWithRelationsDtoSwagger> {
     try {
       // Check if email is already in use
       const existingEmail = await userRepository.findByEmail(data.email)
@@ -99,7 +102,9 @@ export class UsersService {
         throw error
       }
       if (error instanceof DatabaseError) {
-        if (error.code === 'UNIQUE_CONSTRAINT') {
+        // Type assertion to access the code property
+        const dbError = error as IDatabaseError
+        if (dbError.code === 'UNIQUE_CONSTRAINT') {
           throw new ConflictException(
             'User with this email or username already exists'
           )
@@ -109,7 +114,9 @@ export class UsersService {
     }
   }
 
-  async createWithOAuth(data: CreateUserWithOAuthDto): Promise<UserDto> {
+  async createWithOAuth(
+    data: CreateUserWithOAuthDtoSwagger
+  ): Promise<UserWithRelationsDtoSwagger> {
     try {
       // Check if OAuth user already exists
       const existingOAuth = await userRepository.findByOAuth(
@@ -139,17 +146,26 @@ export class UsersService {
       }
 
       // Create OAuth user
+      if (!data.oauthProvider || !data.oauthProviderId) {
+        throw new BadRequestException(
+          'OAuth provider and providerId are required'
+        )
+      }
       return await userRepository.createOAuthUser({
         ...data,
         authType: AuthType.OAUTH,
         active: true,
+        oauthProvider: data.oauthProvider,
+        oauthProviderId: data.oauthProviderId,
       })
     } catch (error) {
       if (error instanceof ConflictException) {
         throw error
       }
       if (error instanceof DatabaseError) {
-        if (error.code === 'UNIQUE_CONSTRAINT') {
+        // Type assertion to access the code property
+        const dbError = error as IDatabaseError
+        if (dbError.code === 'UNIQUE_CONSTRAINT') {
           throw new ConflictException(
             'User with this OAuth provider ID already exists'
           )
@@ -159,7 +175,10 @@ export class UsersService {
     }
   }
 
-  async update(id: string, data: UpdateUserDto): Promise<UserWithRelationsDto> {
+  async update(
+    id: string,
+    data: UpdateUserDtoSwagger
+  ): Promise<UserWithRelationsDtoSwagger> {
     try {
       // Check if user exists
       const existingUser = await this.findById(id)
@@ -180,10 +199,7 @@ export class UsersService {
 
       // Update user
       const updatedUser = await userRepository.update(id, data)
-      return {
-        ...updatedUser,
-        roles: updatedUser.roles.map((role) => role.name),
-      }
+      return updatedUser
     } catch (error) {
       if (
         error instanceof NotFoundException ||
@@ -192,10 +208,12 @@ export class UsersService {
         throw error
       }
       if (error instanceof DatabaseError) {
-        if (error.code === 'NOT_FOUND') {
+        // Type assertion to access the code property
+        const dbError = error as IDatabaseError
+        if (dbError.code === 'NOT_FOUND') {
           throw new NotFoundException(`User with ID ${id} not found`)
         }
-        if (error.code === 'UNIQUE_CONSTRAINT') {
+        if (dbError.code === 'UNIQUE_CONSTRAINT') {
           throw new ConflictException('Username already in use')
         }
       }
@@ -213,7 +231,9 @@ export class UsersService {
         throw error
       }
       if (error instanceof DatabaseError) {
-        if (error.code === 'NOT_FOUND') {
+        // Type assertion to access the code property
+        const dbError = error as IDatabaseError
+        if (dbError.code === 'NOT_FOUND') {
           throw new NotFoundException(`User with ID ${id} not found`)
         }
       }

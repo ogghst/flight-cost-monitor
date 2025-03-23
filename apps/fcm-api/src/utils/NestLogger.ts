@@ -1,49 +1,49 @@
+import { LogMetadata, Logger } from '@fcm/shared'
 import { ConsoleLogger } from '@nestjs/common'
-import { Logger, LogEntry, LogMetadata, LoggerOptions } from '@fcm/shared'
 
-export class NestLogger implements Logger {
-  private readonly logger: ConsoleLogger
-  private static instance: NestLogger | null = null
+export class NestLogger extends ConsoleLogger implements Logger {
+  //private readonly logger: ConsoleLogger
+  //private static instance: NestLogger | null = null
 
-  private constructor(options?: LoggerOptions) {
-    this.logger = new ConsoleLogger(options?.context)
+  constructor(options?: any) {
+    super(options)
   }
 
-  public static getInstance(options?: LoggerOptions): NestLogger {
+  /*public static getInstance(options?: any): NestLogger {
     if (!NestLogger.instance) {
       NestLogger.instance = new NestLogger(options)
     }
     return NestLogger.instance
   }
+    */
 
-  error(message: string, metadata?: LogMetadata): void {
-    this.logger.error(message, this.formatMetadata(metadata))
+  info(message: string, metadata?: any): void {
+    super.log(message, metadata)
+  }
+  http(message: string, metadata?: any): void {
+    super.log(message, metadata)
+  }
+  silly(message: string, metadata?: any): void {
+    super.log(message, metadata)
   }
 
-  warn(message: string, metadata?: LogMetadata): void {
-    this.logger.warn(message, this.formatMetadata(metadata))
+  error(message: string, metadata?: any): void {
+    super.log(message, metadata)
   }
 
-  info(message: string, metadata?: LogMetadata): void {
-    this.logger.log(message, this.formatMetadata(metadata))
+  warn(message: string, metadata?: any): void {
+    super.log(message, metadata)
   }
 
-  http(message: string, metadata?: LogMetadata): void {
-    this.logger.verbose(message, this.formatMetadata(metadata))
+  verbose(message: string, metadata?: any): void {
+    super.log(message, metadata)
   }
 
-  verbose(message: string, metadata?: LogMetadata): void {
-    this.logger.verbose(message, this.formatMetadata(metadata))
+  debug(message: string, metadata?: any): void {
+    super.log(message, metadata)
   }
 
-  debug(message: string, metadata?: LogMetadata): void {
-    this.logger.debug(message, this.formatMetadata(metadata))
-  }
-
-  silly(message: string, metadata?: LogMetadata): void {
-    this.logger.verbose(message, this.formatMetadata(metadata))
-  }
-
+  /*
   log(entry: LogEntry): void {
     switch (entry.level) {
       case 'error':
@@ -69,6 +69,7 @@ export class NestLogger implements Logger {
         break
     }
   }
+    */
 
   private formatMetadata(metadata?: LogMetadata): string | undefined {
     if (!metadata) return undefined

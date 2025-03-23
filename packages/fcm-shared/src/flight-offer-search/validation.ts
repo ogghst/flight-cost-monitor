@@ -1,5 +1,5 @@
+import { SearchType } from 'src/amadeus/types/common.js'
 import { z } from 'zod'
-import { SearchType } from '../auth/types.js'
 import { TravelClass } from './types.js'
 
 export const SearchParamsSchema = z.object({

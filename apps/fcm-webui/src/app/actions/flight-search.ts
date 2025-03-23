@@ -1,6 +1,6 @@
 'use server'
 
-import { makeServerRequest } from '@/lib/api/axiosConfig'
+import * as api from '@/lib/api/FCMServer'
 import { auth } from '@/lib/auth'
 import { amadeusConfig } from '@/lib/config/amadeus'
 import type {
@@ -25,12 +25,17 @@ export async function searchFlightsAction(
   savedSearchId?: string
 ): Promise<FlightOfferSimpleSearchResponse> {
   try {
-    return await makeServerRequest<FlightOfferSimpleSearchResponse>(
-      'POST',
-      '/flight-offers/simple',
+    return await api.post<FlightOfferSimpleSearchResponse>(
+      'flight-offers/simple',
       JSON.stringify(params),
-      { savedSearchId }
+      savedSearchId ? { params: { savedSearchId } } : undefined
     )
+    //  return await fetchFCMServer<FlightOfferSimpleSearchResponse>(
+    //    'POST',
+    //    '/flight-offers/simple',
+    //    JSON.stringify(params),
+    //    { savedSearchId }
+    //  )
   } catch (error) {
     console.error('Simple search error:', error)
     if (error instanceof Error) {
@@ -44,11 +49,18 @@ export async function searchFlightsAdvancedAction(
   params: FlightOfferAdvancedSearchRequest
 ): Promise<FlightOffersAdvancedResponse> {
   try {
-    return await makeServerRequest<FlightOffersAdvancedResponse>(
+    return await api.post<FlightOffersAdvancedResponse>(
+      'flight-offers/simple',
+      { params: params }
+    )
+
+    /*
+    return await fetchFCMServer<FlightOffersAdvancedResponse>(
       'POST',
       '/flight-offers/advanced',
       JSON.stringify(params)
     )
+    */
   } catch (error) {
     console.error('Advanced search error:', error)
     if (error instanceof Error) {
@@ -90,7 +102,7 @@ export async function getUserSearchById(
   }
 
   try {
-    const searches = await makeServerRequest<FlightOfferSearchDto[]>(
+    const searches = await fetchFCMServer<FlightOfferSearchDto[]>(
       'GET',
       `/flight-offers/usersearch/${id}`
     )

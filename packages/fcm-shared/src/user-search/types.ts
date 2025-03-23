@@ -1,4 +1,4 @@
-import { SearchType } from 'src/auth/types.js'
+import { SearchType } from 'src/amadeus/types/common.js'
 
 export interface UserSearchDto {
   id: string

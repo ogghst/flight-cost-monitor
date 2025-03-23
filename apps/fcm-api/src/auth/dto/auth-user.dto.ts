@@ -1,80 +1,18 @@
-import { AuthType, AuthUser, OAuthProvider } from '@fcm/shared/auth'
-import { ApiProperty } from '@nestjs/swagger'
-import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator'
+import { SwaggerSchema } from '@/common/decorators/swagger-schema.decorator.js'
+import { createZodDto } from '@anatine/zod-nestjs'
+import { AuthUserSchema } from '@fcm/shared/auth'
 
-export class AuthUserDto implements AuthUser {
-  @ApiProperty({
-    description: 'User email',
-    example: 'user@example.com',
-  })
-  @IsEmail()
-  email: string
-
-  @ApiProperty({
-    description: 'Username',
-    example: 'johndoe',
-    required: false,
-    nullable: true,
-  })
-  @IsString()
-  @IsOptional()
-  username?: string | null
-
-  @ApiProperty({
-    description: 'First name',
-    example: 'John',
-    required: false,
-    nullable: true,
-  })
-  @IsString()
-  @IsOptional()
-  firstName?: string | null
-
-  @ApiProperty({
-    description: 'Last name',
-    example: 'Doe',
-    required: false,
-    nullable: true,
-  })
-  @IsString()
-  @IsOptional()
-  lastName?: string | null
-
-  @ApiProperty({
-    description: 'User roles',
-    example: ['USER', 'ADMIN'],
-    isArray: true,
-  })
-  roles: string[]
-
-  @ApiProperty({
-    description: 'Authentication type',
-    enum: AuthType,
-    example: AuthType.CREDENTIAL,
-  })
-  @IsEnum(AuthType)
-  authType: AuthType
-
-  @ApiProperty({
-    description: 'Authentication provider',
-    enum: OAuthProvider,
-    example: OAuthProvider.GITHUB,
-  })
-  @IsOptional()
-  @IsEnum(OAuthProvider)
-  oauthProvider?: OAuthProvider
-
-  @ApiProperty({
-    description: 'User profile',
-  })
-  @IsString()
-  @IsOptional()
-  profile?: string
-
-  @ApiProperty({
-    description: 'User image',
-  })
-  @IsString()
-  @IsOptional()
-  image?: string
-}
+@SwaggerSchema(AuthUserSchema, {
+  examples: {
+    id: '123e4567-e89b-12d3-a456-426614174000',
+    email: 'user@example.com',
+    username: 'johndoe',
+    firstName: 'John',
+    lastName: 'Doe',
+    avatar: 'https://example.com/avatars/user.jpg',
+    authType: 'local',
+    oauthProvider: 'google',
+    roles: ['user', 'admin'],
+  },
+})
+export class AuthUserDtoSwagger extends createZodDto(AuthUserSchema) {}

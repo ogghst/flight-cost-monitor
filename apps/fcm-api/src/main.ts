@@ -18,19 +18,22 @@ async function bootstrap() {
   //  minLevel: 'debug',
   //})
 
-  const logger = NestLogger.getInstance({
+  const logger = new NestLogger({
     context: 'FCM-API',
+    minLevel: 'debug',
+    prefix: 'MyApp',
+    logLevels: ['log', 'error', 'warn', 'debug', 'verbose', 'info', 'http'],
   })
 
   try {
     const app = await NestFactory.create(AppModule, {
       logger: logger,
-      bufferLogs: true,
-      abortOnError: false,
+      //bufferLogs: true,
+      //abortOnError: false,
     })
 
     // Patch Swagger to work with Zod schemas
-    patchNestjsSwagger()
+    //patchNestjsSwagger()
 
     // Use WebSocket adapter explicitly
     app.useWebSocketAdapter(new IoAdapter(app))
@@ -97,7 +100,8 @@ async function bootstrap() {
 
     // Configure CORS
     app.enableCors({
-      origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+      //origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+      origin: true,
       credentials: true,
     })
 

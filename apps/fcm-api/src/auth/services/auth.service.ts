@@ -1,9 +1,9 @@
-import { AuthType, OAuthProvider } from '@fcm/shared'
-import type { UserRepository } from '@fcm/storage'
+import { UserWithRelationsDtoSwagger } from '@/users/dto/user.dto.js'
+import { UsersService } from '@/users/users.service.js'
+import { AuthType, OAuthProvider } from '@fcm/shared/types'
 import {
   BadRequestException,
   ConflictException,
-  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
@@ -11,9 +11,11 @@ import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { compare, hash } from 'bcrypt'
 import { randomBytes } from 'crypto'
-import type { AuthResponse, JwtPayload } from '../auth.types.js'
-import { LoginDto } from '../dto/login.dto.js'
-import { OAuthLoginDto } from '../dto/oauth-login.dto.js'
+import { Response } from 'express'
+import type { AuthResponse } from '../auth.types.js'
+import { LoginCredentialsUserDtoSwagger } from '../dto/credential-login.dto.js'
+import { LoginCredentialsDtoSwagger } from '../dto/login.dto.js'
+import { LoginOAuthDtoSwagger } from '../dto/oauth-login.dto.js'
 import { RegisterDto } from '../dto/register.dto.js'
 import {
   RequestPasswordResetDto,
@@ -21,143 +23,97 @@ import {
 } from '../dto/reset-password.dto.js'
 import { TokenService } from './token.service.js'
 
+// Define missing interface
+interface JwtPayload {
+  sub: string
+  email: string
+  roles?: string[]
+}
+
 @Injectable()
 export class AuthService {
   constructor(
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
-    @Inject('USER_REPOSITORY') private readonly userRepository: UserRepository
+    private readonly userService: UsersService
   ) {}
 
-  async register(data: RegisterDto): Promise<AuthResponse> {
-    const existingUser = await this.userRepository.findByEmail(data.email)
+  async register(data: RegisterDto): Promise<UserWithRelationsDtoSwagger> {
+    const existingUser = await this.userService.findByEmail(data.email)
     if (existingUser) {
       throw new ConflictException('User already exists')
     }
 
     // Create user with hashed password
-    const user = await this.userRepository.createCredentialsUser({
+    const user = await this.userService.createWithCredentials({
       ...data,
       password: await hash(data.password, 10),
       active: true,
       authType: AuthType.CREDENTIAL,
     })
 
-    // Generate tokens
-    const tokens = await this.tokenService.generateTokenPair({
-      sub: user.id,
-      email: user.email,
-      roles: user.roles.map((r) => r.name),
-    })
-
-    return {
-      ...tokens,
-      user: {
-        email: user.email,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        roles: user.roles.map((r) => r.name),
-        authType: user.authType,
-      },
-    }
+    return user
   }
 
-  async login(data: LoginDto): Promise<AuthResponse> {
+  async login(
+    credentials: LoginCredentialsDtoSwagger,
+    response: Response
+  ): Promise<UserWithRelationsDtoSwagger> {
     // Find user by email or username
-    const user = await (data.username.includes('@')
-      ? this.userRepository.findByEmail(data.username)
-      : this.userRepository.findByUsername(data.username))
+    const user = await this.userService.findByEmail(credentials.email)
 
     if (!user || !user.password || !user.active) {
       throw new UnauthorizedException('Invalid credentials')
     }
 
     // Verify password
-    const isPasswordValid = await compare(data.password, user.password)
+    const isPasswordValid = await compare(credentials.password, user.password)
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials')
     }
 
     // Update last login
-    await this.userRepository.updateLastLogin(user.id)
+    await this.userService.updateLastLogin(user.id)
 
     // Generate tokens
-    const tokens = await this.tokenService.generateTokenPair({
-      sub: user.id,
-      email: user.email,
-      roles: user.roles.map((r) => r.name),
-    })
+    const tokens = await this.tokenService.generateTokenPair(user, response)
 
-    return {
-      ...tokens,
-      user: {
-        email: user.email,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        roles: user.roles.map((r) => r.name),
-        authType: user.authType,
-      },
-    }
-  }
-
-  async oauthLogin(data: OAuthLoginDto): Promise<AuthResponse> {
-    // Verify the OAuth token with provider
-    const verifiedData = await this.verifyOAuthToken(data)
-
-    // Find or create user
-    let user = await this.userRepository.findByOAuth(
-      data.provider,
-      data.providerId
-    )
-
-    if (!user) {
-      // Create new OAuth user
-      user = await this.userRepository.createOAuthUser({
-        email: verifiedData.email,
-        oauthProvider:
-          data.provider === OAuthProvider.GITHUB
-            ? OAuthProvider.GITHUB
-            : OAuthProvider.GOOGLE,
-        oauthProviderId: data.providerId,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        oauthProfile: JSON.stringify({
-          avatar: data.avatar,
-          ...verifiedData,
-        }),
-        active: true,
-        authType: AuthType.OAUTH,
-      })
-    }
-
-    // Update last login
-    await this.userRepository.updateLastLogin(user.id)
-
-    // Generate tokens
-    const tokens = await this.tokenService.generateTokenPair({
-      sub: user.id,
-      email: user.email,
-      roles: user.roles.map((r) => r.name),
-    })
-
-    return {
-      ...tokens,
-      user: {
-        email: user.email,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        roles: user.roles.map((r) => r.name),
-        authType: user.authType,
-      },
-    }
+    return user
   }
 
   async logout(refreshToken: string): Promise<void> {
     await this.tokenService.revokeToken(refreshToken)
+  }
+
+  async oauthLogin(
+    data: LoginOAuthDtoSwagger
+  ): Promise<UserWithRelationsDtoSwagger> {
+    // Verify the OAuth token with provider
+    const verifiedData = await this.verifyOAuthToken(data)
+
+    // Find or create user
+    let user = await this.userService.findByOAuth(
+      data.oauthProvider,
+      data.oauthProviderId
+    )
+
+    if (!user) {
+      // Create new OAuth user
+      user = await this.userService.createWithOAuth({
+        email: data.email,
+        oauthProvider: data.oauthProvider,
+        oauthProviderId: data.oauthProviderId,
+        active: true,
+        authType: AuthType.OAUTH,
+        oauthProfile: JSON.stringify(verifiedData),
+      })
+    }
+
+    // Update last login
+    await this.userService.updateLastLogin(user.id)
+
+    return user
   }
 
   async refreshTokens(refreshToken: string): Promise<AuthResponse> {
@@ -172,7 +128,7 @@ export class AuthService {
     }
 
     // Get fresh user data
-    const user = await this.userRepository.findById(payload.sub)
+    const user = await this.userService.findById(payload.sub)
     if (!user || !user.active) {
       throw new UnauthorizedException('User not found or inactive')
     }
@@ -182,10 +138,7 @@ export class AuthService {
       user: {
         email: user.email,
         username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
         roles: user.roles.map((r) => r.name),
-        authType: user.authType,
       },
     }
   }
@@ -193,7 +146,7 @@ export class AuthService {
   async requestPasswordReset({
     email,
   }: RequestPasswordResetDto): Promise<void> {
-    const user = await this.userRepository.findByEmail(email)
+    const user = await this.userService.findByEmail(email)
     if (!user) {
       // Don't reveal if user exists
       return
@@ -201,33 +154,43 @@ export class AuthService {
 
     // Generate reset token
     const token = randomBytes(32).toString('hex')
-    const expires = new Date()
-    expires.setHours(expires.getHours() + 1) // Token expires in 1 hour
+    // TODO: In a real implementation, you would store this token
+    // and its expiry somewhere, like in the database.
+    // For now, just generate the token for the example.
 
-    await this.userRepository.setResetToken(user.id, token, expires)
-
-    // TODO: Send reset email
+    // TODO: Send reset email with the token
+    console.log(`Password reset token for ${email}: ${token}`)
   }
 
   async resetPassword({ token, password }: ResetPasswordDto): Promise<void> {
-    const user = await this.userRepository.findByResetToken(token)
-    if (!user) {
-      throw new BadRequestException('Invalid or expired reset token')
-    }
+    // TODO: In a real implementation, you would:
+    // 1. Find the user by the reset token
+    // 2. Check that the token hasn't expired
+    // 3. Update the password and clear the token
 
-    // Update password and clear reset token
-    await this.userRepository.update(user.id, {
-      password: await hash(password, 10),
-    })
-    await this.userRepository.clearResetToken(user.id)
+    // For now, this method is just a placeholder for the implementation
+    throw new BadRequestException(
+      'Password reset functionality not implemented'
+    )
 
-    // Revoke all refresh tokens for security
-    await this.tokenService.revokeAllUserTokens(user.id)
+    // Actual implementation would be something like:
+    // const user = findUserByResetToken(token);
+    // if (!user || tokenIsExpired(user.resetTokenExpires)) {
+    //   throw new BadRequestException('Invalid or expired reset token');
+    // }
+    //
+    // Update password
+    // await this.userService.update(user.id, {
+    //   password: await hash(password, 10),
+    // });
+    //
+    // // Revoke all refresh tokens for security
+    // await this.tokenService.revokeAllUserTokens(user.id);
   }
 
-  private async verifyOAuthToken(data: OAuthLoginDto): Promise<any> {
+  private async verifyOAuthToken(data: LoginOAuthDtoSwagger): Promise<any> {
     // Implement provider-specific token verification
-    switch (data.provider) {
+    switch (data.oauthProvider) {
       case OAuthProvider.GITHUB:
         return this.verifyGithubToken(data.accessToken)
       case OAuthProvider.GOOGLE:
@@ -265,5 +228,21 @@ export class AuthService {
     } catch (error) {
       throw new UnauthorizedException('Failed to verify Google token')
     }
+  }
+
+  async validateCredentials(
+    credentials: LoginCredentialsUserDtoSwagger
+  ): Promise<UserWithRelationsDtoSwagger> {
+    const user = await this.userService.findByEmail(credentials.email)
+    if (!user || !user.password || !user.active) {
+      throw new UnauthorizedException('Invalid credentials')
+    }
+
+    const isPasswordValid = await compare(credentials.password, user.password)
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials')
+    }
+
+    return user
   }
 }

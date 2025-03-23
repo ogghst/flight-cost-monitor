@@ -15,7 +15,8 @@
     "API_URL",
     "API_TIMEOUT",
     "CORS_ORIGIN",
-    "WS_PORT"
+    "WS_PORT",
+    "JWT_REFRESH_NAME"
   ],
   "tasks": {
     "build": {

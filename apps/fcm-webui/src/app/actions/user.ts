@@ -1,6 +1,6 @@
 'use server'
 
-import { makeServerRequest } from '@/lib/api/axiosConfig'
+import { fetchFCMServer } from '@/lib/api/fetch'
 import { auth } from '@/lib/auth'
 import { AuthUser } from '@fcm/shared/auth'
 
@@ -11,7 +11,7 @@ export async function getCurrentUser(): Promise<AuthUser> {
   }
 
   try {
-    return await makeServerRequest<AuthUser>('GET', '/auth/me')
+    return await fetchFCMServer<AuthUser>('GET', '/auth/me')
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to fetch user data: ${error.message}`)
@@ -36,7 +36,7 @@ export async function updateUserProfile(profileData: {
   }
 
   try {
-    return await makeServerRequest<UpdateProfileResponse>(
+    return await fetchFCMServer<UpdateProfileResponse>(
       'PATCH',
       '/users/profile',
       JSON.stringify(profileData)
@@ -64,7 +64,7 @@ export async function changePassword(passwordData: {
   }
 
   try {
-    return await makeServerRequest<PasswordChangeResponse>(
+    return await fetchFCMServer<PasswordChangeResponse>(
       'POST',
       '/auth/password/change',
       JSON.stringify(passwordData)
@@ -84,7 +84,7 @@ interface PasswordResetRequestResponse {
 
 export async function requestPasswordReset(email: string) {
   try {
-    return await makeServerRequest<PasswordResetRequestResponse>(
+    return await fetchFCMServer<PasswordResetRequestResponse>(
       'POST',
       '/auth/password/reset-request',
       JSON.stringify({ email })
@@ -107,7 +107,7 @@ export async function resetPassword(resetData: {
   password: string
 }) {
   try {
-    return await makeServerRequest<PasswordResetResponse>(
+    return await fetchFCMServer<PasswordResetResponse>(
       'POST',
       '/auth/password/reset',
       JSON.stringify(resetData)

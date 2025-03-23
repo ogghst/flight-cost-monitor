@@ -1,5 +1,4 @@
-import { AuthType, OAuthProvider } from '@fcm/shared/auth'
-import { baseEntitySchema } from '@fcm/shared/types'
+import { AuthType, OAuthProvider, baseEntitySchema } from '@fcm/shared/types'
 import { z } from 'zod'
 import type { BaseRefreshToken } from '../types.js'
 

@@ -1,4 +1,4 @@
-import { AuthType, OAuthProvider } from '@fcm/shared/auth'
+import { AuthType, OAuthProvider } from '@fcm/shared/types'
 import { Prisma, type User as PrismaUser } from '@prisma/client'
 import type { ITXClientDenyList } from '@prisma/client/runtime/library'
 import { DatabaseError } from '../schema/types.js'
@@ -8,7 +8,11 @@ import type {
 } from '../schema/user/create.js'
 import type { UserWithRelations } from '../schema/user/types.js'
 import type { UpdateUser } from '../schema/user/update.js'
-import { fcmPrismaClient, type ExtendedPrismaClient, type ExtendedTransactionClient } from './prisma.js'
+import {
+  fcmPrismaClient,
+  type ExtendedPrismaClient,
+  type ExtendedTransactionClient,
+} from './prisma.js'
 
 export class UserRepository {
   private prisma: ExtendedPrismaClient = fcmPrismaClient

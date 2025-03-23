@@ -1,18 +1,9 @@
-export enum SearchType {
-  SIMPLE = 'SIMPLE',
-  ADVANCED = 'ADVANCED',
-}
+import { AuthType } from 'src/types/index.js'
+import { z } from 'zod'
 
-export enum AuthType {
-  OAUTH = 'OAUTH',
-  CREDENTIAL = 'CREDENTIAL',
-}
+/*
 
 export const _PROVIDERS = ['GITHUB', 'GOOGLE'] as const
-export enum OAuthProvider {
-  GITHUB = 'GITHUB',
-  GOOGLE = 'GOOGLE',
-}
 
 export interface TokenPayload {
   sub: string
@@ -78,3 +69,32 @@ export interface PasswordReset {
   password: string
   confirmPassword: string
 }
+  */
+
+export interface TokenPayload {
+  sub: string
+  email: string
+  authType: AuthType
+  roles: string[]
+}
+
+export interface AuthSession {
+  user: {
+    email: string
+    roles: string[]
+    name?: string
+    image?: string
+  }
+  accessToken: string
+  error?: string
+}
+
+export const AuthUserSchema = z.object({
+  //id: z.string(),
+  email: z.string().email(),
+  username: z.string().optional(),
+  roles: z.array(z.string()),
+  preferences: z.record(z.unknown()).optional(),
+})
+
+export interface AuthUser extends z.infer<typeof AuthUserSchema> {}

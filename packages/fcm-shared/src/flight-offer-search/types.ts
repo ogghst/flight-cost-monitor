@@ -1,5 +1,5 @@
 import { TravelClass } from 'src/amadeus/index.js'
-import { SearchType } from 'src/auth/types.js'
+import { SearchType } from 'src/amadeus/types/common.js'
 import { FlightOfferAdvancedSearchRequest } from '../amadeus/clients/flight-offer-advanced/flight-offers-advanced-types.js'
 import type {
   FlightOfferSimpleSearchRequest,

@@ -25,7 +25,7 @@ export async function createServerAxiosInstance() {
   })
 }
 
-export async function makeServerRequest<T>(
+export async function fetchFCMServer<T>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
   url: string,
   data?: any,

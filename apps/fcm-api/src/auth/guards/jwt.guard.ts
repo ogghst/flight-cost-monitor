@@ -1,8 +1,4 @@
-import {
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common'
+import { ExecutionContext, Injectable } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { AuthGuard } from '@nestjs/passport'
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator.js'
@@ -20,19 +16,12 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     ])
 
     const request = context.switchToHttp().getRequest()
-    console.log('JWT Debug:', request.headers.authorization)
+    //console.log('JWT Debug:', request.headers.authorization)
 
     if (isPublic) {
       return true
     }
 
     return super.canActivate(context)
-  }
-
-  handleRequest(err: any, user: any, info: any) {
-    if (err || !user) {
-      throw err || new UnauthorizedException('Invalid token')
-    }
-    return user
   }
 }

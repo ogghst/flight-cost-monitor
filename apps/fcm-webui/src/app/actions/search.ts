@@ -1,6 +1,6 @@
 'use server'
 
-import { makeServerRequest } from '@/lib/api/axiosConfig'
+import { fetchFCMServer } from '@/lib/api/fetch'
 import { auth } from '@/lib/auth'
 import {
   CreateUserSearchDto,
@@ -28,7 +28,7 @@ export async function saveSearch(
       lastUsed: new Date(),
     }
 
-    return await makeServerRequest<UserSearchDto>(
+    return await fetchFCMServer<UserSearchDto>(
       'POST',
       '/user-searches',
       payload
@@ -50,7 +50,7 @@ export async function getUserSearches(
   }
 
   try {
-    const searches = await makeServerRequest<UserSearchDto[]>(
+    const searches = await fetchFCMServer<UserSearchDto[]>(
       'GET',
       `/user-searches/user/${session.user.email}`,
       undefined,
@@ -79,7 +79,7 @@ export async function getFavoriteSearches(): Promise<UserSearchDto[]> {
   }
 
   try {
-    const searches = await makeServerRequest<UserSearchDto[]>(
+    const searches = await fetchFCMServer<UserSearchDto[]>(
       'GET',
       `/user-searches/user/${session.user.id}/favorites`
     )
@@ -106,7 +106,7 @@ export async function markSearchUsed(searchId: string): Promise<UserSearchDto> {
   }
 
   try {
-    return await makeServerRequest<UserSearchDto>(
+    return await fetchFCMServer<UserSearchDto>(
       'POST',
       `/user-searches/${searchId}/used`
     )
@@ -127,7 +127,7 @@ export async function toggleSearchFavorite(
   }
 
   try {
-    return await makeServerRequest<UserSearchDto>(
+    return await fetchFCMServer<UserSearchDto>(
       'POST',
       `/user-searches/${searchId}/toggle-favorite`
     )
@@ -146,7 +146,7 @@ export async function deleteSearch(searchId: string) {
   }
 
   try {
-    await makeServerRequest('DELETE', `/user-searches/${searchId}`)
+    await fetchFCMServer('DELETE', `/user-searches/${searchId}`)
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to delete search: ${error.message}`)

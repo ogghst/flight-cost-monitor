@@ -1,13 +1,13 @@
 'use server'
 
-import { makeServerRequest } from '@/lib/api/axiosConfig'
-import type { TaskMetrics, SystemMetrics } from '@fcm/shared/monitoring'
+import { fetchFCMServer } from '@/lib/api/fetch'
+import type { SystemMetrics, TaskMetrics } from '@fcm/shared/monitoring'
 
 export async function getTaskMetricsAction(
   taskId: string
 ): Promise<TaskMetrics> {
   try {
-    return await makeServerRequest<TaskMetrics>(
+    return await fetchFCMServer<TaskMetrics>(
       'GET',
       `/monitoring/tasks/${taskId}/metrics`
     )
@@ -22,10 +22,7 @@ export async function getTaskMetricsAction(
 
 export async function getSystemMetricsAction(): Promise<SystemMetrics> {
   try {
-    return await makeServerRequest<SystemMetrics>(
-      'GET',
-      '/monitoring/system'
-    )
+    return await fetchFCMServer<SystemMetrics>('GET', '/monitoring/system')
   } catch (error) {
     console.error('Get system metrics error:', error)
     if (error instanceof Error) {

@@ -1,13 +1,14 @@
-import type { AuthUser } from '@fcm/shared'
-import type { UserRepository } from '@fcm/storage'
+import type { AuthSession, AuthUser } from '@fcm/shared'
 import {
   Body,
   Controller,
   Get,
   HttpStatus,
-  Inject,
+  Logger,
   NotFoundException,
   Post,
+  Req,
+  Res,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common'
@@ -20,23 +21,35 @@ import {
 } from '@nestjs/swagger'
 import { Public } from '../decorators/public.decorator.js'
 import { CurrentUser } from '../decorators/user.decorator.js'
-import { AuthUserDto } from '../dto/auth-user.dto.js'
-import { LoginDto } from '../dto/login.dto.js'
-import { OAuthLoginDto } from '../dto/oauth-login.dto.js'
+
+import { extractRefreshTokenFromCookies } from '@/common/ccokies.js'
+import { InjectLogger } from '@/logging/index.js'
+import { UserWithRelationsDtoSwagger } from '@/users/dto/user.dto.js'
+import { UsersService } from '@/users/users.service.js'
+import { ConfigService } from '@nestjs/config'
+import { Throttle } from '@nestjs/throttler'
+import type { Request, Response } from 'express'
+import { LoginCredentialsUserDtoSwagger } from '../dto/credential-login.dto.js'
+import { LoginOAuthDtoSwagger } from '../dto/oauth-login.dto.js'
 import { RegisterDto } from '../dto/register.dto.js'
 import {
   RequestPasswordResetDto,
   ResetPasswordDto,
 } from '../dto/reset-password.dto.js'
+import { JwtRefreshAuthGuard } from '../guards/jwt-refresh-auth.guard.js'
 import { JwtAuthGuard } from '../guards/jwt.guard.js'
 import { AuthService } from '../services/auth.service.js'
+import { TokenService } from '../services/token.service.js'
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    @Inject('USER_REPOSITORY') private readonly userRepository: UserRepository
+    private readonly userService: UsersService,
+    private readonly tokenService: TokenService,
+    private readonly configService: ConfigService,
+    @InjectLogger() private readonly logger: Logger
   ) {}
 
   @Public()
@@ -47,53 +60,67 @@ export class AuthController {
     status: HttpStatus.CREATED,
     description: 'User successfully registered',
   })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input data',
-  })
-  @ApiResponse({
-    status: HttpStatus.CONFLICT,
-    description: 'Username/email already exists',
-  })
-  register(@Body() data: RegisterDto) {
-    return this.authService.register(data)
+  async register(
+    @Body() data: RegisterDto,
+    @Res({ passthrough: true }) response: Response
+  ) {
+    try {
+      // Register user and generate tokens
+      const result = await this.authService.register(data)
+
+      // Generate token pair using our token service
+      await this.tokenService.generateTokenPair(result, response)
+
+      return {
+        user: result,
+        message: 'Registration successful',
+      }
+    } catch (error) {
+      this.logger.error('Error registering user', error)
+      throw error
+    }
   }
 
+  @Throttle({
+    short: { limit: 2, ttl: 1000 },
+    long: { limit: 5, ttl: 60000 },
+  })
   @Public()
   @Post('login')
-  @ApiOperation({ summary: 'Login with username/email and password' })
-  @ApiBody({ type: LoginDto })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successfully logged in',
-    schema: {
-      type: 'object',
-      properties: {
-        accessToken: { type: 'string' },
-        refreshToken: { type: 'string' },
+  async login(
+    @Body() credentials: LoginCredentialsUserDtoSwagger,
+    @Res({ passthrough: true }) response: Response
+  ): Promise<AuthSession> {
+    try {
+      this.logger.debug('Processing login request', {
+        email: credentials.email,
+      })
+
+      // Authenticate user
+      const user = await this.authService.login(credentials)
+
+      // Generate tokens
+      const tokens = await this.tokenService.generateTokenPair(user, response)
+
+      return {
         user: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            email: { type: 'string' },
-            username: { type: 'string' },
-          },
+          email: user.email,
+          name: user.username,
+          image: user.avatar,
+          roles: user.roles.map((role) => role.name),
         },
-      },
-    },
-  })
-  @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'Invalid credentials',
-  })
-  login(@Body() data: LoginDto) {
-    return this.authService.login(data)
+        accessToken: tokens.accessToken,
+      }
+    } catch (error) {
+      this.logger.error('Error during login', error)
+      throw error
+    }
   }
 
   @Public()
   @Post('oauth/login')
   @ApiOperation({ summary: 'Login with OAuth provider' })
-  @ApiBody({ type: OAuthLoginDto })
+  @ApiBody({ type: LoginOAuthDtoSwagger })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully logged in with OAuth',
@@ -102,22 +129,40 @@ export class AuthController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid OAuth data',
   })
-  oauthLogin(@Body() data: OAuthLoginDto) {
-    return this.authService.oauthLogin(data)
+  async oauthLogin(
+    @Body() data: LoginOAuthDtoSwagger,
+    @Res({ passthrough: true }) response: Response
+  ): Promise<AuthSession> {
+    try {
+      const user = await this.authService.oauthLogin(data)
+
+      // Generate tokens
+      const tokens = await this.tokenService.generateTokenPair(user, response)
+
+      return {
+        user: {
+          email: user.email,
+          name: user.username,
+          image: user.avatar,
+          roles: user.roles.map((role) => role.name),
+        },
+        accessToken: tokens.accessToken,
+      }
+    } catch (error) {
+      this.logger.error('Error during login', error)
+      throw error
+    }
   }
 
   @Public()
   @Post('refresh')
-  @ApiOperation({ summary: 'Refresh access token' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['refreshToken'],
-      properties: {
-        refreshToken: { type: 'string' },
-      },
-    },
+  @UseGuards(JwtRefreshAuthGuard)
+  @ApiBearerAuth()
+  @Throttle({
+    short: { limit: 1, ttl: 1000 },
+    long: { limit: 2, ttl: 60000 },
   })
+  @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'New access token generated',
@@ -126,11 +171,34 @@ export class AuthController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid refresh token',
   })
-  refresh(@Body('refreshToken') refreshToken: string) {
-    if (!refreshToken) {
-      throw new UnauthorizedException('Refresh token is required')
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<{ accessToken: string }> {
+    try {
+      this.logger.debug('Processing token refresh request')
+
+      const refreshToken = extractRefreshTokenFromCookies(req)
+      if (!refreshToken) {
+        throw new UnauthorizedException('Refresh token not found')
+      }
+
+      if (!req.user) {
+        throw new UnauthorizedException('User not found')
+      }
+
+      const user = req.user as UserWithRelationsDtoSwagger
+      const accessToken = await this.tokenService.rotateTokens(
+        refreshToken,
+        user,
+        res
+      )
+
+      return { accessToken }
+    } catch (error) {
+      this.logger.error('Error during token refresh', error)
+      throw error
     }
-    return this.authService.refreshTokens(refreshToken)
   }
 
   @Post('logout')
@@ -199,7 +267,7 @@ export class AuthController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Current user profile',
-    type: AuthUserDto,
+    type: UserWithRelationsDtoSwagger,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
@@ -209,24 +277,15 @@ export class AuthController {
     status: HttpStatus.NOT_FOUND,
     description: 'User not found',
   })
-  async getProfile(@CurrentUser() user: AuthUser): Promise<AuthUserDto> {
+  async getProfile(
+    @CurrentUser() user: AuthUser
+  ): Promise<UserWithRelationsDtoSwagger> {
     // Fetch full user data including roles
-    const userData = await this.userRepository.findByEmail(user.email)
+    const userData = await this.userService.findByEmail(user.email)
     if (!userData) {
       throw new NotFoundException('User not found')
     }
 
-    // Convert to AuthUserDto
-    return {
-      email: userData.email,
-      username: userData.username,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      roles: userData.roles.map((role) => role.name),
-      authType: userData.authType,
-      oauthProvider: userData.oauthProvider,
-      profile: userData.oauthProfile,
-      image: userData.image,
-    }
+    return userData
   }
 }
