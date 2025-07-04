@@ -54,6 +54,7 @@
     "@fcm/typescript-config": "workspace:*",
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^20.17.10",
+    "@types/axios": "^0.14.0",
     "prisma": "^6.1.0",
     "rimraf": "^5.0.5",
     "ts-loader": "^9.5.1",

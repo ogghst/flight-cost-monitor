@@ -20,6 +20,9 @@ importers:
       '@fcm/typescript-config':
         specifier: workspace:*
         version: link:packages/typescript-config
+      '@types/node':
+        specifier: ^20.17.10
+        version: 20.17.10
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.18.0
         version: 8.18.2(@typescript-eslint/parser@8.18.2(eslint@9.17.0)(typescript@5.7.2))(eslint@9.17.0)(typescript@5.7.2)
@@ -41,6 +44,9 @@ importers:
       turbo:
         specifier: ^2.3.3
         version: 2.3.3
+      typescript:
+        specifier: ^5.7.2
+        version: 5.7.2
 
   apps/fcm-api:
     dependencies:
@@ -389,6 +395,9 @@ importers:
       '@fcm/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      '@types/axios':
+        specifier: ^0.14.0
+        version: 0.14.4
       '@types/node':
         specifier: ^20.17.10
         version: 20.17.10
@@ -453,6 +462,9 @@ importers:
       '@fcm/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      '@types/axios':
+        specifier: ^0.14.0
+        version: 0.14.4
       '@types/bcrypt':
         specifier: ^5.0.2
         version: 5.0.2
@@ -1987,6 +1999,10 @@ packages:
   '@turbo/workspaces@1.13.4':
     resolution: {integrity: sha512-3uYg2b5TWCiupetbDFMbBFMHl33xQTvp5DNg0fZSYal73Z9AlFH9yWabHWMYw6ywmwM1evkYRpTVA2n7GgqT5A==}
     hasBin: true
+
+  '@types/axios@0.14.4':
+    resolution: {integrity: sha512-9JgOaunvQdsQ/qW2OPmE5+hCeUB52lQSolecrFrthct55QekhmXEwT203s20RL+UHtCQc15y3VXpby9E7Kkh/g==}
+    deprecated: This is a stub types definition. axios provides its own type definitions, so you do not need this installed.
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -7365,6 +7381,12 @@ snapshots:
       rimraf: 3.0.2
       semver: 7.6.3
       update-check: 1.5.4
+
+  '@types/axios@0.14.4':
+    dependencies:
+      axios: 1.7.9
+    transitivePeerDependencies:
+      - debug
 
   '@types/babel__core@7.20.5':
     dependencies:
