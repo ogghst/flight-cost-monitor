@@ -2,7 +2,11 @@
   "extends": "@fcm/typescript-config/nestjs.json",
   "compilerOptions": {
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@fcm/shared": ["../../packages/fcm-shared/src/index.ts"],
+      "@fcm/shared/*": ["../../packages/fcm-shared/src/*"],
+      "@fcm/storage": ["../../packages/fcm-storage/src/index.ts"],
+      "@fcm/storage/*": ["../../packages/fcm-storage/src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/examples.ts", "../../packages/fcm-shared/src/logging/logging.config.ts"],
