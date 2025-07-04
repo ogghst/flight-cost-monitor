@@ -121,8 +121,10 @@ export abstract class BaseClient {
   protected async request<T>(path: string, options: any = {}): Promise<T> {
     try {
       const accessToken = await this.ensureValidToken()
-      // Use baseUrl for API requests, not authentication
-      const url = `${path}`
+      // Ensure we construct the full request URL.
+      // If the provided path is already an absolute URL (starts with http/https),
+      // we use it as-is. Otherwise we prefix it with the configured baseUrl.
+      const url = /^https?:\/\//.test(path) ? path : `${this.baseUrl}${path}`
 
       const axiosConfig = {
         ...options,

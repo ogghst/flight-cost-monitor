@@ -348,27 +348,29 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     return task
   }
 
-  async pauseTask(taskId: string): Promise<TaskScheduleDto> {
+  async pauseTask(taskId: string): Promise<TaskScheduleDto | null> {
     const job = this.activeJobs.get(taskId)
     if (job) {
       job.stop()
       this.activeJobs.delete(taskId)
-      await taskScheduleRepository.update({
+      return await taskScheduleRepository.update({
         id: taskId,
         state: TaskState.DISABLED,
       })
-    } else return null
+    }
+    return null
   }
 
-  async resumeTask(taskId: string): Promise<TaskScheduleDto> {
+  async resumeTask(taskId: string): Promise<TaskScheduleDto | null> {
     const config = await taskScheduleRepository.findById(taskId)
     if (config && !this.activeJobs.has(taskId)) {
       await this.scheduleTask(config)
-      await taskScheduleRepository.update({
+      return await taskScheduleRepository.update({
         id: taskId,
         state: TaskState.ENABLED,
       })
-    } else return null
+    }
+    return null
   }
 
   async updateTask(
