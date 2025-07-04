@@ -3,9 +3,9 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
-      "@fcm/shared": ["../../packages/fcm-shared/src/index.ts"],
+      "@fcm/shared": ["../../packages/fcm-shared/src/index"],
       "@fcm/shared/*": ["../../packages/fcm-shared/src/*"],
-      "@fcm/storage": ["../../packages/fcm-storage/src/index.ts"],
+      "@fcm/storage": ["../../packages/fcm-storage/src/index"],
       "@fcm/storage/*": ["../../packages/fcm-storage/src/*"]
     }
   },
