@@ -1,5 +1,5 @@
 {
-  "extends": "@fcm/typescript-config/nestjs.json",
+  "extends": "../../packages/typescript-config/nestjs.json",
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],

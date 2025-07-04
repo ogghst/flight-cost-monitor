@@ -8,7 +8,8 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "noEmit": false,
-    "emitDeclarationOnly": false
+    "emitDeclarationOnly": false,
+    "allowSyntheticDefaultImports": true
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
